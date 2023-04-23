@@ -1,5 +1,12 @@
 //! bitcoin's base58 encoding format
 
+#[cfg(feature = "alloc")]
+use core as std;
+
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
+
 pub const ALPHABET: &'static str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
@@ -8,14 +15,14 @@ pub enum Error {
     /// base58 `ALPHABET`. Contains the index of the faulty byte.
     UnknownSymbol(usize),
 }
-impl ::std::fmt::Display for Error {
+impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match self {
             &Error::UnknownSymbol(idx) => write!(f, "Unknown symbol at byte index {}", idx),
         }
     }
 }
-impl ::std::error::Error for Error {}
+impl std::error::Error for Error {}
 
 pub type Result<T> = ::std::result::Result<T, Error>;
 

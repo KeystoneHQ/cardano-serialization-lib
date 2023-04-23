@@ -9,9 +9,15 @@
 //! to binary makes an `Addr`
 //!
 
+#[cfg(feature = "alloc")]
+use core as std;
+
+use alloc::format;
+use alloc::vec::Vec;
 use crate::legacy_address::base58;
 use crate::legacy_address::cbor;
 use cbor_event::{self, cbor, de::Deserializer, se::Serializer};
+use core2::io::{BufRead, Write};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest;
 use cryptoxide::sha3;
@@ -238,7 +244,7 @@ impl TryFrom<&[u8]> for Addr {
     }
 }
 
-impl ::std::str::FromStr for Addr {
+impl ::core::str::FromStr for Addr {
     type Err = ParseExtendedAddrError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = base58::decode(s).map_err(ParseExtendedAddrError::Base58Error)?;
@@ -327,7 +333,7 @@ impl std::error::Error for ParseExtendedAddrError {
     }
 }
 
-impl ::std::str::FromStr for ExtendedAddr {
+impl std::str::FromStr for ExtendedAddr {
     type Err = ParseExtendedAddrError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = base58::decode(s).map_err(ParseExtendedAddrError::Base58Error)?;
