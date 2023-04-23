@@ -1,3 +1,4 @@
+use alloc::format;
 use super::*;
 use crate::legacy_address::ExtendedAddr;
 use bech32::ToBase32;

@@ -1,6 +1,10 @@
 #![cfg_attr(feature = "with-bench", feature(test))]
 #![allow(deprecated)]
 
+#![cfg_attr(feature = "alloc", no_std)]
+#![cfg_attr(feature = "alloc", feature(error_in_core))]
+// #![no_std]
+
 #[macro_use]
 extern crate cfg_if;
 
@@ -15,7 +19,21 @@ extern crate quickcheck;
 extern crate quickcheck_macros;
 extern crate hex;
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+use alloc::collections::BTreeSet;
+use alloc::string::{String, ToString};
+use alloc::vec;
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
+use core as std;
+#[cfg(feature = "alloc")]
+use core2::io::{BufRead, Seek, Write};
+
+#[cfg(not(feature = "alloc"))]
 use std::convert::TryInto;
+#[cfg(not(feature = "alloc"))]
 use std::io::{BufRead, Seek, Write};
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
