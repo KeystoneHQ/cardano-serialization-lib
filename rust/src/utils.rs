@@ -1,3 +1,6 @@
+use alloc::borrow::ToOwned;
+use alloc::format;
+use core::convert::TryFrom;
 use cbor_event::{
     self,
     de::Deserializer,
@@ -6,18 +9,13 @@ use cbor_event::{
 use hex::FromHex;
 use num_bigint::Sign;
 use serde_json;
-use std::convert::TryFrom;
-use std::ops::Div;
-use std::{
-    collections::HashMap,
-    io::{BufRead, Seek, Write},
-};
-use std::fmt::Display;
+use core::fmt::Display;
+use core::ops::Div;
+use ritelinked::LinkedHashMap;
 
 use super::*;
 use crate::error::{DeserializeError, DeserializeFailure};
 use crate::fakes::fake_data_hash;
-use schemars::JsonSchema;
 
 pub fn to_bytes<T: cbor_event::se::Serialize>(data_item: &T) -> Vec<u8> {
     let mut buf = Serializer::new_vec();
@@ -26,14 +24,14 @@ pub fn to_bytes<T: cbor_event::se::Serialize>(data_item: &T) -> Vec<u8> {
 }
 
 pub fn from_bytes<T: Deserialize>(data: &Vec<u8>) -> Result<T, DeserializeError> {
-    let mut raw = Deserializer::from(std::io::Cursor::new(data));
+    let mut raw = Deserializer::from(core2::io::Cursor::new(data));
     T::deserialize(&mut raw)
 }
 
 
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, JsonSchema,)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionUnspentOutput {
     pub(crate) input: TransactionInput,
     pub(crate) output: TransactionOutput,
@@ -117,7 +115,7 @@ impl Deserialize for TransactionUnspentOutput {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, JsonSchema,)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionUnspentOutputs(pub(crate) Vec<TransactionUnspentOutput>);
 
 to_from_json!(TransactionUnspentOutputs);
@@ -150,8 +148,8 @@ pub struct BigNum(u64);
 
 impl_to_from!(BigNum);
 
-impl std::fmt::Display for BigNum {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for BigNum {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -311,18 +309,6 @@ impl<'de> serde::de::Deserialize<'de> for BigNum {
     }
 }
 
-impl JsonSchema for BigNum {
-    fn schema_name() -> String {
-        String::from("BigNum")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 pub fn to_bignum(val: u64) -> BigNum {
     BigNum(val)
 }
@@ -347,7 +333,6 @@ Eq,
 PartialEq,
 serde::Serialize,
 serde::Deserialize,
-JsonSchema,
 )]
 pub struct Value {
     pub(crate) coin: Coin,
@@ -409,7 +394,7 @@ impl Value {
     }
 
     pub fn checked_add(&self, rhs: &Value) -> Result<Value, JsError> {
-        use std::collections::btree_map::Entry;
+        use alloc::collections::btree_map::Entry;
         let coin = self.coin.checked_add(&rhs.coin)?;
 
         let multiasset = match (&self.multiasset, &rhs.multiasset) {
@@ -737,18 +722,6 @@ impl<'de> serde::de::Deserialize<'de> for Int {
     }
 }
 
-impl JsonSchema for Int {
-    fn schema_name() -> String {
-        String::from("Int")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 /// TODO: this function can be removed in case `cbor_event` library ever gets a fix on their side
 /// See https://github.com/Emurgo/cardano-serialization-lib/pull/392
 fn read_nint<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<i128, DeserializeError> {
@@ -790,7 +763,7 @@ pub(crate) fn write_bounded_bytes<'se, W: Write>(
 pub(crate) fn read_bounded_bytes<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
 ) -> Result<Vec<u8>, DeserializeError> {
-    use std::io::Read;
+    use core2::io::Read;
     let t = raw.cbor_type()?;
     if t != CBORType::Bytes {
         return Err(cbor_event::Error::Expected(CBORType::Bytes, t).into());
@@ -887,18 +860,6 @@ impl<'de> serde::de::Deserialize<'de> for BigInt {
                 &"string rep of a big int",
             )
         })
-    }
-}
-
-impl JsonSchema for BigInt {
-    fn schema_name() -> String {
-        String::from("BigInt")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
 
@@ -1466,7 +1427,7 @@ fn encode_wallet_value_to_native_script(
         serde_json::Value::Object(map)
         if map.contains_key("cosigners") && map.contains_key("template") =>
             {
-                let mut cosigners = HashMap::new();
+                let mut cosigners = ritelinked::LinkedHashMap::new();
 
                 if let serde_json::Value::Object(cosigner_map) = map.get("cosigners").unwrap() {
                     for (key, value) in cosigner_map.iter() {
@@ -1498,7 +1459,7 @@ fn encode_wallet_value_to_native_script(
 
 fn encode_template_to_native_script(
     template: &serde_json::Value,
-    cosigners: &HashMap<String, String>,
+    cosigners: &LinkedHashMap<String, String>,
 ) -> Result<NativeScript, JsError> {
     match template {
         serde_json::Value::String(cosigner) => {
@@ -2306,7 +2267,7 @@ mod tests {
 
     #[test]
     fn bounded_bytes_read_chunked() {
-        use std::io::Cursor;
+        use core2::io::Cursor;
         let chunks = vec![
             vec![
                 0x52, 0x73, 0x6F, 0x6D, 0x65, 0x20, 0x72, 0x61, 0x6E, 0x64, 0x6F, 0x6D, 0x20, 0x73,

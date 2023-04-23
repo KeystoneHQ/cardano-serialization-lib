@@ -1,5 +1,7 @@
+use alloc::borrow::ToOwned;
+use alloc::format;
 use super::*;
-use linked_hash_map::LinkedHashMap;
+use ritelinked::linked_hash_map::LinkedHashMap;
 
 const MD_MAX_LEN: usize = 64;
 
@@ -236,19 +238,6 @@ impl<'de> serde::de::Deserialize<'de> for TransactionMetadatum {
     }
 }
 
-// just for now we'll do json-in-json until I can figure this out better
-// TODO: maybe not generate this? or how do we do this?
-impl JsonSchema for TransactionMetadatum {
-    fn schema_name() -> String {
-        String::from("TransactionMetadatum")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
 
 pub type TransactionMetadatumLabel = BigNum;
 
@@ -322,7 +311,7 @@ impl serde::Serialize for GeneralTransactionMetadata {
     where
         S: serde::Serializer,
     {
-        let map = self.0.iter().collect::<std::collections::BTreeMap<_, _>>();
+        let map = self.0.iter().collect::<alloc::collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }
@@ -332,29 +321,15 @@ impl<'de> serde::de::Deserialize<'de> for GeneralTransactionMetadata {
     where
         D: serde::de::Deserializer<'de>,
     {
-        let map = <std::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
+        let map = <alloc::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
             deserializer,
         )?;
         Ok(Self(map.into_iter().collect()))
     }
 }
 
-impl JsonSchema for GeneralTransactionMetadata {
-    fn schema_name() -> String {
-        String::from("GeneralTransactionMetadata")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        std::collections::BTreeMap::<TransactionMetadatumLabel, TransactionMetadatum>::json_schema(
-            gen,
-        )
-    }
-    fn is_referenceable() -> bool {
-        std::collections::BTreeMap::<TransactionMetadatumLabel, TransactionMetadatum>::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
-#[derive(Clone, Debug, Ord, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct AuxiliaryData {
     metadata: Option<GeneralTransactionMetadata>,
     native_scripts: Option<NativeScripts>,

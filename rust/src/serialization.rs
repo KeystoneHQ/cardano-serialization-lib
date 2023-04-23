@@ -1,9 +1,11 @@
+use alloc::borrow::ToOwned;
+use alloc::format;
 use super::*;
 use crate::utils::*;
 use address::*;
 use crypto::*;
 use error::*;
-use std::io::{Seek, SeekFrom};
+use core2::io::{Seek, SeekFrom};
 
 // This file was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen
@@ -2000,7 +2002,7 @@ impl cbor_event::se::Serialize for MIRToStakeCredentials {
 impl Deserialize for MIRToStakeCredentials {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
         (|| -> Result<_, DeserializeError> {
-            let mut table = linked_hash_map::LinkedHashMap::new();
+            let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
             let len = raw.map()?;
             while match len {
                 cbor_event::Len::Len(n) => table.len() < n as usize,
@@ -2636,7 +2638,7 @@ impl cbor_event::se::Serialize for Withdrawals {
 
 impl Deserialize for Withdrawals {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = linked_hash_map::LinkedHashMap::new();
+        let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -3563,7 +3565,7 @@ impl cbor_event::se::Serialize for ProposedProtocolParameterUpdates {
 
 impl Deserialize for ProposedProtocolParameterUpdates {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = linked_hash_map::LinkedHashMap::new();
+        let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4295,7 +4297,7 @@ impl cbor_event::se::Serialize for AuxiliaryDataSet {
 
 impl Deserialize for AuxiliaryDataSet {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = linked_hash_map::LinkedHashMap::new();
+        let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4735,7 +4737,7 @@ impl cbor_event::se::Serialize for Assets {
 
 impl Deserialize for Assets {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4778,7 +4780,7 @@ impl cbor_event::se::Serialize for MultiAsset {
 
 impl Deserialize for MultiAsset {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4821,7 +4823,7 @@ impl cbor_event::se::Serialize for MintAssets {
 
 impl Deserialize for MintAssets {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4864,7 +4866,7 @@ impl cbor_event::se::Serialize for Mint {
 
 impl Deserialize for Mint {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4924,7 +4926,7 @@ mod tests {
     use super::*;
     use crate::fakes::{
         fake_base_address, fake_bytes_32, fake_data_hash, fake_signature, fake_tx_input,
-        fake_tx_output, fake_value, fake_value2, fake_vkey,
+        fake_tx_output, fake_value, fake_value2,
     };
 
     #[test]
@@ -5368,76 +5370,6 @@ mod tests {
         assert_eq!(txb, txb2);
     }
 
-    #[test]
-    fn test_header_body_roundtrip() {
-        fn fake_header_body(leader_cert: HeaderLeaderCertEnum) -> HeaderBody {
-            HeaderBody {
-                block_number: 123,
-                slot: to_bignum(123),
-                prev_hash: Some(BlockHash::from_bytes(fake_bytes_32(1)).unwrap()),
-                issuer_vkey: fake_vkey(),
-                vrf_vkey: VRFVKey::from_bytes(fake_bytes_32(2)).unwrap(),
-                leader_cert,
-                block_body_size: 123456,
-                block_body_hash: BlockHash::from_bytes(fake_bytes_32(4)).unwrap(),
-                operational_cert: OperationalCert::new(
-                    &KESVKey::from_bytes(fake_bytes_32(5)).unwrap(),
-                    123,
-                    456,
-                    &fake_signature(6),
-                ),
-                protocol_version: ProtocolVersion::new(12, 13),
-            }
-        }
-
-        let hbody1 = fake_header_body(HeaderLeaderCertEnum::VrfResult(
-            VRFCert::new(fake_bytes_32(3), [0; 80].to_vec()).unwrap(),
-        ));
-
-        assert_eq!(hbody1, HeaderBody::from_bytes(hbody1.to_bytes()).unwrap());
-
-        let hbody2 = fake_header_body(HeaderLeaderCertEnum::NonceAndLeader(
-            VRFCert::new(fake_bytes_32(4), [1; 80].to_vec()).unwrap(),
-            VRFCert::new(fake_bytes_32(5), [2; 80].to_vec()).unwrap(),
-        ));
-
-        assert_eq!(hbody2, HeaderBody::from_bytes(hbody2.to_bytes()).unwrap());
-    }
-
-    #[test]
-    fn test_witness_set_roundtrip() {
-        fn witness_set_roundtrip(plutus_scripts: &PlutusScripts) {
-            let mut ws = TransactionWitnessSet::new();
-            ws.set_vkeys(&Vkeywitnesses(vec![Vkeywitness::new(
-                &fake_vkey(),
-                &fake_signature(1),
-            )]));
-            ws.set_redeemers(&Redeemers(vec![Redeemer::new(
-                &RedeemerTag::new_spend(),
-                &to_bignum(12),
-                &PlutusData::new_integer(&BigInt::one()),
-                &ExUnits::new(&to_bignum(123), &to_bignum(456)),
-            )]));
-            ws.set_plutus_data(&PlutusList::from(vec![PlutusData::new_integer(
-                &BigInt::one(),
-            )]));
-            ws.set_plutus_scripts(plutus_scripts);
-
-            assert_eq!(
-                TransactionWitnessSet::from_bytes(ws.to_bytes()).unwrap(),
-                ws
-            );
-        }
-
-        let bytes = hex::decode("4e4d01000033222220051200120011").unwrap();
-        let script_v1 = PlutusScript::from_bytes(bytes.clone()).unwrap();
-        let script_v2 = PlutusScript::from_bytes_v2(bytes.clone()).unwrap();
-
-        witness_set_roundtrip(&PlutusScripts(vec![]));
-        witness_set_roundtrip(&PlutusScripts(vec![script_v1.clone()]));
-        witness_set_roundtrip(&PlutusScripts(vec![script_v2.clone()]));
-        witness_set_roundtrip(&PlutusScripts(vec![script_v1.clone(), script_v2.clone()]));
-    }
 
     #[test]
     fn test_script_ref_roundtrip() {

@@ -1,3 +1,4 @@
+use alloc::format;
 use super::error::JsError;
 use super::*;
 
@@ -7,7 +8,7 @@ use cryptoxide::pbkdf2::pbkdf2;
 use cryptoxide::sha2::Sha512;
 use hex::ToHex;
 
-use std::iter::repeat;
+use core::iter::repeat;
 
 // taken from js-cardano-wasm
 

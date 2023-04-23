@@ -1,3 +1,4 @@
+use alloc::format;
 use crate::chain_crypto::key::{
     AsymmetricKey, AsymmetricPublicKey, PublicKeyError, SecretKeyError, SecretKeySizeStatic,
 };
@@ -12,8 +13,8 @@ use cryptoxide::sha2::Sha512;
 
 use super::ed25519 as ei;
 use cryptoxide::ed25519;
-use ed25519_bip32::{XPrv, XPub, XPRV_SIZE, XPUB_SIZE};
-use rand_os::rand_core::{CryptoRng, RngCore};
+use ed25519_bip32_core::{XPrv, XPub, XPRV_SIZE, XPUB_SIZE};
+use rand::{CryptoRng, RngCore};
 
 const CHAIN_CODE_SIZE: usize = 32;
 const SEED_SIZE: usize = 64;
@@ -120,12 +121,12 @@ impl SecretKeySizeStatic for LegacyDaedalus {
     const SECRET_KEY_SIZE: usize = XPRV_SIZE;
 }
 
-type XSig = ed25519_bip32::Signature<u8>;
+type XSig = ed25519_bip32_core::Signature<u8>;
 
 impl VerificationAlgorithm for LegacyDaedalus {
     type Signature = XSig;
 
-    const SIGNATURE_SIZE: usize = ed25519_bip32::SIGNATURE_SIZE;
+    const SIGNATURE_SIZE: usize = ed25519_bip32_core::SIGNATURE_SIZE;
     const SIGNATURE_BECH32_HRP: &'static str = "legacy_xsig";
 
     fn signature_from_bytes(data: &[u8]) -> Result<Self::Signature, SignatureError> {
@@ -146,7 +147,7 @@ impl SigningAlgorithm for LegacyDaedalus {
     fn sign(key: &Self::Secret, msg: &[u8]) -> XSig {
         let buf = key.inner_key();
         let sig = ei::Sig(ed25519::signature_extended(msg, &buf));
-        ed25519_bip32::Signature::from_bytes(sig.0)
+        ed25519_bip32_core::Signature::from_bytes(sig.0)
     }
 }
 
@@ -163,6 +164,7 @@ fn mk_ed25519_extended(extended_out: &mut [u8], secret: &[u8]) {
 
 #[cfg(test)]
 mod test {
+    use alloc::vec::Vec;
     use super::*;
 
     use crate::chain_crypto::key::KeyPair;

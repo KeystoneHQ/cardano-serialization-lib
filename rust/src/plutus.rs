@@ -1,5 +1,5 @@
 use super::*;
-use std::io::{BufRead, Seek, Write};
+use core2::io::{BufRead, Seek, Write};
 
 // This library was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen
@@ -9,8 +9,6 @@ use cbor_event::{
     de::Deserializer,
     se::{Serialize, Serializer},
 };
-
-use schemars::JsonSchema;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -138,21 +136,9 @@ impl<'de> serde::de::Deserialize<'de> for PlutusScript {
     }
 }
 
-impl JsonSchema for PlutusScript {
-    fn schema_name() -> String {
-        String::from("PlutusScript")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PlutusScripts(pub(crate) Vec<PlutusScript>);
 
@@ -268,7 +254,7 @@ impl ConstrPlutusData {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct CostModel(Vec<Int>);
 
@@ -321,16 +307,16 @@ impl From<Vec<i128>> for CostModel {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
-pub struct Costmdls(std::collections::BTreeMap<Language, CostModel>);
+pub struct Costmdls(alloc::collections::BTreeMap<Language, CostModel>);
 
 impl_to_from!(Costmdls);
 
 #[wasm_bindgen]
 impl Costmdls {
     pub fn new() -> Self {
-        Self(std::collections::BTreeMap::new())
+        Self(alloc::collections::BTreeMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -409,7 +395,7 @@ impl Costmdls {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ExUnitPrices {
     mem_price: SubCoin,
@@ -438,7 +424,7 @@ impl ExUnitPrices {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ExUnits {
     mem: BigNum,
@@ -476,7 +462,7 @@ impl ExUnits {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub enum LanguageKind {
     PlutusV1 = 0,
@@ -504,7 +490,7 @@ impl LanguageKind {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub struct Language(LanguageKind);
 
@@ -527,7 +513,7 @@ impl Language {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Languages(pub(crate) Vec<Language>);
 
@@ -556,14 +542,14 @@ impl Languages {
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd,)]
-pub struct PlutusMap(std::collections::BTreeMap<PlutusData, PlutusData>);
+pub struct PlutusMap(alloc::collections::BTreeMap<PlutusData, PlutusData>);
 
 to_from_bytes!(PlutusMap);
 
 #[wasm_bindgen]
 impl PlutusMap {
     pub fn new() -> Self {
-        Self(std::collections::BTreeMap::new())
+        Self(alloc::collections::BTreeMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -721,21 +707,6 @@ impl PlutusData {
     }
 }
 
-//TODO: replace this by cardano-node schemas
-impl JsonSchema for PlutusData {
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-
-    fn schema_name() -> String {
-        String::from("PlutusData")
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-}
-
 //TODO: need to figure out what schema to use here
 impl serde::Serialize for PlutusData {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -758,7 +729,7 @@ impl <'de> serde::de::Deserialize<'de> for PlutusData {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Ord, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct PlutusList {
     elems: Vec<PlutusData>,
     // We should always preserve the original datums when deserialized as this is NOT canonicized
@@ -811,7 +782,7 @@ impl From<Vec<PlutusData>> for PlutusList {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Redeemer {
     tag: RedeemerTag,
@@ -870,7 +841,7 @@ impl Redeemer {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub enum RedeemerTagKind {
     Spend,
@@ -881,7 +852,7 @@ pub enum RedeemerTagKind {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct RedeemerTag(RedeemerTagKind);
 
@@ -912,7 +883,7 @@ impl RedeemerTag {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Redeemers(pub(crate) Vec<Redeemer>);
 
@@ -1281,7 +1252,7 @@ pub fn decode_plutus_datum_to_json_value(
 
 // Serialization
 
-use std::io::SeekFrom;
+use core2::io::SeekFrom;
 
 impl cbor_event::se::Serialize for PlutusScript {
     fn serialize<'se, W: Write>(
@@ -1446,7 +1417,7 @@ impl cbor_event::se::Serialize for Costmdls {
 
 impl Deserialize for Costmdls {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -1624,7 +1595,7 @@ impl cbor_event::se::Serialize for PlutusMap {
 
 impl Deserialize for PlutusMap {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
