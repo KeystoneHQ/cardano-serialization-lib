@@ -17,7 +17,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cryptoxide = "0.4.2"
-cbor_event = { git = "https://git@github.com/KeystoneHQ/cbor_event.git", tag = "0.0.2" }
+cbor_event = { git = "https://git@github.com/KeystoneHQ/cbor_event.git", tag = "0.0.3" }
 ed25519-bip32-core = { version = "0.1.1", default-features = false }
 bech32 = { version = "0.9.1", default-features = false }
 hex = { version = "0.4.0", default-features = false, features = ["alloc"] }

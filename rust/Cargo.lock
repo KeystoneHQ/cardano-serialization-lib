@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "cbor_event"
 version = "2.4.0"
-source = "git+https://git@github.com/KeystoneHQ/cbor_event.git?tag=0.0.1#f1e9dca31372f253e849d4b240f634f284119dd8"
+source = "git+https://git@github.com/KeystoneHQ/cbor_event.git?tag=0.0.3#92cbbf637cdfc0cc54f1a15f35b058ff6a359d70"
 dependencies = [
  "core2",
 ]
@@ -77,9 +77,9 @@ dependencies = [
 
 [[package]]
 name = "core2"
-version = "0.4.0"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b49ba7ef1ad6107f8824dbe97de947cbaac53c44e7f9756a1fba0d37c1eec505"
+checksum = "239fa3ae9b63c2dc74bd3fa852d4792b8b305ae64eeede946265b6af62f1fff3"
 dependencies = [
  "memchr",
 ]
