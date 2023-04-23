@@ -1,3 +1,5 @@
+use alloc::borrow::ToOwned;
+use alloc::format;
 use super::*;
 use crate::chain_crypto;
 use cbor_event::{self};
@@ -11,8 +13,8 @@ pub enum Key {
     Uint(u64),
 }
 
-impl std::fmt::Display for Key {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Key {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Key::Str(x) => write!(f, "\"{}\"", x),
             Key::Uint(x) => write!(f, "{}", x),
@@ -75,8 +77,8 @@ impl DeserializeError {
     }
 }
 
-impl std::fmt::Display for DeserializeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for DeserializeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match &self.location {
             Some(loc) => write!(f, "Deserialization failed in {} because: ", loc),
             None => write!(f, "Deserialization: "),
@@ -131,7 +133,7 @@ impl std::fmt::Display for DeserializeError {
 }
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
-impl std::error::Error for DeserializeError {}
+impl core::error::Error for DeserializeError {}
 
 impl From<DeserializeError> for JsError {
     fn from(e: DeserializeError) -> JsError {
@@ -200,11 +202,11 @@ impl JsError {
 }
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
-impl std::fmt::Display for JsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for JsError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.msg)
     }
 }
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
-impl std::error::Error for JsError {}
+impl core::error::Error for JsError {}

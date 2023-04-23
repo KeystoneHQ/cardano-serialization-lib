@@ -25,7 +25,7 @@ macro_rules! from_bytes {
     // Uses Deserialize trait to auto-generate one
     ($name:ident) => {
         from_bytes!($name, bytes, {
-            let mut raw = Deserializer::from(std::io::Cursor::new(bytes));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(bytes));
             Self::deserialize(&mut raw)
         });
     };
@@ -74,7 +74,7 @@ macro_rules! from_hex {
     // Uses Deserialize trait to auto-generate one
     ($name:ident) => {
         from_hex!($name, hex_str, {
-            let mut raw = Deserializer::from(std::io::Cursor::new(hex::decode(hex_str).unwrap()));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(hex::decode(hex_str).unwrap()));
             Self::deserialize(&mut raw)
         });
     };
