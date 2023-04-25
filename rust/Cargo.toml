@@ -12,9 +12,6 @@ exclude = [
     "pkg/*",
 ]
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
 cryptoxide = "0.4.2"
 cbor_event = { git = "https://git@github.com/KeystoneHQ/cbor_event.git", tag = "0.0.3" }
