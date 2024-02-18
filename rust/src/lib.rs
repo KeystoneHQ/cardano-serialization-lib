@@ -128,7 +128,7 @@ type Slot32 = u32;
 type SlotBigNum = BigNum;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Transaction {
     body: TransactionBody,
     witness_set: TransactionWitnessSet,
@@ -615,7 +615,7 @@ impl TransactionInput {
 
 #[wasm_bindgen]
 #[derive(
-    Debug, Clone, Eq, Ord, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Debug, Clone, Eq, Ord, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct TransactionOutput {
     address: Address,

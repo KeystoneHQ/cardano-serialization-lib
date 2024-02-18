@@ -1,5 +1,5 @@
 use super::*;
-use linked_hash_map::LinkedHashMap;
+use ritelinked::LinkedHashMap;
 use core::hash::{Hasher, Hash};
 use core2::io::{BufRead, Seek, Write};
 
@@ -819,7 +819,7 @@ impl <'de> serde::de::Deserialize<'de> for PlutusData {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize)]
 pub struct PlutusList {
     elems: Vec<PlutusData>,
     // We should always preserve the original datums when deserialized as this is NOT canonicized

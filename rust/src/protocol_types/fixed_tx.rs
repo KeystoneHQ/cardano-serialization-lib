@@ -1,6 +1,6 @@
 use crate::error::JsError;
 use crate::*;
-use std::io::{Seek, SeekFrom};
+use core2::io::{Seek, SeekFrom};
 
 #[wasm_bindgen]
 pub struct FixedTransaction {
