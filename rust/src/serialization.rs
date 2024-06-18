@@ -5093,7 +5093,7 @@ impl DeserializeEmbeddedGroup for VoteDelegation {
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
         let stake_credential =
-        StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+        StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential1"))?;
 
         let drep = DRep::deserialize(raw).map_err(|e| e.annotate("drep"))?;
 
