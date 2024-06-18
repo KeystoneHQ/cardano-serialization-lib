@@ -1764,7 +1764,7 @@ impl PoolMetadata {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd,
 )]
 pub struct StakeCredentials(Vec<StakeCredential>);
 
