@@ -1168,7 +1168,11 @@ impl DeserializeEmbeddedGroup for StakeRegistration {
         let stake_credential =
             (|| -> Result<_, DeserializeError> { Ok(StakeCredential::deserialize(raw)?) })()
                 .map_err(|e| e.annotate("stake_credential"))?;
-        Ok(StakeRegistration { stake_credential })
+        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin")).unwrap_or(BigNum::zero());
+        Ok(StakeRegistration {
+            stake_credential,
+            coin: Some(coin),
+        })
     }
 }
 

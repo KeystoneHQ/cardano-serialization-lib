@@ -718,7 +718,8 @@ impl PartialEq for TransactionOutput {
     Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct StakeRegistration {
-    stake_credential: StakeCredential,
+    pub(crate) stake_credential: StakeCredential,
+    pub(crate) coin: Option<Coin>,
 }
 
 impl_to_from!(StakeRegistration);
@@ -729,9 +730,25 @@ impl StakeRegistration {
         self.stake_credential.clone()
     }
 
+    pub fn coin(&self) -> Option<Coin> {
+        self.coin.clone()
+    }
+
+    pub fn new_with_coin(stake_credential: &StakeCredential, coin: &Coin) -> Self {
+        Self {
+            stake_credential: stake_credential.clone(),
+            coin: Some(coin.clone()),
+        }
+    }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
+    }
+
     pub fn new(stake_credential: &StakeCredential) -> Self {
         Self {
             stake_credential: stake_credential.clone(),
+            coin: None,
         }
     }
 }
