@@ -1142,14 +1142,14 @@ impl DeserializeEmbeddedGroup for StakeRegistration {
         _: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
         (|| -> Result<_, DeserializeError> {
-            let index_0_value = raw.unsigned_integer()?;
-            if index_0_value != 0 {
-                return Err(DeserializeFailure::FixedValueMismatch {
-                    found: Key::Uint(index_0_value),
-                    expected: Key::Uint(0),
-                }
-                .into());
-            }
+            // let index_0_value = raw.unsigned_integer()?;
+            // if index_0_value != 0 {
+            //     return Err(DeserializeFailure::FixedValueMismatch {
+            //         found: Key::Uint(index_0_value),
+            //         expected: Key::Uint(0),
+            //     }
+            //     .into());
+            // }
             Ok(())
         })()
         .map_err(|e| e.annotate("index_0"))?;
