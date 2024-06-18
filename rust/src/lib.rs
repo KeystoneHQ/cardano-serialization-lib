@@ -77,6 +77,7 @@ pub mod utils;
 mod fakes;
 mod serialization_macros;
 mod serialization_tools;
+mod certificate_index_names;
 
 use crate::traits::NoneOrEmpty;
 use address::*;

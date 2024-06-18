@@ -1860,6 +1860,11 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
     ) -> Result<Self, DeserializeError> {
         let cert_index = get_cert_index(raw)?;
         let initial_position = raw.as_mut_ref().seek(SeekFrom::Current(0)).unwrap();
+        if cert_index == 7 {
+            return Ok(CertificateEnum::StakeRegistration(
+                StakeRegistration::deserialize_as_embedded_group(raw, len)?,
+            ))
+        }
         match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
             Ok(StakeRegistration::deserialize_as_embedded_group(raw, len)?)
         })(raw)
