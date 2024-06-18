@@ -1841,11 +1841,24 @@ impl Deserialize for CertificateEnum {
     }
 }
 
+fn get_cert_index<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<u64, DeserializeError> {
+    let initial_position = raw
+        .as_mut_ref()
+        .seek(SeekFrom::Current(0))
+        .map_err(|err| DeserializeFailure::IoError(err.to_string()))?;
+    let index = raw.unsigned_integer()?;
+    raw.as_mut_ref()
+        .seek(SeekFrom::Start(initial_position))
+        .map_err(|err| DeserializeFailure::IoError(err.to_string()))?;
+    Ok(index)
+}
+
 impl DeserializeEmbeddedGroup for CertificateEnum {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
+        let cert_index = get_cert_index(raw)?;
         let initial_position = raw.as_mut_ref().seek(SeekFrom::Current(0)).unwrap();
         match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
             Ok(StakeRegistration::deserialize_as_embedded_group(raw, len)?)
@@ -1934,7 +1947,7 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
                 .unwrap(),
         };
         Err(DeserializeError::new(
-            "CertificateEnum",
+            format!("CertificateEnum: {}", cert_index),
             DeserializeFailure::NoVariantMatched.into(),
         ))
     }
