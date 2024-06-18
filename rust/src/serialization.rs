@@ -2027,6 +2027,85 @@ impl<'de> serde::de::Deserialize<'de> for StakeCredentials {
     }
 }
 
+impl cbor_event::se::Serialize for StakeCredentials {
+    fn serialize<'se, W: Write>(
+        &self,
+        serializer: &'se mut Serializer<W>,
+    ) -> cbor_event::Result<&'se mut Serializer<W>> {
+        //TODO: uncomment this line when we conway ero will come
+        //serializer.write_tag(258)?;
+        serializer.write_array(cbor_event::Len::Len(self.len() as u64))?;
+        for element in self.to_vec() {
+            element.serialize(serializer)?;
+        }
+        Ok(serializer)
+    }
+}
+
+pub(super) fn skip_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    tag: u64,
+) -> Result<(), DeserializeError> {
+    if let Ok(extracted_tag) = raw.tag() {
+        if extracted_tag != tag {
+            return Err(DeserializeError::new(
+                "skip_tag",
+                DeserializeFailure::TagMismatch {
+                    found: extracted_tag,
+                    expected: tag,
+                },
+            ));
+        }
+        return Ok(());
+    }
+    Ok(())
+}
+
+pub(super) fn skip_set_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+) -> Result<(), DeserializeError> {
+    skip_tag(raw, 258)
+}
+
+pub(crate) fn is_break_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    location: &str,
+) -> Result<bool, DeserializeError> {
+    if raw.cbor_type()? == CBORType::Special {
+        if raw.special()? == CBORSpecial::Break {
+            return Ok(true);
+        }
+        return Err(
+            DeserializeError::from(DeserializeFailure::EndingBreakMissing).annotate(location),
+        );
+    }
+    Ok(false)
+}
+
+impl Deserialize for StakeCredentials {
+    fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
+        skip_set_tag(raw)?;
+        let mut creds = StakeCredentials::new();
+        let mut counter = 0u64;
+        (|| -> Result<_, DeserializeError> {
+            let len = raw.array()?;
+            while match len {
+                cbor_event::Len::Len(n) => counter < n,
+                cbor_event::Len::Indefinite => true,
+            } {
+                if is_break_tag(raw, "Credentials")? {
+                    break;
+                }
+                creds.add_move(StakeCredential::deserialize(raw)?);
+                counter += 1;
+            }
+            Ok(())
+        })()
+            .map_err(|e| e.annotate("CredentialsSet"))?;
+        Ok(creds)
+    }
+}
+
 impl cbor_event::se::Serialize for MIRToStakeCredentials {
     fn serialize<'se, W: Write>(
         &self,
