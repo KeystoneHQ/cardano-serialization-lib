@@ -221,7 +221,7 @@ impl Deserialize for StakeCredential {
             }
             Ok(StakeCredential(cred_type))
         })()
-            .map_err(|e| e.annotate("StakeCredential"))
+            .map_err(|e| e.annotate("StakeCredential1"))
     }
 }
 
