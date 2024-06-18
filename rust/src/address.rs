@@ -200,19 +200,18 @@ impl Deserialize for StakeCredential {
                         len,
                         "[id, hash]",
                     ))
-                    .into());
+                        .into());
                 }
             }
             let cred_type = match raw.unsigned_integer()? {
                 0 => StakeCredType::Key(Ed25519KeyHash::deserialize(raw)?),
                 1 => StakeCredType::Script(ScriptHash::deserialize(raw)?),
                 n => {
-                    return Err(DeserializeFailure::FixedValueMismatch {
+                    return Err(DeserializeFailure::FixedValuesMismatch {
                         found: Key::Uint(n),
-                        // TODO: change codegen to make FixedValueMismatch support Vec<Key> or ranges or something
-                        expected: Key::Uint(0),
+                        expected: vec![Key::Uint(0), Key::Uint(1)],
                     }
-                    .into())
+                        .into());
                 }
             };
             if let cbor_event::Len::Indefinite = len {
@@ -222,7 +221,7 @@ impl Deserialize for StakeCredential {
             }
             Ok(StakeCredential(cred_type))
         })()
-        .map_err(|e| e.annotate("StakeCredential"))
+            .map_err(|e| e.annotate("StakeCredential"))
     }
 }
 
