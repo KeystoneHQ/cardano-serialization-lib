@@ -1,4 +1,4 @@
-#[derive(Eq, Hash, PartialEq, Clone, Debug, FromPrimitive, ToPrimitive)]
+#[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub(crate) enum CertificateIndexNames {
     StakeRegistrationLegacy = 0,
     StakeDeregistrationLegacy = 1,
