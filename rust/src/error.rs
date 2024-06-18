@@ -58,6 +58,7 @@ pub enum DeserializeFailure {
     UnexpectedKeyType(cbor_event::Type),
     VariableLenNatDecodeFailed,
     IoError(String),
+    CustomError(String),
 }
 
 #[derive(Debug)]
@@ -137,6 +138,7 @@ impl core::fmt::Display for DeserializeError {
                 write!(f, "Variable length natural number decode failed")
             }
             DeserializeFailure::IoError(e) => write!(f, "IO error: {}", e),
+            DeserializeFailure::CustomError(e) => write!(f, "Deserialize error: {}", e),
         }
     }
 }

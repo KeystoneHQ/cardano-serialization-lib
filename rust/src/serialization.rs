@@ -5139,12 +5139,60 @@ impl Deserialize for NetworkId {
 
 impl_deserialize_for_wrapped_tuple!(VoteDelegation);
 
+pub(super) fn serialize_and_check_index<'se, W: Write>(
+    serializer: &'se mut Serializer<W>,
+    index: Option<u64>,
+    name: &'static str,
+) -> cbor_event::Result<&'se mut Serializer<W>> {
+    match index {
+        Some(index) => serializer.write_unsigned_integer(index),
+        None => Err(cbor_event::Error::CustomError(format!(
+            "unknown index of {}",
+            name
+        ))),
+    }
+}
+
+pub(super) fn check_index(
+    actual_index: u64,
+    desired_index: Option<u64>,
+    name: &'static str,
+) -> Result<(), DeserializeError> {
+    let desired_index = desired_index
+        .ok_or(DeserializeFailure::CustomError(
+            "unknown desired index".to_string(),
+        ))
+        .map_err(|e| DeserializeError::from(e))?;
+    if actual_index != desired_index {
+        return Err(DeserializeFailure::FixedValueMismatch {
+            found: Key::Uint(actual_index),
+            expected: Key::Uint(desired_index),
+        })
+        .map_err(|e| DeserializeError::from(e).annotate(name));
+    }
+
+    Ok(())
+}
+
+pub(super) fn deserialize_and_check_index<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    desired_index: Option<u64>,
+    name: &'static str,
+) -> Result<u64, DeserializeError> {
+    let actual_index = raw.unsigned_integer()?;
+    check_index(actual_index, desired_index, name)?;
+    Ok(actual_index)
+}
+
 impl cbor_event::se::Serialize for VoteDelegation {
     fn serialize<'se, W: Write>(
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
         serializer.write_array(cbor_event::Len::Len(3))?;
+
+        let proposal_index = certificate_index_names::CertificateIndexNames::VoteDelegation as u64;
+        serialize_and_check_index(serializer, Some(proposal_index), "VoteDelegation")?;
 
         self.stake_credential.serialize(serializer)?;
         self.drep.serialize(serializer)?;
@@ -5157,6 +5205,9 @@ impl DeserializeEmbeddedGroup for VoteDelegation {
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
+        let cert_index = certificate_index_names::CertificateIndexNames::VoteDelegation as u64;
+        deserialize_and_check_index(raw, Some(cert_index), "cert_index")?;
+
         let stake_credential =
         StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential1"))?;
 
