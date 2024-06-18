@@ -7,6 +7,18 @@ use crypto::*;
 use error::*;
 use core2::io::{Seek, SeekFrom};
 
+pub(super) fn check_len_indefinite<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    len: cbor_event::Len,
+) -> Result<(), DeserializeError> {
+    if let cbor_event::Len::Indefinite = len {
+        if raw.special()? != CBORSpecial::Break {
+            return Err(DeserializeFailure::EndingBreakMissing.into());
+        }
+    }
+    Ok(())
+}
+
 // This file was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen
 
@@ -1122,31 +1134,7 @@ impl SerializeEmbeddedGroup for StakeRegistration {
     }
 }
 
-impl Deserialize for StakeRegistration {
-    fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            let len = raw.array()?;
-            let ret = Self::deserialize_as_embedded_group(raw, len);
-            match len {
-                cbor_event::Len::Len(_) =>
-                /* TODO: check finite len somewhere */
-                {
-                    ()
-                }
-                cbor_event::Len::Indefinite => match raw.special()? {
-                    CBORSpecial::Break =>
-                    /* it's ok */
-                    {
-                        ()
-                    }
-                    _ => return Err(DeserializeFailure::EndingBreakMissing.into()),
-                },
-            }
-            ret
-        })()
-        .map_err(|e| e.annotate("StakeRegistration"))
-    }
-}
+impl_deserialize_for_wrapped_tuple!(StakeRegistration);
 
 impl DeserializeEmbeddedGroup for StakeRegistration {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
@@ -1168,10 +1156,10 @@ impl DeserializeEmbeddedGroup for StakeRegistration {
         let stake_credential =
             (|| -> Result<_, DeserializeError> { Ok(StakeCredential::deserialize(raw)?) })()
                 .map_err(|e| e.annotate("stake_credential"))?;
-        // let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin")).unwrap_or(BigNum::zero());
+        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin")).unwrap_or(BigNum::zero());
         Ok(StakeRegistration {
             stake_credential,
-            coin: None,
+            coin: Some(coin),
         })
     }
 }
@@ -5032,6 +5020,8 @@ impl Deserialize for NetworkId {
         .map_err(|e| e.annotate("NetworkId"))
     }
 }
+
+impl_deserialize_for_wrapped_tuple!(VoteDelegation);
 
 impl cbor_event::se::Serialize for VoteDelegation {
     fn serialize<'se, W: Write>(
