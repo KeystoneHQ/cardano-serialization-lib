@@ -1079,7 +1079,7 @@ pub struct VoteDelegation {
     pub(crate) drep: DRep,
 }
 
-// impl_to_from!(VoteDelegation);
+impl_to_from!(VoteDelegation);
 
 #[wasm_bindgen]
 impl VoteDelegation {
