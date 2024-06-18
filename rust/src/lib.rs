@@ -52,6 +52,7 @@ use cbor_event::{
     de::Deserializer,
     se::{Serialize, Serializer},
 };
+use protocol_types::governance::DRep;
 
 pub mod address;
 pub mod chain_core;
@@ -89,6 +90,7 @@ use core::fmt::Display;
 use core::fmt;
 use utils::*;
 use ser_info::types::*;
+use protocol_types::governance::*;
 
 type DeltaCoin = Int;
 
@@ -1044,6 +1046,47 @@ impl MoveInstantaneousRewardsCert {
 }
 
 #[wasm_bindgen]
+#[derive(
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub struct VoteDelegation {
+    pub(crate) stake_credential: StakeCredential,
+    pub(crate) drep: DRep,
+}
+
+// impl_to_from!(VoteDelegation);
+
+#[wasm_bindgen]
+impl VoteDelegation {
+    pub fn stake_credential(&self) -> StakeCredential {
+        self.stake_credential.clone()
+    }
+
+    pub fn drep(&self) -> DRep {
+        self.drep.clone()
+    }
+
+    pub fn new(stake_credential: &StakeCredential, drep: &DRep) -> Self {
+        Self {
+            stake_credential: stake_credential.clone(),
+            drep: drep.clone(),
+        }
+    }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
+    }
+}
+
+#[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum CertificateKind {
     StakeRegistration,
@@ -1053,6 +1096,7 @@ pub enum CertificateKind {
     PoolRetirement,
     GenesisKeyDelegation,
     MoveInstantaneousRewardsCert,
+    VoteDelegation,
 }
 
 #[derive(
@@ -1066,6 +1110,7 @@ pub enum CertificateEnum {
     PoolRetirement(PoolRetirement),
     GenesisKeyDelegation(GenesisKeyDelegation),
     MoveInstantaneousRewardsCert(MoveInstantaneousRewardsCert),
+    VoteDelegation(VoteDelegation),
 }
 
 #[wasm_bindgen]
@@ -1116,6 +1161,10 @@ impl Certificate {
         ))
     }
 
+    pub fn new_vote_delegation(vote_delegation: &VoteDelegation) -> Self {
+        Self(CertificateEnum::VoteDelegation(vote_delegation.clone()))
+    }
+
     pub fn kind(&self) -> CertificateKind {
         match &self.0 {
             CertificateEnum::StakeRegistration(_) => CertificateKind::StakeRegistration,
@@ -1126,7 +1175,8 @@ impl Certificate {
             CertificateEnum::GenesisKeyDelegation(_) => CertificateKind::GenesisKeyDelegation,
             CertificateEnum::MoveInstantaneousRewardsCert(_) => {
                 CertificateKind::MoveInstantaneousRewardsCert
-            }
+            },
+            CertificateEnum::VoteDelegation(_) => CertificateKind::VoteDelegation,
         }
     }
 
@@ -1175,6 +1225,13 @@ impl Certificate {
     pub fn as_move_instantaneous_rewards_cert(&self) -> Option<MoveInstantaneousRewardsCert> {
         match &self.0 {
             CertificateEnum::MoveInstantaneousRewardsCert(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_vote_delegation(&self) -> Option<VoteDelegation> {
+        match &self.0 {
+            CertificateEnum::VoteDelegation(x) => Some(x.clone()),
             _ => None,
         }
     }

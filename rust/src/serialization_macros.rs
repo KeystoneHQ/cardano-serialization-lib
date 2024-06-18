@@ -135,3 +135,26 @@ macro_rules! impl_to_from {
         to_from_json!($name);
     };
 }
+
+#[macro_export]
+macro_rules! impl_deserialize_for_wrapped_tuple {
+    ($type:ty) => {
+        impl Deserialize for $type {
+            fn deserialize<R: BufRead + Seek>(
+                raw: &mut Deserializer<R>,
+            ) -> Result<Self, DeserializeError> {
+                (|| -> Result<_, DeserializeError> {
+                    use crate::serialization::utils::check_len_indefinite;
+                    let len = raw.array()?;
+
+                    let inner_struct = Self::deserialize_as_embedded_group(raw, len)?;
+
+                    check_len_indefinite(raw, len)?;
+
+                    Ok(inner_struct)
+                })()
+                .map_err(|e| e.annotate(stringify!($type)))
+            }
+        }
+    };
+}
