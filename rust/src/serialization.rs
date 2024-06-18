@@ -1136,31 +1136,64 @@ impl SerializeEmbeddedGroup for StakeRegistration {
 
 impl_deserialize_for_wrapped_tuple!(StakeRegistration);
 
+fn deserialize_legacy<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: cbor_event::Len,
+) -> Result<StakeRegistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        return Ok(StakeRegistration {
+            stake_credential,
+            coin: None,
+        });
+    })()
+    .map_err(|e| e.annotate("StakeRegistration (legacy)"))
+}
+
+fn deserialize_conway<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: cbor_event::Len,
+) -> Result<StakeRegistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin"))?;
+
+        return Ok(StakeRegistration {
+            stake_credential,
+            coin: Some(coin),
+        });
+    })()
+    .map_err(|e| e.annotate("StakeRegistration (conway)"))
+}
+
 impl DeserializeEmbeddedGroup for StakeRegistration {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
-        _: cbor_event::Len,
+        len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            // let index_0_value = raw.unsigned_integer()?;
-            // if index_0_value != 0 {
-            //     return Err(DeserializeFailure::FixedValueMismatch {
-            //         found: Key::Uint(index_0_value),
-            //         expected: Key::Uint(0),
-            //     }
-            //     .into());
-            // }
-            Ok(())
-        })()
-        .map_err(|e| e.annotate("index_0"))?;
-        let stake_credential =
-            (|| -> Result<_, DeserializeError> { Ok(StakeCredential::deserialize(raw)?) })()
-                .map_err(|e| e.annotate("stake_credential"))?;
-        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin")).unwrap_or(BigNum::zero());
-        Ok(StakeRegistration {
-            stake_credential,
-            coin: Some(coin),
-        })
+        let cert_index = raw.unsigned_integer()?;
+        match cert_index {
+            0 => {
+                deserialize_legacy(raw, cert_index, len)
+            }
+            7 => {
+                deserialize_conway(raw, cert_index, len)
+            }
+            _ => Err(DeserializeFailure::FixedValuesMismatch {
+                found: Key::Uint(cert_index),
+                expected: vec![
+                    Key::Uint(0),
+                    Key::Uint(7),
+                ],
+            })
+            .map_err(|e| DeserializeError::from(e).annotate("cert_index")),
+        }
     }
 }
 
