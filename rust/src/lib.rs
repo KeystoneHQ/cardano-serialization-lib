@@ -1319,11 +1319,10 @@ impl MIRToStakeCredentials {
     }
 
     pub fn keys(&self) -> StakeCredentials {
-        StakeCredentials(
+        StakeCredentials::from_iter(
             self.rewards
                 .iter()
                 .map(|(k, _v)| k.clone())
-                .collect::<Vec<StakeCredential>>(),
         )
     }
 }
@@ -1766,26 +1765,77 @@ impl PoolMetadata {
 #[derive(
     Clone, Debug, Eq, Ord, PartialEq, PartialOrd,
 )]
-pub struct StakeCredentials(Vec<StakeCredential>);
+
+pub struct StakeCredentials {
+    pub(crate) credentials: Vec<StakeCredential>,
+    pub(crate) dedup: BTreeSet<StakeCredential>
+}
 
 impl_to_from!(StakeCredentials);
 
 #[wasm_bindgen]
 impl StakeCredentials {
     pub fn new() -> Self {
-        Self(Vec::new())
+        Self {
+            credentials: Vec::new(),
+            dedup: BTreeSet::new(),
+        }
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.credentials.len()
     }
 
     pub fn get(&self, index: usize) -> StakeCredential {
-        self.0[index].clone()
+        self.credentials[index].clone()
     }
 
     pub fn add(&mut self, elem: &StakeCredential) {
-        self.0.push(elem.clone());
+        if self.dedup.insert(elem.clone()) {
+            self.credentials.push(elem.clone());
+        }
+    }
+
+    pub(crate) fn add_move(&mut self, elem: StakeCredential) {
+        if self.dedup.insert(elem.clone()) {
+            self.credentials.push(elem);
+        }
+    }
+
+    pub(crate) fn contains(&self, elem: &StakeCredential) -> bool {
+        self.dedup.contains(elem)
+    }
+
+    pub(crate) fn from_vec(vec: Vec<StakeCredential>) -> Self {
+        let mut dedup = BTreeSet::new();
+        let mut credentials = Vec::new();
+        for elem in vec {
+            if dedup.insert(elem.clone()) {
+                credentials.push(elem);
+            }
+        }
+        Self {
+            credentials,
+            dedup
+        }
+    }
+
+    pub(crate) fn from_iter(iter: impl IntoIterator<Item = StakeCredential>) -> Self {
+        let mut dedup = BTreeSet::new();
+        let mut credentials = Vec::new();
+        for elem in iter {
+            if dedup.insert(elem.clone()) {
+                credentials.push(elem);
+            }
+        }
+        Self {
+            credentials,
+            dedup
+        }
+    }
+
+    pub(crate) fn to_vec(&self) -> &Vec<StakeCredential> {
+        &self.credentials
     }
 }
 
