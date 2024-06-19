@@ -1940,11 +1940,11 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
                     MoveInstantaneousRewardsCert::deserialize_as_embedded_group(raw, len)?,
                 ))
             }
-            CertificateIndexNames::CommitteeHotAuth => {
-                Ok(CertificateEnum::CommitteeHotAuth(
-                    CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
-                ))
-            }
+            // CertificateIndexNames::CommitteeHotAuth => {
+            //     Ok(CertificateEnum::CommitteeHotAuth(
+            //         CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
+            //     ))
+            // }
             // CertificateIndexNames::CommitteeColdResign => {
             //     Ok(CertificateEnum::CommitteeColdResign(
             //         CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
