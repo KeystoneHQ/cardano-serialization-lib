@@ -1152,7 +1152,15 @@ impl<'de> serde::de::Deserialize<'de> for KESSignature {
 // Evolving nonce type (used for Update's crypto)
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct Nonce {
     hash: Option<[u8; 32]>,

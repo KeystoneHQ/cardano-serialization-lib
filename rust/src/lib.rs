@@ -79,6 +79,7 @@ mod fakes;
 mod serialization_macros;
 mod serialization_tools;
 mod certificate_index_names;
+mod voting_proposal_index_names;
 
 use address::*;
 use crypto::*;
@@ -98,7 +99,16 @@ type DeltaCoin = Int;
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct UnitInterval {
     numerator: BigNum,
@@ -182,6 +192,7 @@ impl Transaction {
 type TransactionIndex = u32;
 // index of a cert within a tx
 type CertificateIndex = u32;
+type GovernanceActionIndex = u32;
 
 #[wasm_bindgen]
 #[derive(
@@ -333,37 +344,41 @@ impl From<&Ed25519KeyHashes> for RequiredSignersSet {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, )]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionBody {
-    inputs: TransactionInputs,
-    outputs: TransactionOutputs,
-    fee: Coin,
-    ttl: Option<SlotBigNum>,
-    certs: Option<Certificates>,
-    withdrawals: Option<Withdrawals>,
-    update: Option<Update>,
-    auxiliary_data_hash: Option<AuxiliaryDataHash>,
-    validity_start_interval: Option<SlotBigNum>,
-    mint: Option<Mint>,
-    script_data_hash: Option<ScriptDataHash>,
-    collateral: Option<TransactionInputs>,
-    required_signers: Option<RequiredSigners>,
-    network_id: Option<NetworkId>,
-    collateral_return: Option<TransactionOutput>,
-    total_collateral: Option<Coin>,
-    reference_inputs: Option<TransactionInputs>,
+    pub(crate) inputs: TransactionInputs,
+    pub(crate) outputs: TransactionOutputs,
+    pub(crate) fee: Coin,
+    pub(crate) ttl: Option<SlotBigNum>,
+    pub(crate) certs: Option<Certificates>,
+    pub(crate) withdrawals: Option<Withdrawals>,
+    pub(crate) update: Option<Update>,
+    pub(crate) auxiliary_data_hash: Option<AuxiliaryDataHash>,
+    pub(crate) validity_start_interval: Option<SlotBigNum>,
+    pub(crate) mint: Option<Mint>,
+    pub(crate) script_data_hash: Option<ScriptDataHash>,
+    pub(crate) collateral: Option<TransactionInputs>,
+    pub(crate) required_signers: Option<Ed25519KeyHashes>,
+    pub(crate) network_id: Option<NetworkId>,
+    pub(crate) collateral_return: Option<TransactionOutput>,
+    pub(crate) total_collateral: Option<Coin>,
+    pub(crate) reference_inputs: Option<TransactionInputs>,
+    pub(crate) voting_procedures: Option<VotingProcedures>,
+    pub(crate) voting_proposals: Option<VotingProposals>,
+    pub(crate) donation: Option<Coin>,
+    pub(crate) current_treasury_value: Option<Coin>,
 }
 
 impl_to_from!(TransactionBody);
 
 #[wasm_bindgen]
 impl TransactionBody {
-    pub fn inputs(&self) -> &TransactionInputs {
-        &self.inputs
+    pub fn inputs(&self) -> TransactionInputs {
+        self.inputs.clone()
     }
 
-    pub fn outputs(&self) -> &TransactionOutputs {
-        &self.outputs
+    pub fn outputs(&self) -> TransactionOutputs {
+        self.outputs.clone()
     }
 
     pub fn fee(&self) -> Coin {
@@ -374,8 +389,8 @@ impl TransactionBody {
     /// Returns a Slot32 (u32) value in case the underlying original BigNum (u64) value is within the limits.
     /// Otherwise will just raise an error.
     #[deprecated(
-        since = "10.1.0",
-        note = "Possible boundary error. Use ttl_bignum instead"
+    since = "10.1.0",
+    note = "Possible boundary error. Use ttl_bignum instead"
     )]
     pub fn ttl(&self) -> Result<Option<Slot32>, JsError> {
         match self.ttl {
@@ -411,8 +426,8 @@ impl TransactionBody {
         self.withdrawals = Some(withdrawals.clone())
     }
 
-    pub fn withdrawals(&self) -> &Option<Withdrawals> {
-        &self.withdrawals
+    pub fn withdrawals(&self) -> Option<Withdrawals> {
+        self.withdrawals.clone()
     }
 
     pub fn set_update(&mut self, update: &Update) {
@@ -434,14 +449,14 @@ impl TransactionBody {
     /// !!! DEPRECATED !!!
     /// Uses outdated slot number format.
     #[deprecated(
-        since = "10.1.0",
-        note = "Underlying value capacity of slot (BigNum u64) bigger then Slot32. Use set_validity_start_interval_bignum instead."
+    since = "10.1.0",
+    note = "Underlying value capacity of slot (BigNum u64) bigger then Slot32. Use set_validity_start_interval_bignum instead."
     )]
     pub fn set_validity_start_interval(&mut self, validity_start_interval: Slot32) {
         self.validity_start_interval = Some(validity_start_interval.into())
     }
 
-    pub fn set_validity_start_interval_bignum(&mut self, validity_start_interval: SlotBigNum) {
+    pub fn set_validity_start_interval_bignum(&mut self, validity_start_interval: &SlotBigNum) {
         self.validity_start_interval = Some(validity_start_interval.clone())
     }
 
@@ -454,8 +469,8 @@ impl TransactionBody {
     /// Otherwise will just raise an error.
     /// Use `.validity_start_interval_bignum` instead.
     #[deprecated(
-        since = "10.1.0",
-        note = "Possible boundary error. Use validity_start_interval_bignum instead"
+    since = "10.1.0",
+    note = "Possible boundary error. Use validity_start_interval_bignum instead"
     )]
     pub fn validity_start_interval(&self) -> Result<Option<Slot32>, JsError> {
         match self.validity_start_interval.clone() {
@@ -473,13 +488,6 @@ impl TransactionBody {
 
     pub fn mint(&self) -> Option<Mint> {
         self.mint.clone()
-    }
-
-    /// This function returns the mint value of the transaction
-    /// Use `.mint()` instead.
-    #[deprecated(since = "10.0.0", note = "Weird naming. Use `.mint()`")]
-    pub fn multiassets(&self) -> Option<Mint> {
-        self.mint()
     }
 
     pub fn set_reference_inputs(&mut self, reference_inputs: &TransactionInputs) {
@@ -506,11 +514,11 @@ impl TransactionBody {
         self.collateral.clone()
     }
 
-    pub fn set_required_signers(&mut self, required_signers: &RequiredSigners) {
+    pub fn set_required_signers(&mut self, required_signers: &Ed25519KeyHashes) {
         self.required_signers = Some(required_signers.clone())
     }
 
-    pub fn required_signers(&self) -> Option<RequiredSigners> {
+    pub fn required_signers(&self) -> Option<Ed25519KeyHashes> {
         self.required_signers.clone()
     }
 
@@ -538,12 +546,44 @@ impl TransactionBody {
         self.total_collateral.clone()
     }
 
+    pub fn set_voting_procedures(&mut self, voting_procedures: &VotingProcedures) {
+        self.voting_procedures = Some(voting_procedures.clone());
+    }
+
+    pub fn voting_procedures(&self) -> Option<VotingProcedures> {
+        self.voting_procedures.clone()
+    }
+
+    pub fn set_voting_proposals(&mut self, voting_proposals: &VotingProposals) {
+        self.voting_proposals = Some(voting_proposals.clone());
+    }
+
+    pub fn voting_proposals(&self) -> Option<VotingProposals> {
+        self.voting_proposals.clone()
+    }
+
+    pub fn set_donation(&mut self, donation: &Coin) {
+        self.donation = Some(donation.clone());
+    }
+
+    pub fn donation(&self) -> Option<Coin> {
+        self.donation.clone()
+    }
+
+    pub fn set_current_treasury_value(&mut self, current_treasury_value: &Coin) {
+        self.current_treasury_value = Some(current_treasury_value.clone());
+    }
+
+    pub fn current_treasury_value(&self) -> Option<Coin> {
+        self.current_treasury_value.clone()
+    }
+
     /// !!! DEPRECATED !!!
     /// This constructor uses outdated slot number format for the ttl value.
     /// Use `.new_tx_body` and then `.set_ttl` instead
     #[deprecated(
-        since = "10.1.0",
-        note = "Underlying value capacity of ttl (BigNum u64) bigger then Slot32. Use new_tx_body instead."
+    since = "10.1.0",
+    note = "Underlying value capacity of ttl (BigNum u64) bigger then Slot32. Use new_tx_body instead."
     )]
     pub fn new(
         inputs: &TransactionInputs,
@@ -553,7 +593,7 @@ impl TransactionBody {
     ) -> Self {
         let mut tx = Self::new_tx_body(inputs, outputs, fee);
         if let Some(slot32) = ttl {
-            tx.set_ttl(&to_bignum(slot32 as u64));
+            tx.set_ttl(&(slot32 as u64).into());
         }
         tx
     }
@@ -584,6 +624,10 @@ impl TransactionBody {
             collateral_return: None,
             total_collateral: None,
             reference_inputs: None,
+            voting_procedures: None,
+            voting_proposals: None,
+            donation: None,
+            current_treasury_value: None,
         }
     }
 }
@@ -1963,7 +2007,13 @@ impl PoolMetadata {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
 )]
 
 pub struct StakeCredentials {
@@ -2802,7 +2852,15 @@ impl ProposedProtocolParameterUpdates {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct ProtocolVersion {
     major: u32,
@@ -2823,269 +2881,6 @@ impl ProtocolVersion {
 
     pub fn new(major: u32, minor: u32) -> Self {
         Self { major, minor }
-    }
-}
-
-#[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
-)]
-pub struct ProtocolParamUpdate {
-    minfee_a: Option<Coin>,
-    minfee_b: Option<Coin>,
-    max_block_body_size: Option<u32>,
-    max_tx_size: Option<u32>,
-    max_block_header_size: Option<u32>,
-    key_deposit: Option<Coin>,
-    pool_deposit: Option<Coin>,
-    max_epoch: Option<Epoch>,
-    // desired number of stake pools
-    n_opt: Option<u32>,
-    pool_pledge_influence: Option<Rational>,
-    expansion_rate: Option<UnitInterval>,
-    treasury_growth_rate: Option<UnitInterval>,
-    // decentralization constant
-    d: Option<UnitInterval>,
-    extra_entropy: Option<Nonce>,
-    protocol_version: Option<ProtocolVersion>,
-    min_pool_cost: Option<Coin>,
-    ada_per_utxo_byte: Option<Coin>,
-    cost_models: Option<Costmdls>,
-    execution_costs: Option<ExUnitPrices>,
-    max_tx_ex_units: Option<ExUnits>,
-    max_block_ex_units: Option<ExUnits>,
-    max_value_size: Option<u32>,
-    collateral_percentage: Option<u32>,
-    max_collateral_inputs: Option<u32>,
-}
-
-impl_to_from!(ProtocolParamUpdate);
-
-#[wasm_bindgen]
-impl ProtocolParamUpdate {
-    pub fn set_minfee_a(&mut self, minfee_a: &Coin) {
-        self.minfee_a = Some(minfee_a.clone())
-    }
-
-    pub fn minfee_a(&self) -> Option<Coin> {
-        self.minfee_a.clone()
-    }
-
-    pub fn set_minfee_b(&mut self, minfee_b: &Coin) {
-        self.minfee_b = Some(minfee_b.clone())
-    }
-
-    pub fn minfee_b(&self) -> Option<Coin> {
-        self.minfee_b.clone()
-    }
-
-    pub fn set_max_block_body_size(&mut self, max_block_body_size: u32) {
-        self.max_block_body_size = Some(max_block_body_size)
-    }
-
-    pub fn max_block_body_size(&self) -> Option<u32> {
-        self.max_block_body_size.clone()
-    }
-
-    pub fn set_max_tx_size(&mut self, max_tx_size: u32) {
-        self.max_tx_size = Some(max_tx_size)
-    }
-
-    pub fn max_tx_size(&self) -> Option<u32> {
-        self.max_tx_size.clone()
-    }
-
-    pub fn set_max_block_header_size(&mut self, max_block_header_size: u32) {
-        self.max_block_header_size = Some(max_block_header_size)
-    }
-
-    pub fn max_block_header_size(&self) -> Option<u32> {
-        self.max_block_header_size.clone()
-    }
-
-    pub fn set_key_deposit(&mut self, key_deposit: &Coin) {
-        self.key_deposit = Some(key_deposit.clone())
-    }
-
-    pub fn key_deposit(&self) -> Option<Coin> {
-        self.key_deposit.clone()
-    }
-
-    pub fn set_pool_deposit(&mut self, pool_deposit: &Coin) {
-        self.pool_deposit = Some(pool_deposit.clone())
-    }
-
-    pub fn pool_deposit(&self) -> Option<Coin> {
-        self.pool_deposit.clone()
-    }
-
-    pub fn set_max_epoch(&mut self, max_epoch: Epoch) {
-        self.max_epoch = Some(max_epoch.clone())
-    }
-
-    pub fn max_epoch(&self) -> Option<Epoch> {
-        self.max_epoch.clone()
-    }
-
-    pub fn set_n_opt(&mut self, n_opt: u32) {
-        self.n_opt = Some(n_opt)
-    }
-
-    pub fn n_opt(&self) -> Option<u32> {
-        self.n_opt.clone()
-    }
-
-    pub fn set_pool_pledge_influence(&mut self, pool_pledge_influence: &Rational) {
-        self.pool_pledge_influence = Some(pool_pledge_influence.clone())
-    }
-
-    pub fn pool_pledge_influence(&self) -> Option<Rational> {
-        self.pool_pledge_influence.clone()
-    }
-
-    pub fn set_expansion_rate(&mut self, expansion_rate: &UnitInterval) {
-        self.expansion_rate = Some(expansion_rate.clone())
-    }
-
-    pub fn expansion_rate(&self) -> Option<UnitInterval> {
-        self.expansion_rate.clone()
-    }
-
-    pub fn set_treasury_growth_rate(&mut self, treasury_growth_rate: &UnitInterval) {
-        self.treasury_growth_rate = Some(treasury_growth_rate.clone())
-    }
-
-    pub fn treasury_growth_rate(&self) -> Option<UnitInterval> {
-        self.treasury_growth_rate.clone()
-    }
-
-    /// !!! DEPRECATED !!!
-    /// Since babbage era this param is outdated. But this param you can meet in a pre-babbage block.
-    #[deprecated(
-        since = "11.0.0",
-        note = "Since babbage era this param is outdated. But this param you can meet in a pre-babbage block."
-    )]
-    pub fn d(&self) -> Option<UnitInterval> {
-        self.d.clone()
-    }
-
-    /// !!! DEPRECATED !!!
-    /// Since babbage era this param is outdated. But this param you can meet in a pre-babbage block.
-    #[deprecated(
-        since = "11.0.0",
-        note = "Since babbage era this param is outdated. But this param you can meet in a pre-babbage block."
-    )]
-    pub fn extra_entropy(&self) -> Option<Nonce> {
-        self.extra_entropy.clone()
-    }
-
-    pub fn set_protocol_version(&mut self, protocol_version: &ProtocolVersion) {
-        self.protocol_version = Some(protocol_version.clone())
-    }
-
-    pub fn protocol_version(&self) -> Option<ProtocolVersion> {
-        self.protocol_version.clone()
-    }
-
-    pub fn set_min_pool_cost(&mut self, min_pool_cost: &Coin) {
-        self.min_pool_cost = Some(min_pool_cost.clone())
-    }
-
-    pub fn min_pool_cost(&self) -> Option<Coin> {
-        self.min_pool_cost.clone()
-    }
-
-    pub fn set_ada_per_utxo_byte(&mut self, ada_per_utxo_byte: &Coin) {
-        self.ada_per_utxo_byte = Some(ada_per_utxo_byte.clone())
-    }
-
-    pub fn ada_per_utxo_byte(&self) -> Option<Coin> {
-        self.ada_per_utxo_byte.clone()
-    }
-
-    pub fn set_cost_models(&mut self, cost_models: &Costmdls) {
-        self.cost_models = Some(cost_models.clone())
-    }
-
-    pub fn cost_models(&self) -> Option<Costmdls> {
-        self.cost_models.clone()
-    }
-
-    pub fn set_execution_costs(&mut self, execution_costs: &ExUnitPrices) {
-        self.execution_costs = Some(execution_costs.clone())
-    }
-
-    pub fn execution_costs(&self) -> Option<ExUnitPrices> {
-        self.execution_costs.clone()
-    }
-
-    pub fn set_max_tx_ex_units(&mut self, max_tx_ex_units: &ExUnits) {
-        self.max_tx_ex_units = Some(max_tx_ex_units.clone())
-    }
-
-    pub fn max_tx_ex_units(&self) -> Option<ExUnits> {
-        self.max_tx_ex_units.clone()
-    }
-
-    pub fn set_max_block_ex_units(&mut self, max_block_ex_units: &ExUnits) {
-        self.max_block_ex_units = Some(max_block_ex_units.clone())
-    }
-
-    pub fn max_block_ex_units(&self) -> Option<ExUnits> {
-        self.max_block_ex_units.clone()
-    }
-
-    pub fn set_max_value_size(&mut self, max_value_size: u32) {
-        self.max_value_size = Some(max_value_size.clone())
-    }
-
-    pub fn max_value_size(&self) -> Option<u32> {
-        self.max_value_size.clone()
-    }
-
-    pub fn set_collateral_percentage(&mut self, collateral_percentage: u32) {
-        self.collateral_percentage = Some(collateral_percentage)
-    }
-
-    pub fn collateral_percentage(&self) -> Option<u32> {
-        self.collateral_percentage.clone()
-    }
-
-    pub fn set_max_collateral_inputs(&mut self, max_collateral_inputs: u32) {
-        self.max_collateral_inputs = Some(max_collateral_inputs)
-    }
-
-    pub fn max_collateral_inputs(&self) -> Option<u32> {
-        self.max_collateral_inputs.clone()
-    }
-
-    pub fn new() -> Self {
-        Self {
-            minfee_a: None,
-            minfee_b: None,
-            max_block_body_size: None,
-            max_tx_size: None,
-            max_block_header_size: None,
-            key_deposit: None,
-            pool_deposit: None,
-            max_epoch: None,
-            n_opt: None,
-            pool_pledge_influence: None,
-            expansion_rate: None,
-            treasury_growth_rate: None,
-            d: None,
-            extra_entropy: None,
-            protocol_version: None,
-            min_pool_cost: None,
-            ada_per_utxo_byte: None,
-            cost_models: None,
-            execution_costs: None,
-            max_tx_ex_units: None,
-            max_block_ex_units: None,
-            max_value_size: None,
-            collateral_percentage: None,
-            max_collateral_inputs: None,
-        }
     }
 }
 
