@@ -1987,6 +1987,7 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
                 DeserializeFailure::UnknownKey(Key::Uint(cert_index)),
             )),
         }
+    }
 }
 
 impl cbor_event::se::Serialize for Certificate {
