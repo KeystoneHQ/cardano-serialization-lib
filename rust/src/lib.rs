@@ -776,6 +776,10 @@ impl StakeDeregistration {
             stake_credential: stake_credential.clone(),
         }
     }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
+    }
 }
 
 #[wasm_bindgen]
@@ -804,6 +808,10 @@ impl StakeDelegation {
             stake_credential: stake_credential.clone(),
             pool_keyhash: pool_keyhash.clone(),
         }
+    }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
     }
 }
 
@@ -1139,18 +1147,16 @@ pub enum CertificateEnum {
     PoolRetirement(PoolRetirement),
     GenesisKeyDelegation(GenesisKeyDelegation),
     MoveInstantaneousRewardsCert(MoveInstantaneousRewardsCert),
-    // CommitteeHotAuth,
-    // CommitteeColdResign,
-    // DrepDeregistration,
-    // DrepRegistration,
-    // DrepUpdate,
-    // StakeAndVoteDelegation,
-    // StakeRegistrationAndDelegation,
-    // StakeVoteRegistrationAndDelegation,
-    // VoteDelegation,
-    // VoteRegistrationAndDelegation,
+    CommitteeHotAuth(CommitteeHotAuth),
+    CommitteeColdResign(CommitteeColdResign),
+    DrepDeregistration(DrepDeregistration),
     DrepRegistration(DrepRegistration),
+    DrepUpdate(DrepUpdate),
+    StakeAndVoteDelegation(StakeAndVoteDelegation),
+    StakeRegistrationAndDelegation(StakeRegistrationAndDelegation),
+    StakeVoteRegistrationAndDelegation(StakeVoteRegistrationAndDelegation),
     VoteDelegation(VoteDelegation),
+    VoteRegistrationAndDelegation(VoteRegistrationAndDelegation),
 }
 
 #[wasm_bindgen]
@@ -1201,8 +1207,70 @@ impl Certificate {
         ))
     }
 
+    pub fn new_committee_hot_auth(
+        committee_hot_auth: &CommitteeHotAuth,
+    ) -> Self {
+        Self(CertificateEnum::CommitteeHotAuth(
+            committee_hot_auth.clone(),
+        ))
+    }
+
+    pub fn new_committee_cold_resign(
+        committee_cold_resign: &CommitteeColdResign,
+    ) -> Self {
+        Self(CertificateEnum::CommitteeColdResign(
+            committee_cold_resign.clone(),
+        ))
+    }
+
+    pub fn new_drep_deregistration(drep_deregistration: &DrepDeregistration) -> Self {
+        Self(CertificateEnum::DrepDeregistration(
+            drep_deregistration.clone(),
+        ))
+    }
+
+    pub fn new_drep_registration(drep_registration: &DrepRegistration) -> Self {
+        Self(CertificateEnum::DrepRegistration(drep_registration.clone()))
+    }
+
+    pub fn new_drep_update(drep_update: &DrepUpdate) -> Self {
+        Self(CertificateEnum::DrepUpdate(drep_update.clone()))
+    }
+
+    pub fn new_stake_and_vote_delegation(
+        stake_and_vote_delegation: &StakeAndVoteDelegation,
+    ) -> Self {
+        Self(CertificateEnum::StakeAndVoteDelegation(
+            stake_and_vote_delegation.clone(),
+        ))
+    }
+
+    pub fn new_stake_registration_and_delegation(
+        stake_registration_and_delegation: &StakeRegistrationAndDelegation,
+    ) -> Self {
+        Self(CertificateEnum::StakeRegistrationAndDelegation(
+            stake_registration_and_delegation.clone(),
+        ))
+    }
+
+    pub fn new_stake_vote_registration_and_delegation(
+        stake_vote_registration_and_delegation: &StakeVoteRegistrationAndDelegation,
+    ) -> Self {
+        Self(CertificateEnum::StakeVoteRegistrationAndDelegation(
+            stake_vote_registration_and_delegation.clone(),
+        ))
+    }
+
     pub fn new_vote_delegation(vote_delegation: &VoteDelegation) -> Self {
         Self(CertificateEnum::VoteDelegation(vote_delegation.clone()))
+    }
+
+    pub fn new_vote_registration_and_delegation(
+        vote_registration_and_delegation: &VoteRegistrationAndDelegation,
+    ) -> Self {
+        Self(CertificateEnum::VoteRegistrationAndDelegation(
+            vote_registration_and_delegation.clone(),
+        ))
     }
 
     pub fn kind(&self) -> CertificateKind {
@@ -1215,9 +1283,27 @@ impl Certificate {
             CertificateEnum::GenesisKeyDelegation(_) => CertificateKind::GenesisKeyDelegation,
             CertificateEnum::MoveInstantaneousRewardsCert(_) => {
                 CertificateKind::MoveInstantaneousRewardsCert
-            },
+            }
+            CertificateEnum::CommitteeHotAuth(_) => {
+                CertificateKind::CommitteeHotAuth
+            }
+            CertificateEnum::CommitteeColdResign(_) => {
+                CertificateKind::CommitteeColdResign
+            }
+            CertificateEnum::DrepDeregistration(_) => CertificateKind::DrepDeregistration,
             CertificateEnum::DrepRegistration(_) => CertificateKind::DrepRegistration,
+            CertificateEnum::DrepUpdate(_) => CertificateKind::DrepUpdate,
+            CertificateEnum::StakeAndVoteDelegation(_) => CertificateKind::StakeAndVoteDelegation,
+            CertificateEnum::StakeRegistrationAndDelegation(_) => {
+                CertificateKind::StakeRegistrationAndDelegation
+            }
+            CertificateEnum::StakeVoteRegistrationAndDelegation(_) => {
+                CertificateKind::StakeVoteRegistrationAndDelegation
+            }
             CertificateEnum::VoteDelegation(_) => CertificateKind::VoteDelegation,
+            CertificateEnum::VoteRegistrationAndDelegation(_) => {
+                CertificateKind::VoteRegistrationAndDelegation
+            }
         }
     }
 
@@ -1270,9 +1356,60 @@ impl Certificate {
         }
     }
 
+    pub fn as_committee_hot_auth(&self) -> Option<CommitteeHotAuth> {
+        match &self.0 {
+            CertificateEnum::CommitteeHotAuth(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_committee_cold_resign(&self) -> Option<CommitteeColdResign> {
+        match &self.0 {
+            CertificateEnum::CommitteeColdResign(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_drep_deregistration(&self) -> Option<DrepDeregistration> {
+        match &self.0 {
+            CertificateEnum::DrepDeregistration(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
     pub fn as_drep_registration(&self) -> Option<DrepRegistration> {
         match &self.0 {
             CertificateEnum::DrepRegistration(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_drep_update(&self) -> Option<DrepUpdate> {
+        match &self.0 {
+            CertificateEnum::DrepUpdate(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_stake_and_vote_delegation(&self) -> Option<StakeAndVoteDelegation> {
+        match &self.0 {
+            CertificateEnum::StakeAndVoteDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_stake_registration_and_delegation(&self) -> Option<StakeRegistrationAndDelegation> {
+        match &self.0 {
+            CertificateEnum::StakeRegistrationAndDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_stake_vote_registration_and_delegation(
+        &self,
+    ) -> Option<StakeVoteRegistrationAndDelegation> {
+        match &self.0 {
+            CertificateEnum::StakeVoteRegistrationAndDelegation(x) => Some(x.clone()),
             _ => None,
         }
     }
@@ -1283,7 +1420,40 @@ impl Certificate {
             _ => None,
         }
     }
+
+    pub fn as_vote_registration_and_delegation(&self) -> Option<VoteRegistrationAndDelegation> {
+        match &self.0 {
+            CertificateEnum::VoteRegistrationAndDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn has_required_script_witness(&self) -> bool {
+        match &self.0 {
+            CertificateEnum::StakeRegistration(x) => {
+                if x.coin.is_some() {
+                    return x.has_script_credentials();
+                } else {
+                    return false;
+                }
+            }
+            CertificateEnum::StakeDeregistration(x) => x.has_script_credentials(),
+            CertificateEnum::StakeDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::VoteDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::StakeAndVoteDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::StakeRegistrationAndDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::StakeVoteRegistrationAndDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::VoteRegistrationAndDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::CommitteeHotAuth(x) => x.has_script_credentials(),
+            CertificateEnum::CommitteeColdResign(x) => x.has_script_credentials(),
+            CertificateEnum::DrepRegistration(x) => x.has_script_credentials(),
+            CertificateEnum::DrepDeregistration(x) => x.has_script_credentials(),
+            CertificateEnum::DrepUpdate(x) => x.has_script_credentials(),
+            _ => false,
+        }
+    }
 }
+
 
 #[wasm_bindgen]
 #[derive(

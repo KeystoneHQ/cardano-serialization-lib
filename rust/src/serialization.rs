@@ -1843,8 +1843,16 @@ impl cbor_event::se::Serialize for CertificateEnum {
             CertificateEnum::PoolRetirement(x) => x.serialize(serializer),
             CertificateEnum::GenesisKeyDelegation(x) => x.serialize(serializer),
             CertificateEnum::MoveInstantaneousRewardsCert(x) => x.serialize(serializer),
+            CertificateEnum::CommitteeHotAuth(x) => x.serialize(serializer),
+            CertificateEnum::CommitteeColdResign(x) => x.serialize(serializer),
             CertificateEnum::DrepRegistration(x) => x.serialize(serializer),
+            CertificateEnum::DrepDeregistration(x) => x.serialize(serializer),
+            CertificateEnum::DrepUpdate(x) => x.serialize(serializer),
+            CertificateEnum::StakeAndVoteDelegation(x) => x.serialize(serializer),
+            CertificateEnum::StakeRegistrationAndDelegation(x) => x.serialize(serializer),
+            CertificateEnum::StakeVoteRegistrationAndDelegation(x) => x.serialize(serializer),
             CertificateEnum::VoteDelegation(x) => x.serialize(serializer),
+            CertificateEnum::VoteRegistrationAndDelegation(x) => x.serialize(serializer),
         }
     }
 }
@@ -1941,52 +1949,48 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
                     MoveInstantaneousRewardsCert::deserialize_as_embedded_group(raw, len)?,
                 ))
             }
-            // CertificateIndexNames::CommitteeHotAuth => {
-            //     Ok(CertificateEnum::CommitteeHotAuth(
-            //         CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
-            //     ))
-            // }
-            // CertificateIndexNames::CommitteeColdResign => {
-            //     Ok(CertificateEnum::CommitteeColdResign(
-            //         CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
-            //     ))
-            // }
+            CertificateIndexNames::CommitteeHotAuth => {
+                Ok(CertificateEnum::CommitteeHotAuth(
+                    CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::CommitteeColdResign => {
+                Ok(CertificateEnum::CommitteeColdResign(
+                    CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
             CertificateIndexNames::DrepRegistration => Ok(CertificateEnum::DrepRegistration(
                 DrepRegistration::deserialize_as_embedded_group(raw, len)?,
             )),
-            // CertificateIndexNames::DrepDeregistration => Ok(CertificateEnum::DrepDeregistration(
-            //     DrepDeregistration::deserialize_as_embedded_group(raw, len)?,
-            // )),
-            // CertificateIndexNames::DrepUpdate => Ok(CertificateEnum::DrepUpdate(
-            //     DrepUpdate::deserialize_as_embedded_group(raw, len)?,
-            // )),
-            // CertificateIndexNames::StakeAndVoteDelegation => {
-            //     Ok(CertificateEnum::StakeAndVoteDelegation(
-            //         StakeAndVoteDelegation::deserialize_as_embedded_group(raw, len)?,
-            //     ))
-            // }
-            // CertificateIndexNames::StakeRegistrationAndDelegation => {
-            //     Ok(CertificateEnum::StakeRegistrationAndDelegation(
-            //         StakeRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
-            //     ))
-            // }
-            // CertificateIndexNames::StakeVoteRegistrationAndDelegation => {
-            //     Ok(CertificateEnum::StakeVoteRegistrationAndDelegation(
-            //         StakeVoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
-            //     ))
-            // }
+            CertificateIndexNames::DrepDeregistration => Ok(CertificateEnum::DrepDeregistration(
+                DrepDeregistration::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::DrepUpdate => Ok(CertificateEnum::DrepUpdate(
+                DrepUpdate::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::StakeAndVoteDelegation => {
+                Ok(CertificateEnum::StakeAndVoteDelegation(
+                    StakeAndVoteDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeRegistrationAndDelegation => {
+                Ok(CertificateEnum::StakeRegistrationAndDelegation(
+                    StakeRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeVoteRegistrationAndDelegation => {
+                Ok(CertificateEnum::StakeVoteRegistrationAndDelegation(
+                    StakeVoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
             CertificateIndexNames::VoteDelegation => Ok(CertificateEnum::VoteDelegation(
                 VoteDelegation::deserialize_as_embedded_group(raw, len)?,
             )),
-            // CertificateIndexNames::VoteRegistrationAndDelegation => {
-            //     Ok(CertificateEnum::VoteRegistrationAndDelegation(
-            //         VoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
-            //     ))
-            // }
-            _ => Err(DeserializeError::new(
-                "CertificateEnum",
-                DeserializeFailure::UnknownKey(Key::Uint(cert_index)),
-            )),
+            CertificateIndexNames::VoteRegistrationAndDelegation => {
+                Ok(CertificateEnum::VoteRegistrationAndDelegation(
+                    VoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
         }
     }
 }
