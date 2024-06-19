@@ -1891,104 +1891,102 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
+        use certificate_index_names::CertificateIndexNames;
         let cert_index = get_cert_index(raw)?;
-        let initial_position = raw.as_mut_ref().seek(SeekFrom::Current(0)).unwrap();
-        if cert_index == 9 {
-            return Ok(CertificateEnum::VoteDelegation(
+        let index_enum =
+            CertificateIndexNames::from_u64(cert_index).ok_or(DeserializeError::new(
+                "CertificateEnum",
+                DeserializeFailure::UnknownKey(Key::Uint(cert_index)),
+            ))?;
+
+        match index_enum {
+            CertificateIndexNames::StakeRegistrationLegacy => {
+                Ok(CertificateEnum::StakeRegistration(
+                    StakeRegistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeRegistrationConway => {
+                Ok(CertificateEnum::StakeRegistration(
+                    StakeRegistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeDeregistrationLegacy => {
+                Ok(CertificateEnum::StakeDeregistration(
+                    StakeDeregistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeDeregistrationConway => {
+                Ok(CertificateEnum::StakeDeregistration(
+                    StakeDeregistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeDelegation => Ok(CertificateEnum::StakeDelegation(
+                StakeDelegation::deserialize_as_embedded_group(raw, len)?,
+            )),
+
+            CertificateIndexNames::PoolRegistration => Ok(CertificateEnum::PoolRegistration(
+                PoolRegistration::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::PoolRetirement => Ok(CertificateEnum::PoolRetirement(
+                PoolRetirement::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::GenesisKeyDelegation => {
+                Ok(CertificateEnum::GenesisKeyDelegation(
+                    GenesisKeyDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::MoveInstantaneousRewardsCert => {
+                Ok(CertificateEnum::MoveInstantaneousRewardsCert(
+                    MoveInstantaneousRewardsCert::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::CommitteeHotAuth => {
+                Ok(CertificateEnum::CommitteeHotAuth(
+                    CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            // CertificateIndexNames::CommitteeColdResign => {
+            //     Ok(CertificateEnum::CommitteeColdResign(
+            //         CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
+            //     ))
+            // }
+            // CertificateIndexNames::DrepRegistration => Ok(CertificateEnum::DrepRegistration(
+            //     DrepRegistration::deserialize_as_embedded_group(raw, len)?,
+            // )),
+            // CertificateIndexNames::DrepDeregistration => Ok(CertificateEnum::DrepDeregistration(
+            //     DrepDeregistration::deserialize_as_embedded_group(raw, len)?,
+            // )),
+            // CertificateIndexNames::DrepUpdate => Ok(CertificateEnum::DrepUpdate(
+            //     DrepUpdate::deserialize_as_embedded_group(raw, len)?,
+            // )),
+            // CertificateIndexNames::StakeAndVoteDelegation => {
+            //     Ok(CertificateEnum::StakeAndVoteDelegation(
+            //         StakeAndVoteDelegation::deserialize_as_embedded_group(raw, len)?,
+            //     ))
+            // }
+            // CertificateIndexNames::StakeRegistrationAndDelegation => {
+            //     Ok(CertificateEnum::StakeRegistrationAndDelegation(
+            //         StakeRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+            //     ))
+            // }
+            // CertificateIndexNames::StakeVoteRegistrationAndDelegation => {
+            //     Ok(CertificateEnum::StakeVoteRegistrationAndDelegation(
+            //         StakeVoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+            //     ))
+            // }
+            CertificateIndexNames::VoteDelegation => Ok(CertificateEnum::VoteDelegation(
                 VoteDelegation::deserialize_as_embedded_group(raw, len)?,
-            ))
+            )),
+            // CertificateIndexNames::VoteRegistrationAndDelegation => {
+            //     Ok(CertificateEnum::VoteRegistrationAndDelegation(
+            //         VoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+            //     ))
+            // }
+            _ => Err(DeserializeError::new(
+                "CertificateEnum",
+                DeserializeFailure::UnknownKey(Key::Uint(cert_index)),
+            )),
         }
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(StakeRegistration::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::StakeRegistration(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(StakeDeregistration::deserialize_as_embedded_group(
-                raw, len,
-            )?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::StakeDeregistration(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(StakeDelegation::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::StakeDelegation(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(PoolRegistration::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::PoolRegistration(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(PoolRetirement::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::PoolRetirement(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(GenesisKeyDelegation::deserialize_as_embedded_group(
-                raw, len,
-            )?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::GenesisKeyDelegation(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(MoveInstantaneousRewardsCert::deserialize_as_embedded_group(
-                raw, len,
-            )?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::MoveInstantaneousRewardsCert(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(VoteDelegation::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::VoteDelegation(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        Err(DeserializeError::new(
-            format!("CertificateEnum: {}", cert_index),
-            DeserializeFailure::NoVariantMatched.into(),
-        ))
-    }
 }
 
 impl cbor_event::se::Serialize for Certificate {

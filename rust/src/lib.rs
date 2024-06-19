@@ -1114,7 +1114,17 @@ pub enum CertificateKind {
     PoolRetirement,
     GenesisKeyDelegation,
     MoveInstantaneousRewardsCert,
+    // TODO: add the rest of the certificates
+    CommitteeHotAuth,
+    CommitteeColdResign,
+    DrepDeregistration,
+    DrepRegistration,
+    DrepUpdate,
+    StakeAndVoteDelegation,
+    StakeRegistrationAndDelegation,
+    StakeVoteRegistrationAndDelegation,
     VoteDelegation,
+    VoteRegistrationAndDelegation,
 }
 
 #[derive(
@@ -1474,7 +1484,7 @@ static URL_MAX_LEN: usize = 64;
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
+    Clone, Debug, Eq, Ord, Hash, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct URL(String);
 
