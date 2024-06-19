@@ -46,4 +46,28 @@ impl CertificateIndexNames {
             _ => None,
         }
     }
+
+    pub fn to_u64(&self) -> Option<u64> {
+        match self {
+            CertificateIndexNames::StakeRegistrationLegacy => Some(0),
+            CertificateIndexNames::StakeDeregistrationLegacy => Some(1),
+            CertificateIndexNames::StakeDelegation => Some(2),
+            CertificateIndexNames::PoolRegistration => Some(3),
+            CertificateIndexNames::PoolRetirement => Some(4),
+            CertificateIndexNames::GenesisKeyDelegation => Some(5),
+            CertificateIndexNames::MoveInstantaneousRewardsCert => Some(6),
+            CertificateIndexNames::StakeRegistrationConway => Some(7),
+            CertificateIndexNames::StakeDeregistrationConway => Some(8),
+            CertificateIndexNames::VoteDelegation => Some(9),
+            CertificateIndexNames::StakeAndVoteDelegation => Some(10),
+            CertificateIndexNames::StakeRegistrationAndDelegation => Some(11),
+            CertificateIndexNames::VoteRegistrationAndDelegation => Some(12),
+            CertificateIndexNames::StakeVoteRegistrationAndDelegation => Some(13),
+            CertificateIndexNames::CommitteeHotAuth => Some(14),
+            CertificateIndexNames::CommitteeColdResign => Some(15),
+            CertificateIndexNames::DrepRegistration => Some(16),
+            CertificateIndexNames::DrepDeregistration => Some(17),
+            CertificateIndexNames::DrepUpdate => Some(18),
+        }
+    }
 }

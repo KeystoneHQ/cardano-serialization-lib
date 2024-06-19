@@ -5173,6 +5173,24 @@ pub(super) fn check_index(
     Ok(())
 }
 
+pub(super) fn check_len(
+    len: cbor_event::Len,
+    expected: u64,
+    struct_description: &'static str,
+) -> Result<(), DeserializeError> {
+    if let cbor_event::Len::Len(n) = len {
+        if n != expected {
+            return Err(DeserializeFailure::CBOR(cbor_event::Error::WrongLen(
+                expected as u64,
+                len,
+                struct_description,
+            ))
+            .into());
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn deserialize_and_check_index<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
     desired_index: Option<u64>,

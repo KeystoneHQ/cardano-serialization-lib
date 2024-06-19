@@ -53,6 +53,7 @@ use cbor_event::{
     se::{Serialize, Serializer},
 };
 use protocol_types::governance::DRep;
+use traits::{NoneOrEmpty, DeserializeNullable, SerializeNullable};
 
 pub mod address;
 pub mod chain_core;
