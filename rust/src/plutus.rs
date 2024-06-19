@@ -256,7 +256,15 @@ impl ConstrPlutusData {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct CostModel(Vec<Int>);
 
@@ -484,6 +492,7 @@ impl ExUnits {
     Debug,
     Eq,
     Ord,
+    Hash,
     PartialEq,
     PartialOrd,
     serde::Serialize,
@@ -512,6 +521,7 @@ impl LanguageKind {
     Debug,
     Eq,
     Ord,
+    Hash,
     PartialEq,
     PartialOrd,
     serde::Serialize,
