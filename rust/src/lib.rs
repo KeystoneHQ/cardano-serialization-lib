@@ -92,6 +92,7 @@ use core::fmt;
 use utils::*;
 use ser_info::types::*;
 use protocol_types::governance::*;
+use protocol_types::certificates::*;
 
 type DeltaCoin = Int;
 
@@ -1138,6 +1139,17 @@ pub enum CertificateEnum {
     PoolRetirement(PoolRetirement),
     GenesisKeyDelegation(GenesisKeyDelegation),
     MoveInstantaneousRewardsCert(MoveInstantaneousRewardsCert),
+    // CommitteeHotAuth,
+    // CommitteeColdResign,
+    // DrepDeregistration,
+    // DrepRegistration,
+    // DrepUpdate,
+    // StakeAndVoteDelegation,
+    // StakeRegistrationAndDelegation,
+    // StakeVoteRegistrationAndDelegation,
+    // VoteDelegation,
+    // VoteRegistrationAndDelegation,
+    DrepRegistration(DrepRegistration),
     VoteDelegation(VoteDelegation),
 }
 
@@ -1204,6 +1216,7 @@ impl Certificate {
             CertificateEnum::MoveInstantaneousRewardsCert(_) => {
                 CertificateKind::MoveInstantaneousRewardsCert
             },
+            CertificateEnum::DrepRegistration(_) => CertificateKind::DrepRegistration,
             CertificateEnum::VoteDelegation(_) => CertificateKind::VoteDelegation,
         }
     }
@@ -1253,6 +1266,13 @@ impl Certificate {
     pub fn as_move_instantaneous_rewards_cert(&self) -> Option<MoveInstantaneousRewardsCert> {
         match &self.0 {
             CertificateEnum::MoveInstantaneousRewardsCert(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_drep_registration(&self) -> Option<DrepRegistration> {
+        match &self.0 {
+            CertificateEnum::DrepRegistration(x) => Some(x.clone()),
             _ => None,
         }
     }

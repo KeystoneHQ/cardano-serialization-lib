@@ -1843,6 +1843,7 @@ impl cbor_event::se::Serialize for CertificateEnum {
             CertificateEnum::PoolRetirement(x) => x.serialize(serializer),
             CertificateEnum::GenesisKeyDelegation(x) => x.serialize(serializer),
             CertificateEnum::MoveInstantaneousRewardsCert(x) => x.serialize(serializer),
+            CertificateEnum::DrepRegistration(x) => x.serialize(serializer),
             CertificateEnum::VoteDelegation(x) => x.serialize(serializer),
         }
     }
@@ -1950,9 +1951,9 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
             //         CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
             //     ))
             // }
-            // CertificateIndexNames::DrepRegistration => Ok(CertificateEnum::DrepRegistration(
-            //     DrepRegistration::deserialize_as_embedded_group(raw, len)?,
-            // )),
+            CertificateIndexNames::DrepRegistration => Ok(CertificateEnum::DrepRegistration(
+                DrepRegistration::deserialize_as_embedded_group(raw, len)?,
+            )),
             // CertificateIndexNames::DrepDeregistration => Ok(CertificateEnum::DrepDeregistration(
             //     DrepDeregistration::deserialize_as_embedded_group(raw, len)?,
             // )),
