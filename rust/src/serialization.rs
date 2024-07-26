@@ -1334,6 +1334,50 @@ impl Deserialize for StakeDeregistration {
     }
 }
 
+fn deserialize_stake_deregistrationlegacy<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: Len,
+) -> Result<StakeDeregistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        check_len(len, 2, "(cert_index, stake_credential)")?;
+        let desired_index = CertificateIndexNames::StakeDeregistrationLegacy.to_u64();
+        check_index(cert_index, desired_index, "cert_index")?;
+
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        return Ok(StakeDeregistration {
+            stake_credential,
+            coin: None,
+        });
+    })()
+    .map_err(|e| e.annotate("StakeDeregistration (legacy)"))
+}
+
+fn deserialize_stake_deregistration_conway<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: Len,
+) -> Result<StakeDeregistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        check_len(len, 3, "(cert_index, stake_credential, coin)")?;
+        let desired_index = CertificateIndexNames::StakeDeregistrationConway.to_u64();
+        check_index(cert_index, desired_index, "cert_index")?;
+
+        let stake_credential =
+            Credential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin"))?;
+
+        return Ok(StakeDeregistration {
+            stake_credential,
+            coin: Some(coin),
+        });
+    })()
+    .map_err(|e| e.annotate("StakeDeregistration (conway)"))
+}
+
 impl DeserializeEmbeddedGroup for StakeDeregistration {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
@@ -1343,10 +1387,10 @@ impl DeserializeEmbeddedGroup for StakeDeregistration {
         let index_enum = CertificateIndexNames::from_u64(cert_index);
         match index_enum {
             Some(CertificateIndexNames::StakeDeregistrationLegacy) => {
-                deserialize_legacy(raw, cert_index, len)
+                deserialize_stake_deregistrationlegacy(raw, cert_index, len)
             }
             Some(CertificateIndexNames::StakeDeregistrationConway) => {
-                deserialize_conway(raw, cert_index, len)
+                deserialize_stake_deregistration_conway(raw, cert_index, len)
             }
             _ => Err(DeserializeFailure::FixedValuesMismatch {
                 found: Key::Uint(cert_index),
