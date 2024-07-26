@@ -1337,7 +1337,7 @@ impl Deserialize for StakeDeregistration {
 fn deserialize_stake_deregistrationlegacy<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
     cert_index: u64,
-    len: Len,
+    len: cbor_event::Len,
 ) -> Result<StakeDeregistration, DeserializeError> {
     (|| -> Result<_, DeserializeError> {
         check_len(len, 2, "(cert_index, stake_credential)")?;
@@ -1358,7 +1358,7 @@ fn deserialize_stake_deregistrationlegacy<R: BufRead + Seek>(
 fn deserialize_stake_deregistration_conway<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
     cert_index: u64,
-    len: Len,
+    len: cbor_event::Len,
 ) -> Result<StakeDeregistration, DeserializeError> {
     (|| -> Result<_, DeserializeError> {
         check_len(len, 3, "(cert_index, stake_credential, coin)")?;
@@ -1366,7 +1366,7 @@ fn deserialize_stake_deregistration_conway<R: BufRead + Seek>(
         check_index(cert_index, desired_index, "cert_index")?;
 
         let stake_credential =
-            Credential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
 
         let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin"))?;
 
