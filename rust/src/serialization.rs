@@ -6,6 +6,7 @@ use address::*;
 use crypto::*;
 use error::*;
 use core2::io::{Seek, SeekFrom};
+use certificate_index_names::CertificateIndexNames;
 
 pub(super) fn check_len_indefinite<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
@@ -1234,18 +1235,19 @@ impl DeserializeEmbeddedGroup for StakeRegistration {
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
         let cert_index = raw.unsigned_integer()?;
-        match cert_index {
-            0 => {
+        let index_enum = CertificateIndexNames::from_u64(cert_index);
+        match index_enum {
+            Some(CertificateIndexNames::StakeRegistrationLegacy) => {
                 deserialize_legacy(raw, cert_index, len)
             }
-            7 => {
+            Some(CertificateIndexNames::StakeRegistrationConway) => {
                 deserialize_conway(raw, cert_index, len)
             }
             _ => Err(DeserializeFailure::FixedValuesMismatch {
                 found: Key::Uint(cert_index),
                 expected: vec![
-                    Key::Uint(0),
-                    Key::Uint(7),
+                    Key::OptUint(CertificateIndexNames::StakeRegistrationLegacy.to_u64()),
+                    Key::OptUint(CertificateIndexNames::StakeRegistrationConway.to_u64()),
                 ],
             })
             .map_err(|e| DeserializeError::from(e).annotate("cert_index")),
@@ -1258,9 +1260,41 @@ impl cbor_event::se::Serialize for StakeDeregistration {
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        serializer.write_array(cbor_event::Len::Len(2))?;
-        self.serialize_as_embedded_group(serializer)
+        if self.coin.is_some() {
+            serialize_as_conway(self, serializer)
+        } else {
+            serialize_as_legacy(self, serializer)
+        }
     }
+}
+
+fn serialize_as_legacy<'se, W: Write>(
+    cert: &StakeDeregistration,
+    serializer: &'se mut Serializer<W>,
+) -> cbor_event::Result<&'se mut Serializer<W>> {
+    serializer.write_array(cbor_event::Len::Len(2))?;
+
+    let proposal_index = CertificateIndexNames::StakeDeregistrationLegacy.to_u64();
+    serialize_and_check_index(serializer, proposal_index, "StakeDeregistrationLegacy")?;
+
+    cert.stake_credential.serialize(serializer)?;
+    Ok(serializer)
+}
+
+fn serialize_as_conway<'se, W: Write>(
+    cert: &StakeDeregistration,
+    serializer: &'se mut Serializer<W>,
+) -> cbor_event::Result<&'se mut Serializer<W>> {
+    serializer.write_array(cbor_event::Len::Len(3))?;
+
+    let proposal_index = CertificateIndexNames::StakeDeregistrationConway.to_u64();
+    serialize_and_check_index(serializer, proposal_index, "StakeDeregistrationConway")?;
+
+    cert.stake_credential.serialize(serializer)?;
+    if let Some(coin) = cert.coin {
+        coin.serialize(serializer)?;
+    }
+    Ok(serializer)
 }
 
 impl SerializeEmbeddedGroup for StakeDeregistration {
@@ -1956,7 +1990,6 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        use certificate_index_names::CertificateIndexNames;
         let cert_index = get_cert_index(raw)?;
         let index_enum =
             CertificateIndexNames::from_u64(cert_index).ok_or(DeserializeError::new(
