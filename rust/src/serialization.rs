@@ -1337,24 +1337,26 @@ impl Deserialize for StakeDeregistration {
 impl DeserializeEmbeddedGroup for StakeDeregistration {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
-        _: cbor_event::Len,
+        len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            let index_0_value = raw.unsigned_integer()?;
-            if index_0_value != 1 {
-                return Err(DeserializeFailure::FixedValueMismatch {
-                    found: Key::Uint(index_0_value),
-                    expected: Key::Uint(1),
-                }
-                .into());
+        let cert_index = raw.unsigned_integer()?;
+        let index_enum = CertificateIndexNames::from_u64(cert_index);
+        match index_enum {
+            Some(CertificateIndexNames::StakeDeregistrationLegacy) => {
+                deserialize_legacy(raw, cert_index, len)
             }
-            Ok(())
-        })()
-        .map_err(|e| e.annotate("index_0"))?;
-        let stake_credential =
-            (|| -> Result<_, DeserializeError> { Ok(StakeCredential::deserialize(raw)?) })()
-                .map_err(|e| e.annotate("stake_credential"))?;
-        Ok(StakeDeregistration { stake_credential })
+            Some(CertificateIndexNames::StakeDeregistrationConway) => {
+                deserialize_conway(raw, cert_index, len)
+            }
+            _ => Err(DeserializeFailure::FixedValuesMismatch {
+                found: Key::Uint(cert_index),
+                expected: vec![
+                    Key::OptUint(CertificateIndexNames::StakeDeregistrationLegacy.to_u64()),
+                    Key::OptUint(CertificateIndexNames::StakeDeregistrationConway.to_u64()),
+                ],
+            })
+            .map_err(|e| DeserializeError::from(e).annotate("cert_index")),
+        }
     }
 }
 
