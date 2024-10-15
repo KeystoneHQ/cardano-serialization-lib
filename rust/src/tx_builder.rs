@@ -1249,18 +1249,18 @@ impl TransactionBuilder {
 
     pub fn get_reference_inputs(&self) -> TransactionInputs {
         let mut inputs = self.reference_inputs.clone();
-        for input in self.inputs.get_ref_inputs().0 {
+        for input in self.inputs.get_ref_inputs().inputs {
             inputs.insert(input);
         }
 
         if let Some(mint) = &self.mint {
-            for input in mint.get_ref_inputs().0 {
+            for input in mint.get_ref_inputs().inputs {
                 inputs.insert(input);
             }
         }
 
         let vec_inputs = inputs.into_iter().collect();
-        TransactionInputs(vec_inputs)
+        TransactionInputs::from_vec(vec_inputs)
     }
 
     /// does not include refunds or withdrawals
@@ -4422,7 +4422,7 @@ mod tests {
         }
         let mut encountered = std::collections::HashSet::new();
         let mut input_total = Value::new(&Coin::zero());
-        for input in tx.inputs.0.iter() {
+        for input in tx.inputs().inputs.iter() {
             let txid = input.transaction_id();
             if !encountered.insert(txid.clone()) {
                 panic!("Input {:?} duplicated", txid);

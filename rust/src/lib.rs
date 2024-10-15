@@ -164,29 +164,56 @@ type TransactionIndex = u32;
 type CertificateIndex = u32;
 
 #[wasm_bindgen]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema)]
+pub enum CborSetType {
+    Tagged = 0,
+    Untagged = 1,
+}
+
+
+#[wasm_bindgen]
 #[derive(
     Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
 )]
-pub struct TransactionInputs(Vec<TransactionInput>);
+pub struct TransactionInputs {
+    pub(crate) inputs: Vec<TransactionInput>,
+    pub(crate) dedup: BTreeSet<TransactionInput>,
+    pub(crate) cbor_set_type: CborSetType,
+}
 
 impl_to_from!(TransactionInputs);
 
 #[wasm_bindgen]
 impl TransactionInputs {
     pub fn new() -> Self {
-        Self(Vec::new())
+        Self {
+            inputs: Vec::new(),
+            dedup: BTreeSet::new(),
+            cbor_set_type: CborSetType::Tagged,
+        }
+    }
+
+    pub(crate) fn new_from_prepared_fields(
+        inputs: Vec<TransactionInput>,
+        dedup: BTreeSet<TransactionInput>,
+    ) -> Self {
+        Self {
+            inputs,
+            dedup,
+            cbor_set_type: CborSetType::Tagged,
+        }
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.inputs.len()
     }
 
     pub fn get(&self, index: usize) -> TransactionInput {
-        self.0[index].clone()
+        self.inputs[index].clone()
     }
 
     pub fn add(&mut self, elem: &TransactionInput) {
-        self.0.push(elem.clone());
+        self.inputs.push(elem.clone());
     }
 
     pub fn to_option(&self) -> Option<TransactionInputs> {
@@ -195,6 +222,26 @@ impl TransactionInputs {
         } else {
             None
         }
+    }
+
+    pub(crate) fn get_set_type(&self) -> CborSetType {
+        self.cbor_set_type.clone()
+    }
+
+    pub(crate) fn set_set_type(&mut self, cbor_set_type: CborSetType) {
+        self.cbor_set_type = cbor_set_type;
+    }
+
+    pub(crate) fn from_vec(inputs_vec: Vec<TransactionInput>) -> Self {
+        let mut dedup = BTreeSet::new();
+        let mut inputs = Vec::new();
+        for input in inputs_vec {
+            if dedup.insert(input.clone()) {
+                inputs.push(input.clone());
+            }
+        }
+
+        Self::new_from_prepared_fields(inputs, dedup)
     }
 }
 

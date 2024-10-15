@@ -183,8 +183,8 @@ impl cbor_event::se::Serialize for TransactionInputs {
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        serializer.write_array(cbor_event::Len::Len(self.0.len() as u64))?;
-        for element in &self.0 {
+        serializer.write_array(cbor_event::Len::Len(self.inputs.len() as u64))?;
+        for element in &self.inputs {
             element.serialize(serializer)?;
         }
         Ok(serializer)
@@ -209,7 +209,7 @@ impl Deserialize for TransactionInputs {
             Ok(())
         })()
         .map_err(|e| e.annotate("TransactionInputs"))?;
-        Ok(Self(arr))
+        Ok(Self::from_vec(arr))
     }
 }
 
@@ -5372,7 +5372,7 @@ mod tests {
     #[test]
     fn test_tx_body_roundtrip() {
         let mut txb = TransactionBody::new(
-            &TransactionInputs(vec![fake_tx_input(0)]),
+            &TransactionInputs::from_vec(vec![fake_tx_input(0)]),
             &TransactionOutputs(vec![fake_tx_output(1)]),
             &to_bignum(1234567),
             Some(12345678),
