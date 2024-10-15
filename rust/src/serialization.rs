@@ -2191,7 +2191,7 @@ impl cbor_event::se::Serialize for StakeCredentials {
 pub(super) fn skip_tag<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
     tag: u64,
-) -> Result<(), DeserializeError> {
+) -> Result<bool, DeserializeError> {
     if let Ok(extracted_tag) = raw.tag() {
         if extracted_tag != tag {
             return Err(DeserializeError::new(
@@ -2202,9 +2202,9 @@ pub(super) fn skip_tag<R: BufRead + Seek>(
                 },
             ));
         }
-        return Ok(());
+        return Ok(true);
     }
-    Ok(())
+    Ok(false)
 }
 
 pub(super) fn skip_set_tag<R: BufRead + Seek>(
