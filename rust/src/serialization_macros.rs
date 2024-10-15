@@ -25,7 +25,7 @@ macro_rules! from_bytes {
     // Uses Deserialize trait to auto-generate one
     ($name:ident) => {
         from_bytes!($name, bytes, {
-            let mut raw = Deserializer::from(std::io::Cursor::new(bytes));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(bytes));
             Self::deserialize(&mut raw)
         });
     };
@@ -74,7 +74,7 @@ macro_rules! from_hex {
     // Uses Deserialize trait to auto-generate one
     ($name:ident) => {
         from_hex!($name, hex_str, {
-            let mut raw = Deserializer::from(std::io::Cursor::new(hex::decode(hex_str).unwrap()));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(hex::decode(hex_str).unwrap()));
             Self::deserialize(&mut raw)
         });
     };
@@ -133,5 +133,28 @@ macro_rules! impl_to_from {
     ($name:ident) => {
         to_from_bytes!($name);
         to_from_json!($name);
+    };
+}
+
+#[macro_export]
+macro_rules! impl_deserialize_for_wrapped_tuple {
+    ($type:ty) => {
+        impl Deserialize for $type {
+            fn deserialize<R: BufRead + Seek>(
+                raw: &mut Deserializer<R>,
+            ) -> Result<Self, DeserializeError> {
+                (|| -> Result<_, DeserializeError> {
+                    use crate::serialization::check_len_indefinite;
+                    let len = raw.array()?;
+
+                    let inner_struct = Self::deserialize_as_embedded_group(raw, len)?;
+
+                    check_len_indefinite(raw, len)?;
+
+                    Ok(inner_struct)
+                })()
+                .map_err(|e| e.annotate(stringify!($type)))
+            }
+        }
     };
 }

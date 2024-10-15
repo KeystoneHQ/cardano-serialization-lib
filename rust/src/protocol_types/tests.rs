@@ -34,8 +34,8 @@ mod test {
             .unwrap();
         let tx2 = Transaction::from_bytes(tx.to_bytes()).unwrap();
 
-        assert_eq!(casual_tx.body(), tx.body());
-        assert_eq!(casual_tx.witness_set(), tx.witness_set());
+        assert_eq!(&casual_tx.body(), tx.body());
+        assert_eq!(&casual_tx.witness_set(), tx.witness_set());
         assert_eq!(casual_tx.is_valid(), tx.is_valid());
         assert_eq!(casual_tx, tx2);
     }
@@ -51,8 +51,8 @@ mod test {
         let tx2 = Transaction::from_bytes(tx.to_bytes()).unwrap();
         let tx3 = FixedTransaction::from_bytes(tx.to_bytes()).unwrap();
 
-        assert_eq!(casual_tx.body(), tx.body());
-        assert_eq!(casual_tx.witness_set(), tx.witness_set());
+        assert_eq!(&casual_tx.body(), tx.body());
+        assert_eq!(&casual_tx.witness_set(), tx.witness_set());
         assert_eq!(casual_tx.is_valid(), tx.is_valid());
 
         assert_eq!(body, tx3.raw_body());

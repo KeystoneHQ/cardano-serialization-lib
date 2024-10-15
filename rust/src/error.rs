@@ -1,3 +1,5 @@
+use alloc::borrow::ToOwned;
+use alloc::format;
 use super::*;
 use crate::chain_crypto;
 use cbor_event::{self};
@@ -9,13 +11,16 @@ use cbor_event::{self};
 pub enum Key {
     Str(String),
     Uint(u64),
+    OptUint(Option<u64>),
 }
 
-impl std::fmt::Display for Key {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Key {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Key::Str(x) => write!(f, "\"{}\"", x),
             Key::Uint(x) => write!(f, "{}", x),
+            Key::OptUint(Some(x)) => write!(f, "{}", x),
+            Key::OptUint(None) => write!(f, "null"),
         }
     }
 }
@@ -34,6 +39,10 @@ pub enum DeserializeFailure {
         found: Key,
         expected: Key,
     },
+    FixedValuesMismatch {
+        found: Key,
+        expected: Vec<Key>,
+    },
     MandatoryFieldMissing(Key),
     Metadata(JsError),
     NoVariantMatched,
@@ -51,6 +60,8 @@ pub enum DeserializeFailure {
     UnknownKey(Key),
     UnexpectedKeyType(cbor_event::Type),
     VariableLenNatDecodeFailed,
+    IoError(String),
+    CustomError(String),
 }
 
 #[derive(Debug)]
@@ -75,8 +86,8 @@ impl DeserializeError {
     }
 }
 
-impl std::fmt::Display for DeserializeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for DeserializeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match &self.location {
             Some(loc) => write!(f, "Deserialization failed in {} because: ", loc),
             None => write!(f, "Deserialization: "),
@@ -104,6 +115,9 @@ impl std::fmt::Display for DeserializeError {
             DeserializeFailure::FixedValueMismatch { found, expected } => {
                 write!(f, "Expected fixed value {} found {}", expected, found)
             }
+            DeserializeFailure::FixedValuesMismatch { found, expected } => {
+                write!(f, "Expected fixed value {:?} found {}", expected, found)
+            }
             DeserializeFailure::MandatoryFieldMissing(key) => {
                 write!(f, "Mandatory field {} not found", key)
             }
@@ -126,12 +140,14 @@ impl std::fmt::Display for DeserializeError {
             DeserializeFailure::VariableLenNatDecodeFailed => {
                 write!(f, "Variable length natural number decode failed")
             }
+            DeserializeFailure::IoError(e) => write!(f, "IO error: {}", e),
+            DeserializeFailure::CustomError(e) => write!(f, "Deserialize error: {}", e),
         }
     }
 }
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
-impl std::error::Error for DeserializeError {}
+impl core::error::Error for DeserializeError {}
 
 impl From<DeserializeError> for JsError {
     fn from(e: DeserializeError) -> JsError {
@@ -200,11 +216,11 @@ impl JsError {
 }
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
-impl std::fmt::Display for JsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for JsError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.msg)
     }
 }
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
-impl std::error::Error for JsError {}
+impl core::error::Error for JsError {}

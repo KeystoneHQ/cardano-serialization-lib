@@ -1,6 +1,10 @@
 #![cfg_attr(feature = "with-bench", feature(test))]
 #![allow(deprecated)]
 
+#![cfg_attr(feature = "alloc", no_std)]
+#![cfg_attr(feature = "alloc", feature(error_in_core))]
+// #![no_std]
+
 #[macro_use]
 extern crate cfg_if;
 
@@ -15,8 +19,22 @@ extern crate quickcheck;
 extern crate quickcheck_macros;
 extern crate hex;
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+use alloc::string::{String, ToString};
+use alloc::vec;
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
+use core as std;
+#[cfg(feature = "alloc")]
+use core2::io::{BufRead, Seek, Write};
+use core::convert::TryInto;
+use alloc::format;
+#[cfg(not(feature = "alloc"))]
 use std::convert::TryInto;
-use std::io::{BufRead, Seek, Write};
+#[cfg(not(feature = "alloc"))]
+use core2::io::{BufRead, Seek, Write};
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
 use noop_proc_macro::wasm_bindgen;
@@ -34,6 +52,8 @@ use cbor_event::{
     de::Deserializer,
     se::{Serialize, Serializer},
 };
+use protocol_types::governance::DRep;
+use traits::{NoneOrEmpty, DeserializeNullable, SerializeNullable};
 
 pub mod address;
 pub mod chain_core;
@@ -49,7 +69,6 @@ pub mod output_builder;
 pub mod plutus;
 pub mod serialization;
 pub mod traits;
-pub mod tx_builder;
 pub mod tx_builder_constants;
 pub mod typed_bytes;
 pub mod protocol_types;
@@ -59,26 +78,37 @@ pub mod utils;
 mod fakes;
 mod serialization_macros;
 mod serialization_tools;
+mod certificate_index_names;
+mod voting_proposal_index_names;
 
-use crate::traits::NoneOrEmpty;
 use address::*;
 use crypto::*;
 use error::*;
 use metadata::*;
 use plutus::*;
-use schemars::JsonSchema;
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
-use std::fmt::Display;
-use std::fmt;
+use alloc::collections::BTreeSet;
+use core::fmt::Display;
+use core::fmt;
 use utils::*;
 use ser_info::types::*;
+use protocol_types::governance::*;
+use protocol_types::certificates::*;
 
 type DeltaCoin = Int;
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct UnitInterval {
     numerator: BigNum,
@@ -112,7 +142,7 @@ type Slot32 = u32;
 type SlotBigNum = BigNum;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Transaction {
     body: TransactionBody,
     witness_set: TransactionWitnessSet,
@@ -162,9 +192,10 @@ impl Transaction {
 type TransactionIndex = u32;
 // index of a cert within a tx
 type CertificateIndex = u32;
+type GovernanceActionIndex = u32;
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub enum CborSetType {
     Tagged = 0,
     Untagged = 1,
@@ -173,7 +204,7 @@ pub enum CborSetType {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct TransactionInputs {
     pub(crate) inputs: Vec<TransactionInput>,
@@ -246,7 +277,7 @@ impl TransactionInputs {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, )]
 pub struct TransactionOutputs(Vec<TransactionOutput>);
 
 impl_to_from!(TransactionOutputs);
@@ -322,7 +353,7 @@ impl DataCost {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Certificates(Vec<Certificate>);
 
@@ -360,25 +391,29 @@ impl From<&Ed25519KeyHashes> for RequiredSignersSet {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionBody {
-    inputs: TransactionInputs,
-    outputs: TransactionOutputs,
-    fee: Coin,
-    ttl: Option<SlotBigNum>,
-    certs: Option<Certificates>,
-    withdrawals: Option<Withdrawals>,
-    update: Option<Update>,
-    auxiliary_data_hash: Option<AuxiliaryDataHash>,
-    validity_start_interval: Option<SlotBigNum>,
-    mint: Option<Mint>,
-    script_data_hash: Option<ScriptDataHash>,
-    collateral: Option<TransactionInputs>,
-    required_signers: Option<RequiredSigners>,
-    network_id: Option<NetworkId>,
-    collateral_return: Option<TransactionOutput>,
-    total_collateral: Option<Coin>,
-    reference_inputs: Option<TransactionInputs>,
+    pub(crate) inputs: TransactionInputs,
+    pub(crate) outputs: TransactionOutputs,
+    pub(crate) fee: Coin,
+    pub(crate) ttl: Option<SlotBigNum>,
+    pub(crate) certs: Option<Certificates>,
+    pub(crate) withdrawals: Option<Withdrawals>,
+    pub(crate) update: Option<Update>,
+    pub(crate) auxiliary_data_hash: Option<AuxiliaryDataHash>,
+    pub(crate) validity_start_interval: Option<SlotBigNum>,
+    pub(crate) mint: Option<Mint>,
+    pub(crate) script_data_hash: Option<ScriptDataHash>,
+    pub(crate) collateral: Option<TransactionInputs>,
+    pub(crate) required_signers: Option<Ed25519KeyHashes>,
+    pub(crate) network_id: Option<NetworkId>,
+    pub(crate) collateral_return: Option<TransactionOutput>,
+    pub(crate) total_collateral: Option<Coin>,
+    pub(crate) reference_inputs: Option<TransactionInputs>,
+    pub(crate) voting_procedures: Option<VotingProcedures>,
+    pub(crate) voting_proposals: Option<VotingProposals>,
+    pub(crate) donation: Option<Coin>,
+    pub(crate) current_treasury_value: Option<Coin>,
 }
 
 impl_to_from!(TransactionBody);
@@ -401,8 +436,8 @@ impl TransactionBody {
     /// Returns a Slot32 (u32) value in case the underlying original BigNum (u64) value is within the limits.
     /// Otherwise will just raise an error.
     #[deprecated(
-        since = "10.1.0",
-        note = "Possible boundary error. Use ttl_bignum instead"
+    since = "10.1.0",
+    note = "Possible boundary error. Use ttl_bignum instead"
     )]
     pub fn ttl(&self) -> Result<Option<Slot32>, JsError> {
         match self.ttl {
@@ -461,14 +496,14 @@ impl TransactionBody {
     /// !!! DEPRECATED !!!
     /// Uses outdated slot number format.
     #[deprecated(
-        since = "10.1.0",
-        note = "Underlying value capacity of slot (BigNum u64) bigger then Slot32. Use set_validity_start_interval_bignum instead."
+    since = "10.1.0",
+    note = "Underlying value capacity of slot (BigNum u64) bigger then Slot32. Use set_validity_start_interval_bignum instead."
     )]
     pub fn set_validity_start_interval(&mut self, validity_start_interval: Slot32) {
         self.validity_start_interval = Some(validity_start_interval.into())
     }
 
-    pub fn set_validity_start_interval_bignum(&mut self, validity_start_interval: SlotBigNum) {
+    pub fn set_validity_start_interval_bignum(&mut self, validity_start_interval: &SlotBigNum) {
         self.validity_start_interval = Some(validity_start_interval.clone())
     }
 
@@ -481,8 +516,8 @@ impl TransactionBody {
     /// Otherwise will just raise an error.
     /// Use `.validity_start_interval_bignum` instead.
     #[deprecated(
-        since = "10.1.0",
-        note = "Possible boundary error. Use validity_start_interval_bignum instead"
+    since = "10.1.0",
+    note = "Possible boundary error. Use validity_start_interval_bignum instead"
     )]
     pub fn validity_start_interval(&self) -> Result<Option<Slot32>, JsError> {
         match self.validity_start_interval.clone() {
@@ -500,13 +535,6 @@ impl TransactionBody {
 
     pub fn mint(&self) -> Option<Mint> {
         self.mint.clone()
-    }
-
-    /// This function returns the mint value of the transaction
-    /// Use `.mint()` instead.
-    #[deprecated(since = "10.0.0", note = "Weird naming. Use `.mint()`")]
-    pub fn multiassets(&self) -> Option<Mint> {
-        self.mint()
     }
 
     pub fn set_reference_inputs(&mut self, reference_inputs: &TransactionInputs) {
@@ -533,11 +561,11 @@ impl TransactionBody {
         self.collateral.clone()
     }
 
-    pub fn set_required_signers(&mut self, required_signers: &RequiredSigners) {
+    pub fn set_required_signers(&mut self, required_signers: &Ed25519KeyHashes) {
         self.required_signers = Some(required_signers.clone())
     }
 
-    pub fn required_signers(&self) -> Option<RequiredSigners> {
+    pub fn required_signers(&self) -> Option<Ed25519KeyHashes> {
         self.required_signers.clone()
     }
 
@@ -565,12 +593,44 @@ impl TransactionBody {
         self.total_collateral.clone()
     }
 
+    pub fn set_voting_procedures(&mut self, voting_procedures: &VotingProcedures) {
+        self.voting_procedures = Some(voting_procedures.clone());
+    }
+
+    pub fn voting_procedures(&self) -> Option<VotingProcedures> {
+        self.voting_procedures.clone()
+    }
+
+    pub fn set_voting_proposals(&mut self, voting_proposals: &VotingProposals) {
+        self.voting_proposals = Some(voting_proposals.clone());
+    }
+
+    pub fn voting_proposals(&self) -> Option<VotingProposals> {
+        self.voting_proposals.clone()
+    }
+
+    pub fn set_donation(&mut self, donation: &Coin) {
+        self.donation = Some(donation.clone());
+    }
+
+    pub fn donation(&self) -> Option<Coin> {
+        self.donation.clone()
+    }
+
+    pub fn set_current_treasury_value(&mut self, current_treasury_value: &Coin) {
+        self.current_treasury_value = Some(current_treasury_value.clone());
+    }
+
+    pub fn current_treasury_value(&self) -> Option<Coin> {
+        self.current_treasury_value.clone()
+    }
+
     /// !!! DEPRECATED !!!
     /// This constructor uses outdated slot number format for the ttl value.
     /// Use `.new_tx_body` and then `.set_ttl` instead
     #[deprecated(
-        since = "10.1.0",
-        note = "Underlying value capacity of ttl (BigNum u64) bigger then Slot32. Use new_tx_body instead."
+    since = "10.1.0",
+    note = "Underlying value capacity of ttl (BigNum u64) bigger then Slot32. Use new_tx_body instead."
     )]
     pub fn new(
         inputs: &TransactionInputs,
@@ -580,7 +640,7 @@ impl TransactionBody {
     ) -> Self {
         let mut tx = Self::new_tx_body(inputs, outputs, fee);
         if let Some(slot32) = ttl {
-            tx.set_ttl(&to_bignum(slot32 as u64));
+            tx.set_ttl(&(slot32 as u64).into());
         }
         tx
     }
@@ -611,13 +671,17 @@ impl TransactionBody {
             collateral_return: None,
             total_collateral: None,
             reference_inputs: None,
+            voting_procedures: None,
+            voting_proposals: None,
+            donation: None,
+            current_treasury_value: None,
         }
     }
 }
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 pub struct TransactionInput {
     transaction_id: TransactionHash,
@@ -646,7 +710,7 @@ impl TransactionInput {
 
 #[wasm_bindgen]
 #[derive(
-    Debug, Clone, Eq, Ord, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Debug, Clone, Eq, Ord, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct TransactionOutput {
     address: Address,
@@ -744,10 +808,11 @@ impl PartialEq for TransactionOutput {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct StakeRegistration {
-    stake_credential: StakeCredential,
+    pub(crate) stake_credential: StakeCredential,
+    pub(crate) coin: Option<Coin>,
 }
 
 impl_to_from!(StakeRegistration);
@@ -758,19 +823,36 @@ impl StakeRegistration {
         self.stake_credential.clone()
     }
 
+    pub fn coin(&self) -> Option<Coin> {
+        self.coin.clone()
+    }
+
+    pub fn new_with_coin(stake_credential: &StakeCredential, coin: &Coin) -> Self {
+        Self {
+            stake_credential: stake_credential.clone(),
+            coin: Some(coin.clone()),
+        }
+    }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
+    }
+
     pub fn new(stake_credential: &StakeCredential) -> Self {
         Self {
             stake_credential: stake_credential.clone(),
+            coin: None,
         }
     }
 }
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct StakeDeregistration {
-    stake_credential: StakeCredential,
+    pub(crate) stake_credential: StakeCredential,
+    pub(crate) coin: Option<Coin>,
 }
 
 impl_to_from!(StakeDeregistration);
@@ -781,16 +863,32 @@ impl StakeDeregistration {
         self.stake_credential.clone()
     }
 
+    pub fn coin(&self) -> Option<Coin> {
+        self.coin.clone()
+    }
+
     pub fn new(stake_credential: &StakeCredential) -> Self {
         Self {
             stake_credential: stake_credential.clone(),
+            coin: None,
         }
+    }
+
+    pub fn new_with_coin(stake_credential: &StakeCredential, coin: &Coin) -> Self {
+        Self {
+            stake_credential: stake_credential.clone(),
+            coin: Some(coin.clone()),
+        }
+    }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
     }
 }
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct StakeDelegation {
     stake_credential: StakeCredential,
@@ -815,11 +913,15 @@ impl StakeDelegation {
             pool_keyhash: pool_keyhash.clone(),
         }
     }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
+    }
 }
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Ed25519KeyHashes(Vec<Ed25519KeyHash>);
 
@@ -854,7 +956,7 @@ impl Ed25519KeyHashes {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Relays(Vec<Relay>);
 
@@ -881,7 +983,7 @@ impl Relays {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PoolParams {
     operator: Ed25519KeyHash,
@@ -962,7 +1064,7 @@ impl PoolParams {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PoolRegistration {
     pool_params: PoolParams,
@@ -985,7 +1087,7 @@ impl PoolRegistration {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PoolRetirement {
     pool_keyhash: Ed25519KeyHash,
@@ -1014,7 +1116,7 @@ impl PoolRetirement {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct GenesisKeyDelegation {
     genesishash: GenesisHash,
@@ -1053,7 +1155,7 @@ impl GenesisKeyDelegation {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct MoveInstantaneousRewardsCert {
     move_instantaneous_reward: MoveInstantaneousReward,
@@ -1075,6 +1177,47 @@ impl MoveInstantaneousRewardsCert {
 }
 
 #[wasm_bindgen]
+#[derive(
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub struct VoteDelegation {
+    pub(crate) stake_credential: StakeCredential,
+    pub(crate) drep: DRep,
+}
+
+impl_to_from!(VoteDelegation);
+
+#[wasm_bindgen]
+impl VoteDelegation {
+    pub fn stake_credential(&self) -> StakeCredential {
+        self.stake_credential.clone()
+    }
+
+    pub fn drep(&self) -> DRep {
+        self.drep.clone()
+    }
+
+    pub fn new(stake_credential: &StakeCredential, drep: &DRep) -> Self {
+        Self {
+            stake_credential: stake_credential.clone(),
+            drep: drep.clone(),
+        }
+    }
+
+    pub fn has_script_credentials(&self) -> bool {
+        self.stake_credential.has_script_hash()
+    }
+}
+
+#[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum CertificateKind {
     StakeRegistration,
@@ -1084,10 +1227,21 @@ pub enum CertificateKind {
     PoolRetirement,
     GenesisKeyDelegation,
     MoveInstantaneousRewardsCert,
+    // TODO: add the rest of the certificates
+    CommitteeHotAuth,
+    CommitteeColdResign,
+    DrepDeregistration,
+    DrepRegistration,
+    DrepUpdate,
+    StakeAndVoteDelegation,
+    StakeRegistrationAndDelegation,
+    StakeVoteRegistrationAndDelegation,
+    VoteDelegation,
+    VoteRegistrationAndDelegation,
 }
 
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum CertificateEnum {
     StakeRegistration(StakeRegistration),
@@ -1097,11 +1251,21 @@ pub enum CertificateEnum {
     PoolRetirement(PoolRetirement),
     GenesisKeyDelegation(GenesisKeyDelegation),
     MoveInstantaneousRewardsCert(MoveInstantaneousRewardsCert),
+    CommitteeHotAuth(CommitteeHotAuth),
+    CommitteeColdResign(CommitteeColdResign),
+    DrepDeregistration(DrepDeregistration),
+    DrepRegistration(DrepRegistration),
+    DrepUpdate(DrepUpdate),
+    StakeAndVoteDelegation(StakeAndVoteDelegation),
+    StakeRegistrationAndDelegation(StakeRegistrationAndDelegation),
+    StakeVoteRegistrationAndDelegation(StakeVoteRegistrationAndDelegation),
+    VoteDelegation(VoteDelegation),
+    VoteRegistrationAndDelegation(VoteRegistrationAndDelegation),
 }
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Certificate(CertificateEnum);
 
@@ -1147,6 +1311,72 @@ impl Certificate {
         ))
     }
 
+    pub fn new_committee_hot_auth(
+        committee_hot_auth: &CommitteeHotAuth,
+    ) -> Self {
+        Self(CertificateEnum::CommitteeHotAuth(
+            committee_hot_auth.clone(),
+        ))
+    }
+
+    pub fn new_committee_cold_resign(
+        committee_cold_resign: &CommitteeColdResign,
+    ) -> Self {
+        Self(CertificateEnum::CommitteeColdResign(
+            committee_cold_resign.clone(),
+        ))
+    }
+
+    pub fn new_drep_deregistration(drep_deregistration: &DrepDeregistration) -> Self {
+        Self(CertificateEnum::DrepDeregistration(
+            drep_deregistration.clone(),
+        ))
+    }
+
+    pub fn new_drep_registration(drep_registration: &DrepRegistration) -> Self {
+        Self(CertificateEnum::DrepRegistration(drep_registration.clone()))
+    }
+
+    pub fn new_drep_update(drep_update: &DrepUpdate) -> Self {
+        Self(CertificateEnum::DrepUpdate(drep_update.clone()))
+    }
+
+    pub fn new_stake_and_vote_delegation(
+        stake_and_vote_delegation: &StakeAndVoteDelegation,
+    ) -> Self {
+        Self(CertificateEnum::StakeAndVoteDelegation(
+            stake_and_vote_delegation.clone(),
+        ))
+    }
+
+    pub fn new_stake_registration_and_delegation(
+        stake_registration_and_delegation: &StakeRegistrationAndDelegation,
+    ) -> Self {
+        Self(CertificateEnum::StakeRegistrationAndDelegation(
+            stake_registration_and_delegation.clone(),
+        ))
+    }
+
+    pub fn new_stake_vote_registration_and_delegation(
+        stake_vote_registration_and_delegation: &StakeVoteRegistrationAndDelegation,
+    ) -> Self {
+        Self(CertificateEnum::StakeVoteRegistrationAndDelegation(
+            stake_vote_registration_and_delegation.clone(),
+        ))
+    }
+
+    pub fn new_vote_delegation(vote_delegation: &VoteDelegation) -> Self {
+        Self(CertificateEnum::VoteDelegation(vote_delegation.clone()))
+    }
+
+    pub fn new_vote_registration_and_delegation(
+        vote_registration_and_delegation: &VoteRegistrationAndDelegation,
+    ) -> Self {
+        Self(CertificateEnum::VoteRegistrationAndDelegation(
+            vote_registration_and_delegation.clone(),
+        ))
+    }
+
     pub fn kind(&self) -> CertificateKind {
         match &self.0 {
             CertificateEnum::StakeRegistration(_) => CertificateKind::StakeRegistration,
@@ -1157,6 +1387,26 @@ impl Certificate {
             CertificateEnum::GenesisKeyDelegation(_) => CertificateKind::GenesisKeyDelegation,
             CertificateEnum::MoveInstantaneousRewardsCert(_) => {
                 CertificateKind::MoveInstantaneousRewardsCert
+            }
+            CertificateEnum::CommitteeHotAuth(_) => {
+                CertificateKind::CommitteeHotAuth
+            }
+            CertificateEnum::CommitteeColdResign(_) => {
+                CertificateKind::CommitteeColdResign
+            }
+            CertificateEnum::DrepDeregistration(_) => CertificateKind::DrepDeregistration,
+            CertificateEnum::DrepRegistration(_) => CertificateKind::DrepRegistration,
+            CertificateEnum::DrepUpdate(_) => CertificateKind::DrepUpdate,
+            CertificateEnum::StakeAndVoteDelegation(_) => CertificateKind::StakeAndVoteDelegation,
+            CertificateEnum::StakeRegistrationAndDelegation(_) => {
+                CertificateKind::StakeRegistrationAndDelegation
+            }
+            CertificateEnum::StakeVoteRegistrationAndDelegation(_) => {
+                CertificateKind::StakeVoteRegistrationAndDelegation
+            }
+            CertificateEnum::VoteDelegation(_) => CertificateKind::VoteDelegation,
+            CertificateEnum::VoteRegistrationAndDelegation(_) => {
+                CertificateKind::VoteRegistrationAndDelegation
             }
         }
     }
@@ -1209,7 +1459,105 @@ impl Certificate {
             _ => None,
         }
     }
+
+    pub fn as_committee_hot_auth(&self) -> Option<CommitteeHotAuth> {
+        match &self.0 {
+            CertificateEnum::CommitteeHotAuth(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_committee_cold_resign(&self) -> Option<CommitteeColdResign> {
+        match &self.0 {
+            CertificateEnum::CommitteeColdResign(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_drep_deregistration(&self) -> Option<DrepDeregistration> {
+        match &self.0 {
+            CertificateEnum::DrepDeregistration(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_drep_registration(&self) -> Option<DrepRegistration> {
+        match &self.0 {
+            CertificateEnum::DrepRegistration(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_drep_update(&self) -> Option<DrepUpdate> {
+        match &self.0 {
+            CertificateEnum::DrepUpdate(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_stake_and_vote_delegation(&self) -> Option<StakeAndVoteDelegation> {
+        match &self.0 {
+            CertificateEnum::StakeAndVoteDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_stake_registration_and_delegation(&self) -> Option<StakeRegistrationAndDelegation> {
+        match &self.0 {
+            CertificateEnum::StakeRegistrationAndDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_stake_vote_registration_and_delegation(
+        &self,
+    ) -> Option<StakeVoteRegistrationAndDelegation> {
+        match &self.0 {
+            CertificateEnum::StakeVoteRegistrationAndDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_vote_delegation(&self) -> Option<VoteDelegation> {
+        match &self.0 {
+            CertificateEnum::VoteDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_vote_registration_and_delegation(&self) -> Option<VoteRegistrationAndDelegation> {
+        match &self.0 {
+            CertificateEnum::VoteRegistrationAndDelegation(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn has_required_script_witness(&self) -> bool {
+        match &self.0 {
+            CertificateEnum::StakeRegistration(x) => {
+                if x.coin.is_some() {
+                    return x.has_script_credentials();
+                } else {
+                    return false;
+                }
+            }
+            CertificateEnum::StakeDeregistration(x) => x.has_script_credentials(),
+            CertificateEnum::StakeDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::VoteDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::StakeAndVoteDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::StakeRegistrationAndDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::StakeVoteRegistrationAndDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::VoteRegistrationAndDelegation(x) => x.has_script_credentials(),
+            CertificateEnum::CommitteeHotAuth(x) => x.has_script_credentials(),
+            CertificateEnum::CommitteeColdResign(x) => x.has_script_credentials(),
+            CertificateEnum::DrepRegistration(x) => x.has_script_credentials(),
+            CertificateEnum::DrepDeregistration(x) => x.has_script_credentials(),
+            CertificateEnum::DrepUpdate(x) => x.has_script_credentials(),
+            _ => false,
+        }
+    }
 }
+
 
 #[wasm_bindgen]
 #[derive(
@@ -1222,7 +1570,7 @@ impl Certificate {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub enum MIRPot {
     Reserves,
@@ -1230,7 +1578,7 @@ pub enum MIRPot {
 }
 
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum MIREnum {
     ToOtherPot(Coin),
@@ -1239,7 +1587,7 @@ pub enum MIREnum {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum MIRKind {
     ToOtherPot,
@@ -1249,7 +1597,7 @@ pub enum MIRKind {
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct MIRToStakeCredentials {
-    rewards: linked_hash_map::LinkedHashMap<StakeCredential, DeltaCoin>,
+    rewards: ritelinked::linked_hash_map::LinkedHashMap<StakeCredential, DeltaCoin>,
 }
 
 impl_to_from!(MIRToStakeCredentials);
@@ -1258,7 +1606,7 @@ impl_to_from!(MIRToStakeCredentials);
 impl MIRToStakeCredentials {
     pub fn new() -> Self {
         Self {
-            rewards: linked_hash_map::LinkedHashMap::new(),
+            rewards: ritelinked::linked_hash_map::LinkedHashMap::new(),
         }
     }
 
@@ -1275,11 +1623,10 @@ impl MIRToStakeCredentials {
     }
 
     pub fn keys(&self) -> StakeCredentials {
-        StakeCredentials(
+        StakeCredentials::from_iter(
             self.rewards
                 .iter()
                 .map(|(k, _v)| k.clone())
-                .collect::<Vec<StakeCredential>>(),
         )
     }
 }
@@ -1292,7 +1639,7 @@ impl serde::Serialize for MIRToStakeCredentials {
         let map = self
             .rewards
             .iter()
-            .collect::<std::collections::BTreeMap<_, _>>();
+            .collect::<alloc::collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }
@@ -1302,7 +1649,7 @@ impl<'de> serde::de::Deserialize<'de> for MIRToStakeCredentials {
     where
         D: serde::de::Deserializer<'de>,
     {
-        let map = <std::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
+        let map = <alloc::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
             deserializer,
         )?;
         Ok(Self {
@@ -1311,21 +1658,10 @@ impl<'de> serde::de::Deserialize<'de> for MIRToStakeCredentials {
     }
 }
 
-impl JsonSchema for MIRToStakeCredentials {
-    fn schema_name() -> String {
-        String::from("MIRToStakeCredentials")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        std::collections::BTreeMap::<GenesisHash, ProtocolParamUpdate>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        std::collections::BTreeMap::<GenesisHash, ProtocolParamUpdate>::is_referenceable()
-    }
-}
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct MoveInstantaneousReward {
     pot: MIRPot,
@@ -1380,7 +1716,7 @@ type Port = u16;
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Ipv4([u8; 4]);
 
@@ -1410,7 +1746,7 @@ impl Ipv4 {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Ipv6([u8; 16]);
 
@@ -1438,11 +1774,11 @@ impl Ipv6 {
     }
 }
 
-static URL_MAX_LEN: usize = 64;
+static URL_MAX_LEN: usize = 128;
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, Hash, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct URL(String);
 
@@ -1478,7 +1814,7 @@ static DNS_NAME_MAX_LEN: usize = 64;
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct DNSRecordAorAAAA(String);
 
@@ -1512,7 +1848,7 @@ impl DNSRecordAorAAAA {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct DNSRecordSRV(String);
 
@@ -1546,7 +1882,7 @@ impl DNSRecordSRV {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct SingleHostAddr {
     port: Option<Port>,
@@ -1581,7 +1917,7 @@ impl SingleHostAddr {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct SingleHostName {
     port: Option<Port>,
@@ -1610,7 +1946,7 @@ impl SingleHostName {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct MultiHostName {
     dns_name: DNSRecordSRV,
@@ -1640,7 +1976,7 @@ pub enum RelayKind {
 }
 
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum RelayEnum {
     SingleHostAddr(SingleHostAddr),
@@ -1650,7 +1986,7 @@ pub enum RelayEnum {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Relay(RelayEnum);
 
@@ -1702,7 +2038,7 @@ impl Relay {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PoolMetadata {
     url: URL,
@@ -1731,34 +2067,91 @@ impl PoolMetadata {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
 )]
-pub struct StakeCredentials(Vec<StakeCredential>);
+
+pub struct StakeCredentials {
+    pub(crate) credentials: Vec<StakeCredential>,
+    pub(crate) dedup: BTreeSet<StakeCredential>
+}
 
 impl_to_from!(StakeCredentials);
 
 #[wasm_bindgen]
 impl StakeCredentials {
     pub fn new() -> Self {
-        Self(Vec::new())
+        Self {
+            credentials: Vec::new(),
+            dedup: BTreeSet::new(),
+        }
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.credentials.len()
     }
 
     pub fn get(&self, index: usize) -> StakeCredential {
-        self.0[index].clone()
+        self.credentials[index].clone()
     }
 
     pub fn add(&mut self, elem: &StakeCredential) {
-        self.0.push(elem.clone());
+        if self.dedup.insert(elem.clone()) {
+            self.credentials.push(elem.clone());
+        }
+    }
+
+    pub(crate) fn add_move(&mut self, elem: StakeCredential) {
+        if self.dedup.insert(elem.clone()) {
+            self.credentials.push(elem);
+        }
+    }
+
+    pub(crate) fn contains(&self, elem: &StakeCredential) -> bool {
+        self.dedup.contains(elem)
+    }
+
+    pub(crate) fn from_vec(vec: Vec<StakeCredential>) -> Self {
+        let mut dedup = BTreeSet::new();
+        let mut credentials = Vec::new();
+        for elem in vec {
+            if dedup.insert(elem.clone()) {
+                credentials.push(elem);
+            }
+        }
+        Self {
+            credentials,
+            dedup
+        }
+    }
+
+    pub(crate) fn from_iter(iter: impl IntoIterator<Item = StakeCredential>) -> Self {
+        let mut dedup = BTreeSet::new();
+        let mut credentials = Vec::new();
+        for elem in iter {
+            if dedup.insert(elem.clone()) {
+                credentials.push(elem);
+            }
+        }
+        Self {
+            credentials,
+            dedup
+        }
+    }
+
+    pub(crate) fn to_vec(&self) -> &Vec<StakeCredential> {
+        &self.credentials
     }
 }
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct RewardAddresses(Vec<RewardAddress>);
 
@@ -1785,14 +2178,14 @@ impl RewardAddresses {
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Withdrawals(linked_hash_map::LinkedHashMap<RewardAddress, Coin>);
+pub struct Withdrawals(ritelinked::linked_hash_map::LinkedHashMap<RewardAddress, Coin>);
 
 impl_to_from!(Withdrawals);
 
 #[wasm_bindgen]
 impl Withdrawals {
     pub fn new() -> Self {
-        Self(linked_hash_map::LinkedHashMap::new())
+        Self(ritelinked::linked_hash_map::LinkedHashMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -1822,7 +2215,7 @@ impl serde::Serialize for Withdrawals {
     where
         S: serde::Serializer,
     {
-        let map = self.0.iter().collect::<std::collections::BTreeMap<_, _>>();
+        let map = self.0.iter().collect::<alloc::collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }
@@ -1832,27 +2225,15 @@ impl<'de> serde::de::Deserialize<'de> for Withdrawals {
     where
         D: serde::de::Deserializer<'de>,
     {
-        let map = <std::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
+        let map = <alloc::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
             deserializer,
         )?;
         Ok(Self(map.into_iter().collect()))
     }
 }
 
-impl JsonSchema for Withdrawals {
-    fn schema_name() -> String {
-        String::from("Withdrawals")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        std::collections::BTreeMap::<GenesisHash, ProtocolParamUpdate>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        std::collections::BTreeMap::<GenesisHash, ProtocolParamUpdate>::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionWitnessSet {
     vkeys: Option<Vkeywitnesses>,
     native_scripts: Option<NativeScripts>,
@@ -1928,7 +2309,7 @@ impl TransactionWitnessSet {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ScriptPubkey {
     addr_keyhash: Ed25519KeyHash,
@@ -1951,7 +2332,7 @@ impl ScriptPubkey {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ScriptAll {
     native_scripts: NativeScripts,
@@ -1974,7 +2355,7 @@ impl ScriptAll {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ScriptAny {
     native_scripts: NativeScripts,
@@ -1997,7 +2378,7 @@ impl ScriptAny {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ScriptNOfK {
     n: u32,
@@ -2026,7 +2407,7 @@ impl ScriptNOfK {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct TimelockStart {
     slot: SlotBigNum,
@@ -2070,7 +2451,7 @@ impl TimelockStart {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct TimelockExpiry {
     slot: SlotBigNum,
@@ -2118,7 +2499,7 @@ pub enum NativeScriptKind {
 }
 
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum NativeScriptEnum {
     ScriptPubkey(ScriptPubkey),
@@ -2130,7 +2511,7 @@ pub enum NativeScriptEnum {
 }
 
 #[derive(
-    Debug, Clone, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Debug, Clone, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum ScriptRefEnum {
     NativeScript(NativeScript),
@@ -2139,7 +2520,7 @@ pub enum ScriptRefEnum {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ScriptRef(ScriptRefEnum);
 
@@ -2185,7 +2566,7 @@ impl ScriptRef {
 }
 
 #[derive(
-    Debug, Clone, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Debug, Clone, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum DataOption {
     DataHash(DataHash),
@@ -2193,8 +2574,38 @@ pub enum DataOption {
 }
 
 #[wasm_bindgen]
+#[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd )]
+pub struct OutputDatum(pub(crate) DataOption);
+
+#[wasm_bindgen]
+impl OutputDatum {
+
+    pub fn new_data_hash(data_hash: &DataHash) -> Self {
+        Self(DataOption::DataHash(data_hash.clone()))
+    }
+
+    pub fn new_data(data: &PlutusData) -> Self {
+        Self(DataOption::Data(data.clone()))
+    }
+
+    pub fn data_hash(&self) -> Option<DataHash> {
+        match &self.0 {
+            DataOption::DataHash(data_hash) => Some(data_hash.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn data(&self) -> Option<PlutusData> {
+        match &self.0 {
+            DataOption::Data(data) => Some(data.clone()),
+            _ => None,
+        }
+    }
+}
+
+#[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct NativeScript(NativeScriptEnum);
 
@@ -2313,7 +2724,7 @@ impl NativeScript {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct NativeScripts(Vec<NativeScript>);
 
@@ -2353,7 +2764,7 @@ impl NoneOrEmpty for NativeScripts {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Update {
     proposed_protocol_parameter_updates: ProposedProtocolParameterUpdates,
@@ -2385,7 +2796,7 @@ impl Update {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct GenesisHashes(Vec<GenesisHash>);
 
@@ -2412,7 +2823,7 @@ impl GenesisHashes {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ScriptHashes(pub(crate) Vec<ScriptHash>);
 
@@ -2440,7 +2851,7 @@ impl ScriptHashes {
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct ProposedProtocolParameterUpdates(
-    linked_hash_map::LinkedHashMap<GenesisHash, ProtocolParamUpdate>,
+    ritelinked::linked_hash_map::LinkedHashMap<GenesisHash, ProtocolParamUpdate>,
 );
 
 impl serde::Serialize for ProposedProtocolParameterUpdates {
@@ -2448,7 +2859,7 @@ impl serde::Serialize for ProposedProtocolParameterUpdates {
     where
         S: serde::Serializer,
     {
-        let map = self.0.iter().collect::<std::collections::BTreeMap<_, _>>();
+        let map = self.0.iter().collect::<alloc::collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }
@@ -2458,22 +2869,10 @@ impl<'de> serde::de::Deserialize<'de> for ProposedProtocolParameterUpdates {
     where
         D: serde::de::Deserializer<'de>,
     {
-        let map = <std::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
+        let map = <alloc::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
             deserializer,
         )?;
         Ok(Self(map.into_iter().collect()))
-    }
-}
-
-impl JsonSchema for ProposedProtocolParameterUpdates {
-    fn schema_name() -> String {
-        String::from("ProposedProtocolParameterUpdates")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        std::collections::BTreeMap::<GenesisHash, ProtocolParamUpdate>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        std::collections::BTreeMap::<GenesisHash, ProtocolParamUpdate>::is_referenceable()
     }
 }
 
@@ -2482,7 +2881,7 @@ impl_to_from!(ProposedProtocolParameterUpdates);
 #[wasm_bindgen]
 impl ProposedProtocolParameterUpdates {
     pub fn new() -> Self {
-        Self(linked_hash_map::LinkedHashMap::new())
+        Self(ritelinked::linked_hash_map::LinkedHashMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -2513,7 +2912,15 @@ impl ProposedProtocolParameterUpdates {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct ProtocolVersion {
     major: u32,
@@ -2538,270 +2945,7 @@ impl ProtocolVersion {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
-pub struct ProtocolParamUpdate {
-    minfee_a: Option<Coin>,
-    minfee_b: Option<Coin>,
-    max_block_body_size: Option<u32>,
-    max_tx_size: Option<u32>,
-    max_block_header_size: Option<u32>,
-    key_deposit: Option<Coin>,
-    pool_deposit: Option<Coin>,
-    max_epoch: Option<Epoch>,
-    // desired number of stake pools
-    n_opt: Option<u32>,
-    pool_pledge_influence: Option<Rational>,
-    expansion_rate: Option<UnitInterval>,
-    treasury_growth_rate: Option<UnitInterval>,
-    // decentralization constant
-    d: Option<UnitInterval>,
-    extra_entropy: Option<Nonce>,
-    protocol_version: Option<ProtocolVersion>,
-    min_pool_cost: Option<Coin>,
-    ada_per_utxo_byte: Option<Coin>,
-    cost_models: Option<Costmdls>,
-    execution_costs: Option<ExUnitPrices>,
-    max_tx_ex_units: Option<ExUnits>,
-    max_block_ex_units: Option<ExUnits>,
-    max_value_size: Option<u32>,
-    collateral_percentage: Option<u32>,
-    max_collateral_inputs: Option<u32>,
-}
-
-impl_to_from!(ProtocolParamUpdate);
-
-#[wasm_bindgen]
-impl ProtocolParamUpdate {
-    pub fn set_minfee_a(&mut self, minfee_a: &Coin) {
-        self.minfee_a = Some(minfee_a.clone())
-    }
-
-    pub fn minfee_a(&self) -> Option<Coin> {
-        self.minfee_a.clone()
-    }
-
-    pub fn set_minfee_b(&mut self, minfee_b: &Coin) {
-        self.minfee_b = Some(minfee_b.clone())
-    }
-
-    pub fn minfee_b(&self) -> Option<Coin> {
-        self.minfee_b.clone()
-    }
-
-    pub fn set_max_block_body_size(&mut self, max_block_body_size: u32) {
-        self.max_block_body_size = Some(max_block_body_size)
-    }
-
-    pub fn max_block_body_size(&self) -> Option<u32> {
-        self.max_block_body_size.clone()
-    }
-
-    pub fn set_max_tx_size(&mut self, max_tx_size: u32) {
-        self.max_tx_size = Some(max_tx_size)
-    }
-
-    pub fn max_tx_size(&self) -> Option<u32> {
-        self.max_tx_size.clone()
-    }
-
-    pub fn set_max_block_header_size(&mut self, max_block_header_size: u32) {
-        self.max_block_header_size = Some(max_block_header_size)
-    }
-
-    pub fn max_block_header_size(&self) -> Option<u32> {
-        self.max_block_header_size.clone()
-    }
-
-    pub fn set_key_deposit(&mut self, key_deposit: &Coin) {
-        self.key_deposit = Some(key_deposit.clone())
-    }
-
-    pub fn key_deposit(&self) -> Option<Coin> {
-        self.key_deposit.clone()
-    }
-
-    pub fn set_pool_deposit(&mut self, pool_deposit: &Coin) {
-        self.pool_deposit = Some(pool_deposit.clone())
-    }
-
-    pub fn pool_deposit(&self) -> Option<Coin> {
-        self.pool_deposit.clone()
-    }
-
-    pub fn set_max_epoch(&mut self, max_epoch: Epoch) {
-        self.max_epoch = Some(max_epoch.clone())
-    }
-
-    pub fn max_epoch(&self) -> Option<Epoch> {
-        self.max_epoch.clone()
-    }
-
-    pub fn set_n_opt(&mut self, n_opt: u32) {
-        self.n_opt = Some(n_opt)
-    }
-
-    pub fn n_opt(&self) -> Option<u32> {
-        self.n_opt.clone()
-    }
-
-    pub fn set_pool_pledge_influence(&mut self, pool_pledge_influence: &Rational) {
-        self.pool_pledge_influence = Some(pool_pledge_influence.clone())
-    }
-
-    pub fn pool_pledge_influence(&self) -> Option<Rational> {
-        self.pool_pledge_influence.clone()
-    }
-
-    pub fn set_expansion_rate(&mut self, expansion_rate: &UnitInterval) {
-        self.expansion_rate = Some(expansion_rate.clone())
-    }
-
-    pub fn expansion_rate(&self) -> Option<UnitInterval> {
-        self.expansion_rate.clone()
-    }
-
-    pub fn set_treasury_growth_rate(&mut self, treasury_growth_rate: &UnitInterval) {
-        self.treasury_growth_rate = Some(treasury_growth_rate.clone())
-    }
-
-    pub fn treasury_growth_rate(&self) -> Option<UnitInterval> {
-        self.treasury_growth_rate.clone()
-    }
-
-    /// !!! DEPRECATED !!!
-    /// Since babbage era this param is outdated. But this param you can meet in a pre-babbage block.
-    #[deprecated(
-        since = "11.0.0",
-        note = "Since babbage era this param is outdated. But this param you can meet in a pre-babbage block."
-    )]
-    pub fn d(&self) -> Option<UnitInterval> {
-        self.d.clone()
-    }
-
-    /// !!! DEPRECATED !!!
-    /// Since babbage era this param is outdated. But this param you can meet in a pre-babbage block.
-    #[deprecated(
-        since = "11.0.0",
-        note = "Since babbage era this param is outdated. But this param you can meet in a pre-babbage block."
-    )]
-    pub fn extra_entropy(&self) -> Option<Nonce> {
-        self.extra_entropy.clone()
-    }
-
-    pub fn set_protocol_version(&mut self, protocol_version: &ProtocolVersion) {
-        self.protocol_version = Some(protocol_version.clone())
-    }
-
-    pub fn protocol_version(&self) -> Option<ProtocolVersion> {
-        self.protocol_version.clone()
-    }
-
-    pub fn set_min_pool_cost(&mut self, min_pool_cost: &Coin) {
-        self.min_pool_cost = Some(min_pool_cost.clone())
-    }
-
-    pub fn min_pool_cost(&self) -> Option<Coin> {
-        self.min_pool_cost.clone()
-    }
-
-    pub fn set_ada_per_utxo_byte(&mut self, ada_per_utxo_byte: &Coin) {
-        self.ada_per_utxo_byte = Some(ada_per_utxo_byte.clone())
-    }
-
-    pub fn ada_per_utxo_byte(&self) -> Option<Coin> {
-        self.ada_per_utxo_byte.clone()
-    }
-
-    pub fn set_cost_models(&mut self, cost_models: &Costmdls) {
-        self.cost_models = Some(cost_models.clone())
-    }
-
-    pub fn cost_models(&self) -> Option<Costmdls> {
-        self.cost_models.clone()
-    }
-
-    pub fn set_execution_costs(&mut self, execution_costs: &ExUnitPrices) {
-        self.execution_costs = Some(execution_costs.clone())
-    }
-
-    pub fn execution_costs(&self) -> Option<ExUnitPrices> {
-        self.execution_costs.clone()
-    }
-
-    pub fn set_max_tx_ex_units(&mut self, max_tx_ex_units: &ExUnits) {
-        self.max_tx_ex_units = Some(max_tx_ex_units.clone())
-    }
-
-    pub fn max_tx_ex_units(&self) -> Option<ExUnits> {
-        self.max_tx_ex_units.clone()
-    }
-
-    pub fn set_max_block_ex_units(&mut self, max_block_ex_units: &ExUnits) {
-        self.max_block_ex_units = Some(max_block_ex_units.clone())
-    }
-
-    pub fn max_block_ex_units(&self) -> Option<ExUnits> {
-        self.max_block_ex_units.clone()
-    }
-
-    pub fn set_max_value_size(&mut self, max_value_size: u32) {
-        self.max_value_size = Some(max_value_size.clone())
-    }
-
-    pub fn max_value_size(&self) -> Option<u32> {
-        self.max_value_size.clone()
-    }
-
-    pub fn set_collateral_percentage(&mut self, collateral_percentage: u32) {
-        self.collateral_percentage = Some(collateral_percentage)
-    }
-
-    pub fn collateral_percentage(&self) -> Option<u32> {
-        self.collateral_percentage.clone()
-    }
-
-    pub fn set_max_collateral_inputs(&mut self, max_collateral_inputs: u32) {
-        self.max_collateral_inputs = Some(max_collateral_inputs)
-    }
-
-    pub fn max_collateral_inputs(&self) -> Option<u32> {
-        self.max_collateral_inputs.clone()
-    }
-
-    pub fn new() -> Self {
-        Self {
-            minfee_a: None,
-            minfee_b: None,
-            max_block_body_size: None,
-            max_tx_size: None,
-            max_block_header_size: None,
-            key_deposit: None,
-            pool_deposit: None,
-            max_epoch: None,
-            n_opt: None,
-            pool_pledge_influence: None,
-            expansion_rate: None,
-            treasury_growth_rate: None,
-            d: None,
-            extra_entropy: None,
-            protocol_version: None,
-            min_pool_cost: None,
-            ada_per_utxo_byte: None,
-            cost_models: None,
-            execution_costs: None,
-            max_tx_ex_units: None,
-            max_block_ex_units: None,
-            max_value_size: None,
-            collateral_percentage: None,
-            max_collateral_inputs: None,
-        }
-    }
-}
-
-#[wasm_bindgen]
-#[derive(Clone, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct TransactionBodies(pub(crate) Vec<TransactionBody>);
 
 impl_to_from!(TransactionBodies);
@@ -2826,7 +2970,7 @@ impl TransactionBodies {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct TransactionWitnessSets(Vec<TransactionWitnessSet>);
 
 impl_to_from!(TransactionWitnessSets);
@@ -2854,12 +2998,12 @@ pub type TransactionIndexes = Vec<TransactionIndex>;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct AuxiliaryDataSet(linked_hash_map::LinkedHashMap<TransactionIndex, AuxiliaryData>);
+pub struct AuxiliaryDataSet(ritelinked::linked_hash_map::LinkedHashMap<TransactionIndex, AuxiliaryData>);
 
 #[wasm_bindgen]
 impl AuxiliaryDataSet {
     pub fn new() -> Self {
-        Self(linked_hash_map::LinkedHashMap::new())
+        Self(ritelinked::linked_hash_map::LinkedHashMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -2891,7 +3035,7 @@ impl serde::Serialize for AuxiliaryDataSet {
     where
         S: serde::Serializer,
     {
-        let map = self.0.iter().collect::<std::collections::BTreeMap<_, _>>();
+        let map = self.0.iter().collect::<alloc::collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }
@@ -2901,27 +3045,15 @@ impl<'de> serde::de::Deserialize<'de> for AuxiliaryDataSet {
     where
         D: serde::de::Deserializer<'de>,
     {
-        let map = <std::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
+        let map = <alloc::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
             deserializer,
         )?;
         Ok(Self(map.into_iter().collect()))
     }
 }
 
-impl JsonSchema for AuxiliaryDataSet {
-    fn schema_name() -> String {
-        String::from("AuxiliaryDataSet")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        std::collections::BTreeMap::<TransactionIndex, AuxiliaryData>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        std::collections::BTreeMap::<TransactionIndex, AuxiliaryData>::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
-#[derive(Clone, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Block {
     header: Header,
     transaction_bodies: TransactionBodies,
@@ -2972,7 +3104,7 @@ impl Block {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Header {
     header_body: HeaderBody,
     body_signature: KESSignature,
@@ -2999,7 +3131,7 @@ impl Header {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct OperationalCert {
     hot_vkey: KESVKey,
     sequence_number: u32,
@@ -3042,14 +3174,14 @@ impl OperationalCert {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum HeaderLeaderCertEnum {
     NonceAndLeader(VRFCert, VRFCert),
     VrfResult(VRFCert),
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct HeaderBody {
     block_number: u32,
     slot: SlotBigNum,
@@ -3299,21 +3431,9 @@ impl<'de> serde::de::Deserialize<'de> for AssetName {
     }
 }
 
-impl JsonSchema for AssetName {
-    fn schema_name() -> String {
-        String::from("AssetName")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct AssetNames(Vec<AssetName>);
 
@@ -3352,16 +3472,16 @@ pub type PolicyIDs = ScriptHashes;
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
-pub struct Assets(pub(crate) std::collections::BTreeMap<AssetName, BigNum>);
+pub struct Assets(pub(crate) alloc::collections::BTreeMap<AssetName, BigNum>);
 
 impl_to_from!(Assets);
 
 #[wasm_bindgen]
 impl Assets {
     pub fn new() -> Self {
-        Self(std::collections::BTreeMap::new())
+        Self(alloc::collections::BTreeMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -3387,15 +3507,15 @@ impl Assets {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, Ord, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
-pub struct MultiAsset(pub(crate) std::collections::BTreeMap<PolicyID, Assets>);
+#[derive(Clone, Debug, Eq, Ord, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct MultiAsset(pub(crate) alloc::collections::BTreeMap<PolicyID, Assets>);
 
 impl_to_from!(MultiAsset);
 
 #[wasm_bindgen]
 impl MultiAsset {
     pub fn new() -> Self {
-        Self(std::collections::BTreeMap::new())
+        Self(alloc::collections::BTreeMap::new())
     }
 
     /// the number of unique policy IDs in the multiasset
@@ -3546,14 +3666,14 @@ impl MintsAssets {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
-pub struct MintAssets(std::collections::BTreeMap<AssetName, Int>);
+pub struct MintAssets(alloc::collections::BTreeMap<AssetName, Int>);
 
 #[wasm_bindgen]
 impl MintAssets {
     pub fn new() -> Self {
-        Self(std::collections::BTreeMap::new())
+        Self(alloc::collections::BTreeMap::new())
     }
 
     pub fn new_from_entry(key: &AssetName, value: Int) -> Self {
@@ -3586,7 +3706,7 @@ impl MintAssets {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Mint(Vec<(PolicyID, MintAssets)>);
 
@@ -3694,7 +3814,7 @@ impl Mint {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub enum NetworkIdKind {
     Testnet,
@@ -3712,7 +3832,7 @@ pub enum NetworkIdKind {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub struct NetworkId(NetworkIdKind);
 

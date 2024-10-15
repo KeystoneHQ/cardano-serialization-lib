@@ -1,6 +1,6 @@
 use crate::error::JsError;
 use crate::*;
-use std::io::{Seek, SeekFrom};
+use core2::io::{Seek, SeekFrom};
 
 #[wasm_bindgen]
 pub struct FixedTransaction {
@@ -61,8 +61,8 @@ impl FixedTransaction {
         })
     }
 
-    pub fn body(&self) -> TransactionBody {
-        self.body.clone()
+    pub fn body(&self) -> &TransactionBody {
+        &self.body
     }
 
     pub fn raw_body(&self) -> Vec<u8> {
@@ -83,8 +83,8 @@ impl FixedTransaction {
         Ok(())
     }
 
-    pub fn witness_set(&self) -> TransactionWitnessSet {
-        self.witness_set.clone()
+    pub fn witness_set(&self) -> &TransactionWitnessSet {
+        &self.witness_set
     }
 
     pub fn raw_witness_set(&self) -> Vec<u8> {

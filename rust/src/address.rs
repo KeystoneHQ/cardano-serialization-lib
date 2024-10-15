@@ -1,7 +1,8 @@
+use alloc::format;
 use super::*;
 use crate::legacy_address::ExtendedAddr;
-use bech32::ToBase32;
-use ed25519_bip32::XPub;
+use bech32::{ToBase32, Variant};
+use ed25519_bip32_core::XPub;
 
 // returns (Number represented, bytes read) if valid encoding
 // or None if decoding prematurely finished
@@ -92,7 +93,7 @@ impl NetworkInfo {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
+
 )]
 pub enum StakeCredType {
     Key(Ed25519KeyHash),
@@ -118,7 +119,6 @@ pub enum StakeCredKind {
     PartialOrd,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
 )]
 pub struct StakeCredential(pub(crate) StakeCredType);
 
@@ -150,6 +150,13 @@ impl StakeCredential {
         match &self.0 {
             StakeCredType::Key(_) => StakeCredKind::Key,
             StakeCredType::Script(_) => StakeCredKind::Script,
+        }
+    }
+
+    pub fn has_script_hash(&self) -> bool {
+        match &self.0 {
+            StakeCredType::Key(_) => false,
+            StakeCredType::Script(_) => true,
         }
     }
 
@@ -193,19 +200,18 @@ impl Deserialize for StakeCredential {
                         len,
                         "[id, hash]",
                     ))
-                    .into());
+                        .into());
                 }
             }
             let cred_type = match raw.unsigned_integer()? {
                 0 => StakeCredType::Key(Ed25519KeyHash::deserialize(raw)?),
                 1 => StakeCredType::Script(ScriptHash::deserialize(raw)?),
                 n => {
-                    return Err(DeserializeFailure::FixedValueMismatch {
+                    return Err(DeserializeFailure::FixedValuesMismatch {
                         found: Key::Uint(n),
-                        // TODO: change codegen to make FixedValueMismatch support Vec<Key> or ranges or something
-                        expected: Key::Uint(0),
+                        expected: vec![Key::Uint(0), Key::Uint(1)],
                     }
-                    .into())
+                        .into());
                 }
             };
             if let cbor_event::Len::Indefinite = len {
@@ -215,7 +221,7 @@ impl Deserialize for StakeCredential {
             }
             Ok(StakeCredential(cred_type))
         })()
-        .map_err(|e| e.annotate("StakeCredential"))
+            .map_err(|e| e.annotate("StakeCredential"))
     }
 }
 
@@ -242,7 +248,7 @@ impl ByronAddress {
         addr_bytes.finalize()
     }
     pub fn from_bytes(bytes: Vec<u8>) -> Result<ByronAddress, JsError> {
-        let mut raw = Deserializer::from(std::io::Cursor::new(bytes));
+        let mut raw = Deserializer::from(core2::io::Cursor::new(bytes));
         let extended_addr = ExtendedAddr::deserialize(&mut raw)?;
         Ok(ByronAddress(extended_addr))
     }
@@ -291,7 +297,7 @@ impl ByronAddress {
     }
 
     pub fn from_base58(s: &str) -> Result<ByronAddress, JsError> {
-        use std::str::FromStr;
+        use core::str::FromStr;
         ExtendedAddr::from_str(s)
             .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
             .map(ByronAddress)
@@ -315,7 +321,7 @@ impl ByronAddress {
     }
 
     pub fn is_valid(s: &str) -> bool {
-        use std::str::FromStr;
+        use core::str::FromStr;
         match ExtendedAddr::from_str(s) {
             Ok(_v) => true,
             Err(_err) => false,
@@ -366,18 +372,6 @@ impl<'de> serde::de::Deserialize<'de> for Address {
                 &"bech32 address string",
             )
         })
-    }
-}
-
-impl JsonSchema for Address {
-    fn schema_name() -> String {
-        String::from("Address")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
 
@@ -436,7 +430,7 @@ impl Address {
     }
 
     fn from_bytes_impl(data: &[u8]) -> Result<Address, DeserializeError> {
-        use std::convert::TryInto;
+        use core::convert::TryInto;
         // header has 4 bits addr type discrim then 4 bits network discrim.
         // Copied from shelley.cddl:
         //
@@ -595,12 +589,12 @@ impl Address {
                 format!("{}{}", prefix_header, prefix_tail)
             }
         };
-        bech32::encode(&final_prefix, self.to_bytes().to_base32())
+        bech32::encode(&final_prefix, self.to_bytes().to_base32(), Variant::Bech32)
             .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
     }
 
     pub fn from_bech32(bech_str: &str) -> Result<Address, JsError> {
-        let (_hrp, u5data) =
+        let (_hrp, u5data, _v) =
             bech32::decode(bech_str).map_err(|e| JsError::from_str(&e.to_string()))?;
         let data: Vec<u8> = bech32::FromBase32::from_base32(&u5data).unwrap();
         Ok(Self::from_bytes_impl(data.as_ref())?)
@@ -763,18 +757,6 @@ impl<'de> serde::de::Deserialize<'de> for RewardAddress {
                 &"bech32 reward address string",
             )),
         }
-    }
-}
-
-impl JsonSchema for RewardAddress {
-    fn schema_name() -> String {
-        String::from("RewardAddress")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
 

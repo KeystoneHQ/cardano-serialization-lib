@@ -1,9 +1,24 @@
+use alloc::borrow::ToOwned;
+use alloc::format;
 use super::*;
 use crate::utils::*;
 use address::*;
 use crypto::*;
 use error::*;
-use std::io::{Seek, SeekFrom};
+use core2::io::{Seek, SeekFrom};
+use certificate_index_names::CertificateIndexNames;
+
+pub(super) fn check_len_indefinite<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    len: cbor_event::Len,
+) -> Result<(), DeserializeError> {
+    if let cbor_event::Len::Indefinite = len {
+        if raw.special()? != CBORSpecial::Break {
+            return Err(DeserializeFailure::EndingBreakMissing.into());
+        }
+    }
+    Ok(())
+}
 
 // This file was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen
@@ -393,6 +408,10 @@ impl Deserialize for TransactionBody {
             let mut collateral_return = None;
             let mut total_collateral = None;
             let mut reference_inputs = None;
+            let mut voting_procedures = None;
+            let mut voting_proposals = None;
+            let mut current_treasury_value = None;
+            let mut donation = None;
             let mut read = 0;
             while match len {
                 cbor_event::Len::Len(n) => read < n as usize,
@@ -408,7 +427,7 @@ impl Deserialize for TransactionBody {
                                 (|| -> Result<_, DeserializeError> {
                                     Ok(TransactionInputs::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("inputs"))?,
+                                    .map_err(|e| e.annotate("inputs"))?,
                             );
                         }
                         1 => {
@@ -419,7 +438,7 @@ impl Deserialize for TransactionBody {
                                 (|| -> Result<_, DeserializeError> {
                                     Ok(TransactionOutputs::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("outputs"))?,
+                                    .map_err(|e| e.annotate("outputs"))?,
                             );
                         }
                         2 => {
@@ -431,7 +450,7 @@ impl Deserialize for TransactionBody {
                                     (|| -> Result<_, DeserializeError> {
                                         Ok(Coin::deserialize(raw)?)
                                     })()
-                                    .map_err(|e| e.annotate("fee"))?,
+                                        .map_err(|e| e.annotate("fee"))?,
                                 );
                         }
                         3 => {
@@ -443,7 +462,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(SlotBigNum::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("ttl"))?,
+                                    .map_err(|e| e.annotate("ttl"))?,
                             );
                         }
                         4 => {
@@ -455,7 +474,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Certificates::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("certs"))?,
+                                    .map_err(|e| e.annotate("certs"))?,
                             );
                         }
                         5 => {
@@ -467,7 +486,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Withdrawals::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("withdrawals"))?,
+                                    .map_err(|e| e.annotate("withdrawals"))?,
                             );
                         }
                         6 => {
@@ -479,7 +498,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Update::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("update"))?,
+                                    .map_err(|e| e.annotate("update"))?,
                             );
                         }
                         7 => {
@@ -491,7 +510,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(AuxiliaryDataHash::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("auxiliary_data_hash"))?,
+                                    .map_err(|e| e.annotate("auxiliary_data_hash"))?,
                             );
                         }
                         8 => {
@@ -503,7 +522,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(SlotBigNum::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("validity_start_interval"))?,
+                                    .map_err(|e| e.annotate("validity_start_interval"))?,
                             );
                         }
                         9 => {
@@ -515,7 +534,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Mint::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("mint"))?,
+                                    .map_err(|e| e.annotate("mint"))?,
                             );
                         }
                         11 => {
@@ -527,7 +546,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(ScriptDataHash::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("script_data_hash"))?,
+                                    .map_err(|e| e.annotate("script_data_hash"))?,
                             );
                         }
                         13 => {
@@ -539,7 +558,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(TransactionInputs::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("collateral"))?,
+                                    .map_err(|e| e.annotate("collateral"))?,
                             );
                         }
                         14 => {
@@ -549,9 +568,9 @@ impl Deserialize for TransactionBody {
                             required_signers = Some(
                                 (|| -> Result<_, DeserializeError> {
                                     read_len.read_elems(1)?;
-                                    Ok(RequiredSigners::deserialize(raw)?)
+                                    Ok(Ed25519KeyHashes::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("required_signers"))?,
+                                    .map_err(|e| e.annotate("required_signers"))?,
                             );
                         }
                         15 => {
@@ -563,7 +582,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(NetworkId::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("network_id"))?,
+                                    .map_err(|e| e.annotate("network_id"))?,
                             );
                         }
                         16 => {
@@ -575,7 +594,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(TransactionOutput::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("collateral_return"))?,
+                                    .map_err(|e| e.annotate("collateral_return"))?,
                             );
                         }
                         17 => {
@@ -587,7 +606,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Coin::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("total_collateral"))?,
+                                    .map_err(|e| e.annotate("total_collateral"))?,
                             );
                         }
                         18 => {
@@ -599,7 +618,55 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(TransactionInputs::deserialize(raw)?)
                                 })()
-                                .map_err(|e| e.annotate("reference_inputs"))?,
+                                    .map_err(|e| e.annotate("reference_inputs"))?,
+                            );
+                        }
+                        19 => {
+                            if voting_procedures.is_some() {
+                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(19)).into());
+                            }
+                            voting_procedures = Some(
+                                (|| -> Result<_, DeserializeError> {
+                                    read_len.read_elems(1)?;
+                                    Ok(VotingProcedures::deserialize(raw)?)
+                                })()
+                                    .map_err(|e| e.annotate("voting_procedures"))?,
+                            );
+                        }
+                        20 => {
+                            if voting_proposals.is_some() {
+                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(20)).into());
+                            }
+                            voting_proposals = Some(
+                                (|| -> Result<_, DeserializeError> {
+                                    read_len.read_elems(1)?;
+                                    Ok(VotingProposals::deserialize(raw)?)
+                                })()
+                                    .map_err(|e| e.annotate("voting_proposals"))?,
+                            );
+                        }
+                        21 => {
+                            if current_treasury_value.is_some() {
+                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(21)).into());
+                            }
+                            current_treasury_value = Some(
+                                (|| -> Result<_, DeserializeError> {
+                                    read_len.read_elems(1)?;
+                                    Ok(Coin::deserialize(raw)?)
+                                })()
+                                    .map_err(|e| e.annotate("current_treasury_value"))?,
+                            );
+                        }
+                        22 => {
+                            if donation.is_some() {
+                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(22)).into());
+                            }
+                            donation = Some(
+                                (|| -> Result<_, DeserializeError> {
+                                    read_len.read_elems(1)?;
+                                    Ok(Coin::deserialize(raw)?)
+                                })()
+                                    .map_err(|e| e.annotate("donation"))?,
                             );
                         }
                         unknown_key => {
@@ -613,7 +680,7 @@ impl Deserialize for TransactionBody {
                             return Err(DeserializeFailure::UnknownKey(Key::Str(
                                 unknown_key.to_owned(),
                             ))
-                            .into())
+                                .into())
                         }
                     },
                     CBORType::Special => match len {
@@ -662,9 +729,13 @@ impl Deserialize for TransactionBody {
                 collateral_return,
                 total_collateral,
                 reference_inputs,
+                voting_procedures,
+                voting_proposals,
+                donation,
+                current_treasury_value,
             })
         })()
-        .map_err(|e| e.annotate("TransactionBody"))
+            .map_err(|e| e.annotate("TransactionBody"))
     }
 }
 
@@ -1120,53 +1191,67 @@ impl SerializeEmbeddedGroup for StakeRegistration {
     }
 }
 
-impl Deserialize for StakeRegistration {
-    fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            let len = raw.array()?;
-            let ret = Self::deserialize_as_embedded_group(raw, len);
-            match len {
-                cbor_event::Len::Len(_) =>
-                /* TODO: check finite len somewhere */
-                {
-                    ()
-                }
-                cbor_event::Len::Indefinite => match raw.special()? {
-                    CBORSpecial::Break =>
-                    /* it's ok */
-                    {
-                        ()
-                    }
-                    _ => return Err(DeserializeFailure::EndingBreakMissing.into()),
-                },
-            }
-            ret
-        })()
-        .map_err(|e| e.annotate("StakeRegistration"))
-    }
+impl_deserialize_for_wrapped_tuple!(StakeRegistration);
+
+fn deserialize_legacy<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: cbor_event::Len,
+) -> Result<StakeRegistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        return Ok(StakeRegistration {
+            stake_credential,
+            coin: None,
+        });
+    })()
+    .map_err(|e| e.annotate("StakeRegistration (legacy)"))
+}
+
+fn deserialize_conway<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: cbor_event::Len,
+) -> Result<StakeRegistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin"))?;
+
+        return Ok(StakeRegistration {
+            stake_credential,
+            coin: Some(coin),
+        });
+    })()
+    .map_err(|e| e.annotate("StakeRegistration (conway)"))
 }
 
 impl DeserializeEmbeddedGroup for StakeRegistration {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
-        _: cbor_event::Len,
+        len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            let index_0_value = raw.unsigned_integer()?;
-            if index_0_value != 0 {
-                return Err(DeserializeFailure::FixedValueMismatch {
-                    found: Key::Uint(index_0_value),
-                    expected: Key::Uint(0),
-                }
-                .into());
+        let cert_index = raw.unsigned_integer()?;
+        let index_enum = CertificateIndexNames::from_u64(cert_index);
+        match index_enum {
+            Some(CertificateIndexNames::StakeRegistrationLegacy) => {
+                deserialize_legacy(raw, cert_index, len)
             }
-            Ok(())
-        })()
-        .map_err(|e| e.annotate("index_0"))?;
-        let stake_credential =
-            (|| -> Result<_, DeserializeError> { Ok(StakeCredential::deserialize(raw)?) })()
-                .map_err(|e| e.annotate("stake_credential"))?;
-        Ok(StakeRegistration { stake_credential })
+            Some(CertificateIndexNames::StakeRegistrationConway) => {
+                deserialize_conway(raw, cert_index, len)
+            }
+            _ => Err(DeserializeFailure::FixedValuesMismatch {
+                found: Key::Uint(cert_index),
+                expected: vec![
+                    Key::OptUint(CertificateIndexNames::StakeRegistrationLegacy.to_u64()),
+                    Key::OptUint(CertificateIndexNames::StakeRegistrationConway.to_u64()),
+                ],
+            })
+            .map_err(|e| DeserializeError::from(e).annotate("cert_index")),
+        }
     }
 }
 
@@ -1175,9 +1260,41 @@ impl cbor_event::se::Serialize for StakeDeregistration {
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        serializer.write_array(cbor_event::Len::Len(2))?;
-        self.serialize_as_embedded_group(serializer)
+        if self.coin.is_some() {
+            serialize_as_conway(self, serializer)
+        } else {
+            serialize_as_legacy(self, serializer)
+        }
     }
+}
+
+fn serialize_as_legacy<'se, W: Write>(
+    cert: &StakeDeregistration,
+    serializer: &'se mut Serializer<W>,
+) -> cbor_event::Result<&'se mut Serializer<W>> {
+    serializer.write_array(cbor_event::Len::Len(2))?;
+
+    let proposal_index = CertificateIndexNames::StakeDeregistrationLegacy.to_u64();
+    serialize_and_check_index(serializer, proposal_index, "StakeDeregistrationLegacy")?;
+
+    cert.stake_credential.serialize(serializer)?;
+    Ok(serializer)
+}
+
+fn serialize_as_conway<'se, W: Write>(
+    cert: &StakeDeregistration,
+    serializer: &'se mut Serializer<W>,
+) -> cbor_event::Result<&'se mut Serializer<W>> {
+    serializer.write_array(cbor_event::Len::Len(3))?;
+
+    let proposal_index = CertificateIndexNames::StakeDeregistrationConway.to_u64();
+    serialize_and_check_index(serializer, proposal_index, "StakeDeregistrationConway")?;
+
+    cert.stake_credential.serialize(serializer)?;
+    if let Some(coin) = cert.coin {
+        coin.serialize(serializer)?;
+    }
+    Ok(serializer)
 }
 
 impl SerializeEmbeddedGroup for StakeDeregistration {
@@ -1217,27 +1334,73 @@ impl Deserialize for StakeDeregistration {
     }
 }
 
+fn deserialize_stake_deregistrationlegacy<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: cbor_event::Len,
+) -> Result<StakeDeregistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        check_len(len, 2, "(cert_index, stake_credential)")?;
+        let desired_index = CertificateIndexNames::StakeDeregistrationLegacy.to_u64();
+        check_index(cert_index, desired_index, "cert_index")?;
+
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        return Ok(StakeDeregistration {
+            stake_credential,
+            coin: None,
+        });
+    })()
+    .map_err(|e| e.annotate("StakeDeregistration (legacy)"))
+}
+
+fn deserialize_stake_deregistration_conway<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    cert_index: u64,
+    len: cbor_event::Len,
+) -> Result<StakeDeregistration, DeserializeError> {
+    (|| -> Result<_, DeserializeError> {
+        check_len(len, 3, "(cert_index, stake_credential, coin)")?;
+        let desired_index = CertificateIndexNames::StakeDeregistrationConway.to_u64();
+        check_index(cert_index, desired_index, "cert_index")?;
+
+        let stake_credential =
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential"))?;
+
+        let coin = Coin::deserialize(raw).map_err(|e| e.annotate("coin"))?;
+
+        return Ok(StakeDeregistration {
+            stake_credential,
+            coin: Some(coin),
+        });
+    })()
+    .map_err(|e| e.annotate("StakeDeregistration (conway)"))
+}
+
 impl DeserializeEmbeddedGroup for StakeDeregistration {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
-        _: cbor_event::Len,
+        len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            let index_0_value = raw.unsigned_integer()?;
-            if index_0_value != 1 {
-                return Err(DeserializeFailure::FixedValueMismatch {
-                    found: Key::Uint(index_0_value),
-                    expected: Key::Uint(1),
-                }
-                .into());
+        let cert_index = raw.unsigned_integer()?;
+        let index_enum = CertificateIndexNames::from_u64(cert_index);
+        match index_enum {
+            Some(CertificateIndexNames::StakeDeregistrationLegacy) => {
+                deserialize_stake_deregistrationlegacy(raw, cert_index, len)
             }
-            Ok(())
-        })()
-        .map_err(|e| e.annotate("index_0"))?;
-        let stake_credential =
-            (|| -> Result<_, DeserializeError> { Ok(StakeCredential::deserialize(raw)?) })()
-                .map_err(|e| e.annotate("stake_credential"))?;
-        Ok(StakeDeregistration { stake_credential })
+            Some(CertificateIndexNames::StakeDeregistrationConway) => {
+                deserialize_stake_deregistration_conway(raw, cert_index, len)
+            }
+            _ => Err(DeserializeFailure::FixedValuesMismatch {
+                found: Key::Uint(cert_index),
+                expected: vec![
+                    Key::OptUint(CertificateIndexNames::StakeDeregistrationLegacy.to_u64()),
+                    Key::OptUint(CertificateIndexNames::StakeDeregistrationConway.to_u64()),
+                ],
+            })
+            .map_err(|e| DeserializeError::from(e).annotate("cert_index")),
+        }
     }
 }
 
@@ -1816,6 +1979,16 @@ impl cbor_event::se::Serialize for CertificateEnum {
             CertificateEnum::PoolRetirement(x) => x.serialize(serializer),
             CertificateEnum::GenesisKeyDelegation(x) => x.serialize(serializer),
             CertificateEnum::MoveInstantaneousRewardsCert(x) => x.serialize(serializer),
+            CertificateEnum::CommitteeHotAuth(x) => x.serialize(serializer),
+            CertificateEnum::CommitteeColdResign(x) => x.serialize(serializer),
+            CertificateEnum::DrepRegistration(x) => x.serialize(serializer),
+            CertificateEnum::DrepDeregistration(x) => x.serialize(serializer),
+            CertificateEnum::DrepUpdate(x) => x.serialize(serializer),
+            CertificateEnum::StakeAndVoteDelegation(x) => x.serialize(serializer),
+            CertificateEnum::StakeRegistrationAndDelegation(x) => x.serialize(serializer),
+            CertificateEnum::StakeVoteRegistrationAndDelegation(x) => x.serialize(serializer),
+            CertificateEnum::VoteDelegation(x) => x.serialize(serializer),
+            CertificateEnum::VoteRegistrationAndDelegation(x) => x.serialize(serializer),
         }
     }
 }
@@ -1846,92 +2019,114 @@ impl Deserialize for CertificateEnum {
     }
 }
 
+fn get_cert_index<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<u64, DeserializeError> {
+    let initial_position = raw
+        .as_mut_ref()
+        .seek(SeekFrom::Current(0))
+        .map_err(|err| DeserializeFailure::IoError(err.to_string()))?;
+    let index = raw.unsigned_integer()?;
+    raw.as_mut_ref()
+        .seek(SeekFrom::Start(initial_position))
+        .map_err(|err| DeserializeFailure::IoError(err.to_string()))?;
+    Ok(index)
+}
+
 impl DeserializeEmbeddedGroup for CertificateEnum {
     fn deserialize_as_embedded_group<R: BufRead + Seek>(
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        let initial_position = raw.as_mut_ref().seek(SeekFrom::Current(0)).unwrap();
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(StakeRegistration::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::StakeRegistration(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(StakeDeregistration::deserialize_as_embedded_group(
-                raw, len,
-            )?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::StakeDeregistration(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(StakeDelegation::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::StakeDelegation(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(PoolRegistration::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::PoolRegistration(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(PoolRetirement::deserialize_as_embedded_group(raw, len)?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::PoolRetirement(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(GenesisKeyDelegation::deserialize_as_embedded_group(
-                raw, len,
-            )?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::GenesisKeyDelegation(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        match (|raw: &mut Deserializer<_>| -> Result<_, DeserializeError> {
-            Ok(MoveInstantaneousRewardsCert::deserialize_as_embedded_group(
-                raw, len,
-            )?)
-        })(raw)
-        {
-            Ok(variant) => return Ok(CertificateEnum::MoveInstantaneousRewardsCert(variant)),
-            Err(_) => raw
-                .as_mut_ref()
-                .seek(SeekFrom::Start(initial_position))
-                .unwrap(),
-        };
-        Err(DeserializeError::new(
-            "CertificateEnum",
-            DeserializeFailure::NoVariantMatched.into(),
-        ))
+        let cert_index = get_cert_index(raw)?;
+        let index_enum =
+            CertificateIndexNames::from_u64(cert_index).ok_or(DeserializeError::new(
+                "CertificateEnum",
+                DeserializeFailure::UnknownKey(Key::Uint(cert_index)),
+            ))?;
+
+        match index_enum {
+            CertificateIndexNames::StakeRegistrationLegacy => {
+                Ok(CertificateEnum::StakeRegistration(
+                    StakeRegistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeRegistrationConway => {
+                Ok(CertificateEnum::StakeRegistration(
+                    StakeRegistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeDeregistrationLegacy => {
+                Ok(CertificateEnum::StakeDeregistration(
+                    StakeDeregistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeDeregistrationConway => {
+                Ok(CertificateEnum::StakeDeregistration(
+                    StakeDeregistration::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeDelegation => Ok(CertificateEnum::StakeDelegation(
+                StakeDelegation::deserialize_as_embedded_group(raw, len)?,
+            )),
+
+            CertificateIndexNames::PoolRegistration => Ok(CertificateEnum::PoolRegistration(
+                PoolRegistration::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::PoolRetirement => Ok(CertificateEnum::PoolRetirement(
+                PoolRetirement::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::GenesisKeyDelegation => {
+                Ok(CertificateEnum::GenesisKeyDelegation(
+                    GenesisKeyDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::MoveInstantaneousRewardsCert => {
+                Ok(CertificateEnum::MoveInstantaneousRewardsCert(
+                    MoveInstantaneousRewardsCert::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::CommitteeHotAuth => {
+                Ok(CertificateEnum::CommitteeHotAuth(
+                    CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::CommitteeColdResign => {
+                Ok(CertificateEnum::CommitteeColdResign(
+                    CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::DrepRegistration => Ok(CertificateEnum::DrepRegistration(
+                DrepRegistration::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::DrepDeregistration => Ok(CertificateEnum::DrepDeregistration(
+                DrepDeregistration::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::DrepUpdate => Ok(CertificateEnum::DrepUpdate(
+                DrepUpdate::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::StakeAndVoteDelegation => {
+                Ok(CertificateEnum::StakeAndVoteDelegation(
+                    StakeAndVoteDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeRegistrationAndDelegation => {
+                Ok(CertificateEnum::StakeRegistrationAndDelegation(
+                    StakeRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::StakeVoteRegistrationAndDelegation => {
+                Ok(CertificateEnum::StakeVoteRegistrationAndDelegation(
+                    StakeVoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+            CertificateIndexNames::VoteDelegation => Ok(CertificateEnum::VoteDelegation(
+                VoteDelegation::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::VoteRegistrationAndDelegation => {
+                Ok(CertificateEnum::VoteRegistrationAndDelegation(
+                    VoteRegistrationAndDelegation::deserialize_as_embedded_group(raw, len)?,
+                ))
+            }
+        }
     }
 }
 
@@ -1950,38 +2145,103 @@ impl Deserialize for Certificate {
     }
 }
 
+impl serde::Serialize for StakeCredentials {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+    {
+        self.credentials.serialize(serializer)
+    }
+}
+
+impl<'de> serde::de::Deserialize<'de> for StakeCredentials {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::de::Deserializer<'de>,
+    {
+        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(
+            deserializer,
+        )?;
+        Ok(Self::from_vec(vec))
+    }
+}
+
 impl cbor_event::se::Serialize for StakeCredentials {
     fn serialize<'se, W: Write>(
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        serializer.write_array(cbor_event::Len::Len(self.0.len() as u64))?;
-        for element in &self.0 {
+        //TODO: uncomment this line when we conway ero will come
+        //serializer.write_tag(258)?;
+        serializer.write_array(cbor_event::Len::Len(self.len() as u64))?;
+        for element in self.to_vec() {
             element.serialize(serializer)?;
         }
         Ok(serializer)
     }
 }
 
+pub(super) fn skip_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    tag: u64,
+) -> Result<(), DeserializeError> {
+    if let Ok(extracted_tag) = raw.tag() {
+        if extracted_tag != tag {
+            return Err(DeserializeError::new(
+                "skip_tag",
+                DeserializeFailure::TagMismatch {
+                    found: extracted_tag,
+                    expected: tag,
+                },
+            ));
+        }
+        return Ok(());
+    }
+    Ok(())
+}
+
+pub(super) fn skip_set_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+) -> Result<(), DeserializeError> {
+    skip_tag(raw, 258)
+}
+
+pub(crate) fn is_break_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    location: &str,
+) -> Result<bool, DeserializeError> {
+    if raw.cbor_type()? == CBORType::Special {
+        if raw.special()? == CBORSpecial::Break {
+            return Ok(true);
+        }
+        return Err(
+            DeserializeError::from(DeserializeFailure::EndingBreakMissing).annotate(location),
+        );
+    }
+    Ok(false)
+}
+
 impl Deserialize for StakeCredentials {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut arr = Vec::new();
+        skip_set_tag(raw)?;
+        let mut creds = StakeCredentials::new();
+        let mut counter = 0u64;
         (|| -> Result<_, DeserializeError> {
             let len = raw.array()?;
             while match len {
-                cbor_event::Len::Len(n) => arr.len() < n as usize,
+                cbor_event::Len::Len(n) => counter < n,
                 cbor_event::Len::Indefinite => true,
             } {
-                if raw.cbor_type()? == CBORType::Special {
-                    assert_eq!(raw.special()?, CBORSpecial::Break);
+                if is_break_tag(raw, "Credentials")? {
                     break;
                 }
-                arr.push(StakeCredential::deserialize(raw)?);
+                creds.add_move(StakeCredential::deserialize(raw)?);
+                counter += 1;
             }
             Ok(())
         })()
-        .map_err(|e| e.annotate("StakeCredentials"))?;
-        Ok(Self(arr))
+            .map_err(|e| e.annotate("CredentialsSet"))?;
+        Ok(creds)
     }
 }
 
@@ -2002,7 +2262,7 @@ impl cbor_event::se::Serialize for MIRToStakeCredentials {
 impl Deserialize for MIRToStakeCredentials {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
         (|| -> Result<_, DeserializeError> {
-            let mut table = linked_hash_map::LinkedHashMap::new();
+            let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
             let len = raw.map()?;
             while match len {
                 cbor_event::Len::Len(n) => table.len() < n as usize,
@@ -2084,6 +2344,100 @@ impl Deserialize for MoveInstantaneousReward {
             Ok(Self { pot, variant })
         })()
         .map_err(|e| e.annotate("MoveInstantaneousReward"))
+    }
+}
+
+impl cbor_event::se::Serialize for DRep {
+    fn serialize<'se, W: Write>(
+        &self,
+        serializer: &'se mut Serializer<W>,
+    ) -> cbor_event::Result<&'se mut Serializer<W>> {
+        self.0.serialize(serializer)
+    }
+}
+
+impl Deserialize for DRep {
+    fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
+        (|| -> Result<_, DeserializeError> {
+            let drep_enum = DRepEnum::deserialize(raw)?;
+            Ok(Self(drep_enum))
+        })()
+        .map_err(|e| e.annotate("DRep"))
+    }
+}
+
+impl cbor_event::se::Serialize for DRepEnum {
+    fn serialize<'se, W: Write>(
+        &self,
+        serializer: &'se mut Serializer<W>,
+    ) -> cbor_event::Result<&'se mut Serializer<W>> {
+        match &self {
+            DRepEnum::KeyHash(keyhash) => {
+                serializer.write_array(cbor_event::Len::Len(2))?;
+                serializer.write_unsigned_integer(0u64)?;
+                serializer.write_bytes(keyhash.to_bytes())
+            }
+            DRepEnum::ScriptHash(scripthash) => {
+                serializer.write_array(cbor_event::Len::Len(2))?;
+                serializer.write_unsigned_integer(1u64)?;
+                serializer.write_bytes(scripthash.to_bytes())
+            }
+            DRepEnum::AlwaysAbstain => {
+                serializer.write_array(cbor_event::Len::Len(1))?;
+                serializer.write_unsigned_integer(2u64)
+            }
+            DRepEnum::AlwaysNoConfidence => {
+                serializer.write_array(cbor_event::Len::Len(1))?;
+                serializer.write_unsigned_integer(3u64)
+            }
+        }
+    }
+}
+
+impl Deserialize for DRepEnum {
+    fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
+        (|| -> Result<_, DeserializeError> {
+            let len = raw.array()?;
+            if let cbor_event::Len::Len(n) = len {
+                if n != 2 && n != 1 {
+                    return Err(DeserializeFailure::CBOR(cbor_event::Error::WrongLen(
+                        2,
+                        len,
+                        "[id, hash] or [id] (for abstain and no confidence)",
+                    ))
+                    .into());
+                }
+            }
+
+            let drep = match raw.unsigned_integer()? {
+                0 => {
+                    let key_hash =
+                        Ed25519KeyHash::deserialize(raw).map_err(|e| e.annotate("key_hash"))?;
+                    DRepEnum::KeyHash(key_hash)
+                }
+                1 => {
+                    let script_hash =
+                        ScriptHash::deserialize(raw).map_err(|e| e.annotate("script_hash"))?;
+                    DRepEnum::ScriptHash(script_hash)
+                }
+                2 => DRepEnum::AlwaysAbstain,
+                3 => DRepEnum::AlwaysNoConfidence,
+                n => {
+                    return Err(DeserializeFailure::FixedValuesMismatch {
+                        found: Key::Uint(n),
+                        expected: vec![Key::Uint(0), Key::Uint(1), Key::Uint(2), Key::Uint(3)],
+                    }
+                    .into())
+                }
+            };
+            if let cbor_event::Len::Indefinite = len {
+                if raw.special()? != CBORSpecial::Break {
+                    return Err(DeserializeFailure::EndingBreakMissing.into());
+                }
+            }
+            Ok(drep)
+        })()
+        .map_err(|e| e.annotate("DRepEnum"))
     }
 }
 
@@ -2638,7 +2992,7 @@ impl cbor_event::se::Serialize for Withdrawals {
 
 impl Deserialize for Withdrawals {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = linked_hash_map::LinkedHashMap::new();
+        let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -3565,7 +3919,7 @@ impl cbor_event::se::Serialize for ProposedProtocolParameterUpdates {
 
 impl Deserialize for ProposedProtocolParameterUpdates {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = linked_hash_map::LinkedHashMap::new();
+        let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -3652,571 +4006,6 @@ impl DeserializeEmbeddedGroup for ProtocolVersion {
     }
 }
 
-impl cbor_event::se::Serialize for ProtocolParamUpdate {
-    fn serialize<'se, W: Write>(
-        &self,
-        serializer: &'se mut Serializer<W>,
-    ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        serializer.write_map(cbor_event::Len::Len(
-            match &self.minfee_a {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.minfee_b {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_block_body_size {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_tx_size {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_block_header_size {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.key_deposit {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.pool_deposit {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_epoch {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.n_opt {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.pool_pledge_influence {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.expansion_rate {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.treasury_growth_rate {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.d {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.extra_entropy {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.protocol_version {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.min_pool_cost {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.ada_per_utxo_byte {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.cost_models {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.execution_costs {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_tx_ex_units {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_block_ex_units {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_value_size {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.collateral_percentage {
-                Some(_) => 1,
-                None => 0,
-            } + match &self.max_collateral_inputs {
-                Some(_) => 1,
-                None => 0,
-            },
-        ))?;
-        if let Some(field) = &self.minfee_a {
-            serializer.write_unsigned_integer(0)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.minfee_b {
-            serializer.write_unsigned_integer(1)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_block_body_size {
-            serializer.write_unsigned_integer(2)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_tx_size {
-            serializer.write_unsigned_integer(3)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_block_header_size {
-            serializer.write_unsigned_integer(4)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.key_deposit {
-            serializer.write_unsigned_integer(5)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.pool_deposit {
-            serializer.write_unsigned_integer(6)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_epoch {
-            serializer.write_unsigned_integer(7)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.n_opt {
-            serializer.write_unsigned_integer(8)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.pool_pledge_influence {
-            serializer.write_unsigned_integer(9)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.expansion_rate {
-            serializer.write_unsigned_integer(10)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.treasury_growth_rate {
-            serializer.write_unsigned_integer(11)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.d {
-            serializer.write_unsigned_integer(12)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.extra_entropy {
-            serializer.write_unsigned_integer(13)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.protocol_version {
-            serializer.write_unsigned_integer(14)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.min_pool_cost {
-            serializer.write_unsigned_integer(16)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.ada_per_utxo_byte {
-            serializer.write_unsigned_integer(17)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.cost_models {
-            serializer.write_unsigned_integer(18)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.execution_costs {
-            serializer.write_unsigned_integer(19)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_tx_ex_units {
-            serializer.write_unsigned_integer(20)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_block_ex_units {
-            serializer.write_unsigned_integer(21)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_value_size {
-            serializer.write_unsigned_integer(22)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.collateral_percentage {
-            serializer.write_unsigned_integer(23)?;
-            field.serialize(serializer)?;
-        }
-        if let Some(field) = &self.max_collateral_inputs {
-            serializer.write_unsigned_integer(24)?;
-            field.serialize(serializer)?;
-        }
-        Ok(serializer)
-    }
-}
-
-impl Deserialize for ProtocolParamUpdate {
-    fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        (|| -> Result<_, DeserializeError> {
-            let len = raw.map()?;
-            let mut read_len = CBORReadLen::new(len);
-            let mut minfee_a = None;
-            let mut minfee_b = None;
-            let mut max_block_body_size = None;
-            let mut max_tx_size = None;
-            let mut max_block_header_size = None;
-            let mut key_deposit = None;
-            let mut pool_deposit = None;
-            let mut max_epoch = None;
-            let mut n_opt = None;
-            let mut pool_pledge_influence = None;
-            let mut expansion_rate = None;
-            let mut treasury_growth_rate = None;
-            let mut d = None;
-            let mut extra_entropy = None;
-            let mut protocol_version = None;
-            let mut min_pool_cost = None;
-            let mut ada_per_utxo_byte = None;
-            let mut cost_models = None;
-            let mut execution_costs = None;
-            let mut max_tx_ex_units = None;
-            let mut max_block_ex_units = None;
-            let mut max_value_size = None;
-            let mut collateral_percentage = None;
-            let mut max_collateral_inputs = None;
-            let mut read = 0;
-            while match len {
-                cbor_event::Len::Len(n) => read < n as usize,
-                cbor_event::Len::Indefinite => true,
-            } {
-                match raw.cbor_type()? {
-                    CBORType::UnsignedInteger => match raw.unsigned_integer()? {
-                        0 => {
-                            if minfee_a.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(0)).into());
-                            }
-                            minfee_a = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Coin::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("minfee_a"))?,
-                            );
-                        }
-                        1 => {
-                            if minfee_b.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(1)).into());
-                            }
-                            minfee_b = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Coin::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("minfee_b"))?,
-                            );
-                        }
-                        2 => {
-                            if max_block_body_size.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(2)).into());
-                            }
-                            max_block_body_size = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_block_body_size"))?,
-                            );
-                        }
-                        3 => {
-                            if max_tx_size.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(3)).into());
-                            }
-                            max_tx_size = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_tx_size"))?,
-                            );
-                        }
-                        4 => {
-                            if max_block_header_size.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(4)).into());
-                            }
-                            max_block_header_size = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_block_header_size"))?,
-                            );
-                        }
-                        5 => {
-                            if key_deposit.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(5)).into());
-                            }
-                            key_deposit = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Coin::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("key_deposit"))?,
-                            );
-                        }
-                        6 => {
-                            if pool_deposit.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(6)).into());
-                            }
-                            pool_deposit = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Coin::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("pool_deposit"))?,
-                            );
-                        }
-                        7 => {
-                            if max_epoch.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(7)).into());
-                            }
-                            max_epoch = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Epoch::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_epoch"))?,
-                            );
-                        }
-                        8 => {
-                            if n_opt.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(8)).into());
-                            }
-                            n_opt = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("n_opt"))?,
-                            );
-                        }
-                        9 => {
-                            if pool_pledge_influence.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(9)).into());
-                            }
-                            pool_pledge_influence = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Rational::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("pool_pledge_influence"))?,
-                            );
-                        }
-                        10 => {
-                            if expansion_rate.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(10)).into());
-                            }
-                            expansion_rate = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(UnitInterval::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("expansion_rate"))?,
-                            );
-                        }
-                        11 => {
-                            if treasury_growth_rate.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(11)).into());
-                            }
-                            treasury_growth_rate = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(UnitInterval::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("treasury_growth_rate"))?,
-                            );
-                        }
-                        12 => {
-                            if d.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(12)).into());
-                            }
-                            d = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(UnitInterval::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("d"))?,
-                            );
-                        }
-                        13 => {
-                            if extra_entropy.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(13)).into());
-                            }
-                            extra_entropy = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Nonce::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("extra_entropy"))?,
-                            );
-                        }
-                        14 => {
-                            if protocol_version.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(14)).into());
-                            }
-                            protocol_version = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(ProtocolVersion::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("protocol_version"))?,
-                            );
-                        }
-                        16 => {
-                            if min_pool_cost.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(16)).into());
-                            }
-                            min_pool_cost = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Coin::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("min_pool_cost"))?,
-                            );
-                        }
-                        17 => {
-                            if ada_per_utxo_byte.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(17)).into());
-                            }
-                            ada_per_utxo_byte = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Coin::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("ada_per_utxo_byte"))?,
-                            );
-                        }
-                        18 => {
-                            if cost_models.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(18)).into());
-                            }
-                            cost_models = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(Costmdls::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("cost_models"))?,
-                            );
-                        }
-                        19 => {
-                            if execution_costs.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(19)).into());
-                            }
-                            execution_costs = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(ExUnitPrices::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("execution_costs"))?,
-                            );
-                        }
-                        20 => {
-                            if max_tx_ex_units.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(20)).into());
-                            }
-                            max_tx_ex_units = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(ExUnits::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_tx_ex_units"))?,
-                            );
-                        }
-                        21 => {
-                            if max_block_ex_units.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(21)).into());
-                            }
-                            max_block_ex_units = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(ExUnits::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_block_ex_units"))?,
-                            );
-                        }
-                        22 => {
-                            if max_value_size.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(22)).into());
-                            }
-                            max_value_size = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_value_size"))?,
-                            );
-                        }
-                        23 => {
-                            if collateral_percentage.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(23)).into());
-                            }
-                            collateral_percentage = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("collateral_percentage"))?,
-                            );
-                        }
-                        24 => {
-                            if max_collateral_inputs.is_some() {
-                                return Err(DeserializeFailure::DuplicateKey(Key::Uint(24)).into());
-                            }
-                            max_collateral_inputs = Some(
-                                (|| -> Result<_, DeserializeError> {
-                                    read_len.read_elems(1)?;
-                                    Ok(u32::deserialize(raw)?)
-                                })()
-                                .map_err(|e| e.annotate("max_collateral_inputs"))?,
-                            );
-                        }
-                        unknown_key => {
-                            return Err(
-                                DeserializeFailure::UnknownKey(Key::Uint(unknown_key)).into()
-                            )
-                        }
-                    },
-                    CBORType::Text => match raw.text()?.as_str() {
-                        unknown_key => {
-                            return Err(DeserializeFailure::UnknownKey(Key::Str(
-                                unknown_key.to_owned(),
-                            ))
-                            .into())
-                        }
-                    },
-                    CBORType::Special => match len {
-                        cbor_event::Len::Len(_) => {
-                            return Err(DeserializeFailure::BreakInDefiniteLen.into())
-                        }
-                        cbor_event::Len::Indefinite => match raw.special()? {
-                            CBORSpecial::Break => break,
-                            _ => return Err(DeserializeFailure::EndingBreakMissing.into()),
-                        },
-                    },
-                    other_type => {
-                        return Err(DeserializeFailure::UnexpectedKeyType(other_type).into())
-                    }
-                }
-                read += 1;
-            }
-            read_len.finish()?;
-            Ok(Self {
-                minfee_a,
-                minfee_b,
-                max_block_body_size,
-                max_tx_size,
-                max_block_header_size,
-                key_deposit,
-                pool_deposit,
-                max_epoch,
-                n_opt,
-                pool_pledge_influence,
-                expansion_rate,
-                treasury_growth_rate,
-                d,
-                extra_entropy,
-                protocol_version,
-                min_pool_cost,
-                ada_per_utxo_byte,
-                cost_models,
-                execution_costs,
-                max_tx_ex_units,
-                max_block_ex_units,
-                max_value_size,
-                collateral_percentage,
-                max_collateral_inputs,
-            })
-        })()
-        .map_err(|e| e.annotate("ProtocolParamUpdate"))
-    }
-}
-
 impl cbor_event::se::Serialize for TransactionBodies {
     fn serialize<'se, W: Write>(
         &self,
@@ -4239,8 +4028,7 @@ impl Deserialize for TransactionBodies {
                 cbor_event::Len::Len(n) => arr.len() < n as usize,
                 cbor_event::Len::Indefinite => true,
             } {
-                if raw.cbor_type()? == CBORType::Special {
-                    assert_eq!(raw.special()?, CBORSpecial::Break);
+                if is_break_tag(raw, "TransactionBodies")? {
                     break;
                 }
                 arr.push(TransactionBody::deserialize(raw)?);
@@ -4303,7 +4091,7 @@ impl cbor_event::se::Serialize for AuxiliaryDataSet {
 
 impl Deserialize for AuxiliaryDataSet {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = linked_hash_map::LinkedHashMap::new();
+        let mut table = ritelinked::linked_hash_map::LinkedHashMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4743,7 +4531,7 @@ impl cbor_event::se::Serialize for Assets {
 
 impl Deserialize for Assets {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4786,7 +4574,7 @@ impl cbor_event::se::Serialize for MultiAsset {
 
 impl Deserialize for MultiAsset {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4829,7 +4617,7 @@ impl cbor_event::se::Serialize for MintAssets {
 
 impl Deserialize for MintAssets {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = alloc::collections::BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -4922,12 +4710,113 @@ impl Deserialize for NetworkId {
     }
 }
 
+impl_deserialize_for_wrapped_tuple!(VoteDelegation);
+
+pub(super) fn serialize_and_check_index<'se, W: Write>(
+    serializer: &'se mut Serializer<W>,
+    index: Option<u64>,
+    name: &'static str,
+) -> cbor_event::Result<&'se mut Serializer<W>> {
+    match index {
+        Some(index) => serializer.write_unsigned_integer(index),
+        None => Err(cbor_event::Error::CustomError(format!(
+            "unknown index of {}",
+            name
+        ))),
+    }
+}
+
+pub(super) fn check_index(
+    actual_index: u64,
+    desired_index: Option<u64>,
+    name: &'static str,
+) -> Result<(), DeserializeError> {
+    let desired_index = desired_index
+        .ok_or(DeserializeFailure::CustomError(
+            "unknown desired index".to_string(),
+        ))
+        .map_err(|e| DeserializeError::from(e))?;
+    if actual_index != desired_index {
+        return Err(DeserializeFailure::FixedValueMismatch {
+            found: Key::Uint(actual_index),
+            expected: Key::Uint(desired_index),
+        })
+        .map_err(|e| DeserializeError::from(e).annotate(name));
+    }
+
+    Ok(())
+}
+
+pub(super) fn check_len(
+    len: cbor_event::Len,
+    expected: u64,
+    struct_description: &'static str,
+) -> Result<(), DeserializeError> {
+    if let cbor_event::Len::Len(n) = len {
+        if n != expected {
+            return Err(DeserializeFailure::CBOR(cbor_event::Error::WrongLen(
+                expected as u64,
+                len,
+                struct_description,
+            ))
+            .into());
+        }
+    }
+    Ok(())
+}
+
+pub(super) fn deserialize_and_check_index<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    desired_index: Option<u64>,
+    name: &'static str,
+) -> Result<u64, DeserializeError> {
+    let actual_index = raw.unsigned_integer()?;
+    check_index(actual_index, desired_index, name)?;
+    Ok(actual_index)
+}
+
+impl cbor_event::se::Serialize for VoteDelegation {
+    fn serialize<'se, W: Write>(
+        &self,
+        serializer: &'se mut Serializer<W>,
+    ) -> cbor_event::Result<&'se mut Serializer<W>> {
+        serializer.write_array(cbor_event::Len::Len(3))?;
+
+        let proposal_index = certificate_index_names::CertificateIndexNames::VoteDelegation as u64;
+        serialize_and_check_index(serializer, Some(proposal_index), "VoteDelegation")?;
+
+        self.stake_credential.serialize(serializer)?;
+        self.drep.serialize(serializer)?;
+        Ok(serializer)
+    }
+}
+
+impl DeserializeEmbeddedGroup for VoteDelegation {
+    fn deserialize_as_embedded_group<R: BufRead + Seek>(
+        raw: &mut Deserializer<R>,
+        len: cbor_event::Len,
+    ) -> Result<Self, DeserializeError> {
+        let cert_index = certificate_index_names::CertificateIndexNames::VoteDelegation as u64;
+        deserialize_and_check_index(raw, Some(cert_index), "cert_index")?;
+
+        let stake_credential =
+        StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential1"))?;
+
+        let drep = DRep::deserialize(raw).map_err(|e| e.annotate("drep"))?;
+
+        Ok(VoteDelegation {
+            stake_credential,
+            drep,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::fakes::{
         fake_base_address, fake_bytes_32, fake_data_hash, fake_signature, fake_tx_input,
-        fake_tx_output, fake_value, fake_value2, fake_vkey,
+        fake_tx_output, fake_value, fake_value2,
     };
 
     #[test]
@@ -5385,76 +5274,6 @@ mod tests {
         assert_eq!(txb, txb2);
     }
 
-    #[test]
-    fn test_header_body_roundtrip() {
-        fn fake_header_body(leader_cert: HeaderLeaderCertEnum) -> HeaderBody {
-            HeaderBody {
-                block_number: 123,
-                slot: to_bignum(123),
-                prev_hash: Some(BlockHash::from_bytes(fake_bytes_32(1)).unwrap()),
-                issuer_vkey: fake_vkey(),
-                vrf_vkey: VRFVKey::from_bytes(fake_bytes_32(2)).unwrap(),
-                leader_cert,
-                block_body_size: 123456,
-                block_body_hash: BlockHash::from_bytes(fake_bytes_32(4)).unwrap(),
-                operational_cert: OperationalCert::new(
-                    &KESVKey::from_bytes(fake_bytes_32(5)).unwrap(),
-                    123,
-                    456,
-                    &fake_signature(6),
-                ),
-                protocol_version: ProtocolVersion::new(12, 13),
-            }
-        }
-
-        let hbody1 = fake_header_body(HeaderLeaderCertEnum::VrfResult(
-            VRFCert::new(fake_bytes_32(3), [0; 80].to_vec()).unwrap(),
-        ));
-
-        assert_eq!(hbody1, HeaderBody::from_bytes(hbody1.to_bytes()).unwrap());
-
-        let hbody2 = fake_header_body(HeaderLeaderCertEnum::NonceAndLeader(
-            VRFCert::new(fake_bytes_32(4), [1; 80].to_vec()).unwrap(),
-            VRFCert::new(fake_bytes_32(5), [2; 80].to_vec()).unwrap(),
-        ));
-
-        assert_eq!(hbody2, HeaderBody::from_bytes(hbody2.to_bytes()).unwrap());
-    }
-
-    #[test]
-    fn test_witness_set_roundtrip() {
-        fn witness_set_roundtrip(plutus_scripts: &PlutusScripts) {
-            let mut ws = TransactionWitnessSet::new();
-            ws.set_vkeys(&Vkeywitnesses(vec![Vkeywitness::new(
-                &fake_vkey(),
-                &fake_signature(1),
-            )]));
-            ws.set_redeemers(&Redeemers(vec![Redeemer::new(
-                &RedeemerTag::new_spend(),
-                &to_bignum(12),
-                &PlutusData::new_integer(&BigInt::one()),
-                &ExUnits::new(&to_bignum(123), &to_bignum(456)),
-            )]));
-            ws.set_plutus_data(&PlutusList::from(vec![PlutusData::new_integer(
-                &BigInt::one(),
-            )]));
-            ws.set_plutus_scripts(plutus_scripts);
-
-            assert_eq!(
-                TransactionWitnessSet::from_bytes(ws.to_bytes()).unwrap(),
-                ws
-            );
-        }
-
-        let bytes = hex::decode("4e4d01000033222220051200120011").unwrap();
-        let script_v1 = PlutusScript::from_bytes(bytes.clone()).unwrap();
-        let script_v2 = PlutusScript::from_bytes_v2(bytes.clone()).unwrap();
-
-        witness_set_roundtrip(&PlutusScripts(vec![]));
-        witness_set_roundtrip(&PlutusScripts(vec![script_v1.clone()]));
-        witness_set_roundtrip(&PlutusScripts(vec![script_v2.clone()]));
-        witness_set_roundtrip(&PlutusScripts(vec![script_v1.clone(), script_v2.clone()]));
-    }
 
     #[test]
     fn test_script_ref_roundtrip() {

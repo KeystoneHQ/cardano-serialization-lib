@@ -30,7 +30,10 @@
 //! is selected to write a block in the chain.
 //!
 
-use std::{fmt::Debug, hash::Hash};
+use alloc::vec;
+use alloc::vec::Vec;
+use core::fmt::Debug;
+use core::hash::Hash;
 
 /// Trait identifying the block identifier type.
 pub trait BlockId: Eq + Ord + Clone + Debug + Hash + Serialize + Deserialize {
@@ -198,7 +201,7 @@ pub trait Transaction: Serialize + Deserialize {
 }
 
 pub trait State: Sized + Clone {
-    type Error: std::error::Error;
+    type Error: core::error::Error;
     type Header: Header;
     type Content: Fragment;
 
@@ -224,7 +227,7 @@ pub trait State: Sized + Clone {
 /// `Block`.
 pub trait Ledger<T: Transaction>: Sized {
     /// Ledger's errors
-    type Error: std::error::Error;
+    type Error: core::error::Error;
 
     fn input<'a, I>(
         &'a self,
@@ -248,7 +251,7 @@ pub trait LeaderSelection {
     type Block: Block;
 
     /// Leader Selection error type
-    type Error: std::error::Error;
+    type Error: core::error::Error;
 
     /// Identifier of the leader (e.g. a public key).
     type LeaderId: LeaderId;
@@ -287,9 +290,9 @@ pub trait Settings {
 
 /// Define that an object can be written to a `Write` object.
 pub trait Serialize {
-    type Error: std::error::Error + From<std::io::Error>;
+    type Error: core2::error::Error + From<core2::io::Error>;
 
-    fn serialize<W: std::io::Write>(&self, writer: W) -> Result<(), Self::Error>;
+    fn serialize<W: core2::io::Write>(&self, writer: W) -> Result<(), Self::Error>;
 
     /// Convenience method to serialize into a byte vector.
     fn serialize_as_vec(&self) -> Result<Vec<u8>, Self::Error> {
@@ -301,9 +304,9 @@ pub trait Serialize {
 
 /// Define that an object can be read from a `Read` object.
 pub trait Deserialize: Sized {
-    type Error: std::error::Error + From<std::io::Error> + Send + Sync + 'static;
+    type Error: core::error::Error + From<core2::io::Error> + Send + Sync + 'static;
 
-    fn deserialize<R: std::io::BufRead>(reader: R) -> Result<Self, Self::Error>;
+    fn deserialize<R: core2::io::BufRead>(reader: R) -> Result<Self, Self::Error>;
 }
 
 /// Defines the way to parse the object from a UTF-8 string.
@@ -312,27 +315,27 @@ pub trait Deserialize: Sized {
 /// additional bounds on the error type to make it more usable for
 /// aggregation to higher level errors and passing between threads.
 pub trait FromStr: Sized {
-    type Error: std::error::Error + Send + Sync + 'static;
+    type Error: core::error::Error + Send + Sync + 'static;
 
     fn from_str(s: &str) -> Result<Self, Self::Error>;
 }
 
 impl<T> FromStr for T
 where
-    T: std::str::FromStr,
-    <T as std::str::FromStr>::Err: std::error::Error + Send + Sync + 'static,
+    T: core::str::FromStr,
+    <T as core::str::FromStr>::Err: core::error::Error + Send + Sync + 'static,
 {
-    type Error = <T as std::str::FromStr>::Err;
+    type Error = <T as core::str::FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Error> {
-        std::str::FromStr::from_str(s)
+        core::str::FromStr::from_str(s)
     }
 }
 
 impl<T: Serialize> Serialize for &T {
     type Error = T::Error;
 
-    fn serialize<W: std::io::Write>(&self, writer: W) -> Result<(), T::Error> {
+    fn serialize<W: core2::io::Write>(&self, writer: W) -> Result<(), T::Error> {
         (**self).serialize(writer)
     }
 }

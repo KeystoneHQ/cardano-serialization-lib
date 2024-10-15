@@ -292,14 +292,14 @@ impl Crc32 {
         self.0 ^ 0xFFFF_FFFF
     }
 }
-impl ::std::io::Write for Crc32 {
+impl ::core2::io::Write for Crc32 {
     #[inline]
-    fn write(&mut self, bytes: &[u8]) -> Result<usize, std::io::Error> {
+    fn write(&mut self, bytes: &[u8]) -> Result<usize, core2::io::Error> {
         self.update(bytes.iter());
         Ok(bytes.len())
     }
     #[inline]
-    fn flush(&mut self) -> Result<(), std::io::Error> {
+    fn flush(&mut self) -> Result<(), core2::io::Error> {
         Ok(())
     }
 }

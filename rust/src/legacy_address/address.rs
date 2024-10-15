@@ -9,18 +9,23 @@
 //! to binary makes an `Addr`
 //!
 
+#[cfg(feature = "alloc")]
+use core as std;
+
+use alloc::format;
+use alloc::vec::Vec;
 use crate::legacy_address::base58;
 use crate::legacy_address::cbor;
 use cbor_event::{self, cbor, de::Deserializer, se::Serializer};
+use core2::io::{BufRead, Write};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest;
 use cryptoxide::sha3;
-use ed25519_bip32::XPub;
+use ed25519_bip32_core::XPub;
 
 use std::{
-    convert::{TryFrom, TryInto},
     fmt,
-    io::{BufRead, Write},
+    convert::{TryFrom, TryInto},
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
@@ -30,6 +35,7 @@ pub enum AddrType {
     ATScript,
     ATRedeem,
 }
+
 impl fmt::Display for AddrType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -39,6 +45,7 @@ impl fmt::Display for AddrType {
         }
     }
 }
+
 // [TkListLen 1, TkInt (fromEnum t)]
 impl AddrType {
     fn from_u64(v: u64) -> Option<Self> {
@@ -57,6 +64,7 @@ impl AddrType {
         }
     }
 }
+
 impl cbor_event::se::Serialize for AddrType {
     fn serialize<'se, W: Write>(
         &self,
@@ -65,6 +73,7 @@ impl cbor_event::se::Serialize for AddrType {
         serializer.write_unsigned_integer(self.to_byte() as u64)
     }
 }
+
 impl cbor_event::de::Deserialize for AddrType {
     fn deserialize<R: BufRead>(reader: &mut Deserializer<R>) -> cbor_event::Result<Self> {
         match AddrType::from_u64(reader.unsigned_integer()?) {
@@ -81,6 +90,7 @@ pub struct Attributes {
     pub derivation_path: Option<HDAddressPayload>,
     pub protocol_magic: Option<u32>,
 }
+
 impl Attributes {
     pub fn new_bootstrap_era(hdap: Option<HDAddressPayload>, protocol_magic: Option<u32>) -> Self {
         Attributes {
@@ -121,6 +131,7 @@ impl cbor_event::se::Serialize for Attributes {
         Ok(serializer)
     }
 }
+
 impl cbor_event::de::Deserialize for Attributes {
     fn deserialize<R: BufRead>(reader: &mut Deserializer<R>) -> cbor_event::Result<Self> {
         let len = reader.map()?;
@@ -142,7 +153,7 @@ impl cbor_event::de::Deserialize for Attributes {
                 ATTRIBUTE_NAME_TAG_PROTOCOL_MAGIC => {
                     // Yes, this is an integer encoded as CBOR encoded as Bytes in CBOR.
                     let bytes = reader.bytes()?;
-                    let n = Deserializer::from(std::io::Cursor::new(bytes)).deserialize::<u32>()?;
+                    let n = Deserializer::from(core2::io::Cursor::new(bytes)).deserialize::<u32>()?;
                     protocol_magic = Some(n);
                 }
                 _ => {
@@ -193,7 +204,7 @@ pub enum AddressMatchXPub {
 
 impl Addr {
     pub fn deconstruct(&self) -> ExtendedAddr {
-        let mut raw = Deserializer::from(std::io::Cursor::new(&self.0));
+        let mut raw = Deserializer::from(core2::io::Cursor::new(&self.0));
         cbor_event::de::Deserialize::deserialize(&mut raw).unwrap() // unwrap should never fail from addr to extended addr
     }
 
@@ -230,7 +241,7 @@ impl TryFrom<&[u8]> for Addr {
         let mut v = Vec::new();
         // TODO we only want validation of slice here, but we don't have api to do that yet.
         {
-            let mut raw = Deserializer::from(std::io::Cursor::new(&slice));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(&slice));
             let _: ExtendedAddr = cbor_event::de::Deserialize::deserialize(&mut raw)?;
         }
         v.extend_from_slice(slice);
@@ -238,7 +249,7 @@ impl TryFrom<&[u8]> for Addr {
     }
 }
 
-impl ::std::str::FromStr for Addr {
+impl ::core::str::FromStr for Addr {
     type Err = ParseExtendedAddrError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = base58::decode(s).map_err(ParseExtendedAddrError::Base58Error)?;
@@ -267,6 +278,7 @@ impl cbor_event::se::Serialize for Addr {
         serializer.write_raw_bytes(&self.0)
     }
 }
+
 impl cbor_event::de::Deserialize for Addr {
     fn deserialize<R: BufRead>(reader: &mut Deserializer<R>) -> cbor_event::Result<Self> {
         let ea: ExtendedAddr = cbor_event::de::Deserialize::deserialize(reader)?;
@@ -283,6 +295,7 @@ pub struct ExtendedAddr {
     pub attributes: Attributes,
     pub addr_type: AddrType,
 }
+
 impl ExtendedAddr {
     pub fn new(xpub: &XPub, attrs: Attributes) -> Self {
         ExtendedAddr {
@@ -301,6 +314,7 @@ impl ExtendedAddr {
         Addr(cbor!(self).unwrap()) // unwrap should never fail from strongly typed extended addr to addr
     }
 }
+
 #[derive(Debug)]
 pub enum ParseExtendedAddrError {
     EncodingError(cbor_event::Error),
@@ -317,17 +331,7 @@ impl fmt::Display for ParseExtendedAddrError {
     }
 }
 
-impl std::error::Error for ParseExtendedAddrError {
-    fn source<'a>(&'a self) -> Option<&'a (dyn std::error::Error + 'static)> {
-        use ParseExtendedAddrError::*;
-        match self {
-            EncodingError(ref error) => Some(error),
-            Base58Error(ref error) => Some(error),
-        }
-    }
-}
-
-impl ::std::str::FromStr for ExtendedAddr {
+impl core::str::FromStr for ExtendedAddr {
     type Err = ParseExtendedAddrError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = base58::decode(s).map_err(ParseExtendedAddrError::Base58Error)?;
@@ -335,14 +339,16 @@ impl ::std::str::FromStr for ExtendedAddr {
         Self::try_from(&bytes[..]).map_err(ParseExtendedAddrError::EncodingError)
     }
 }
+
 impl TryFrom<&[u8]> for ExtendedAddr {
     type Error = cbor_event::Error;
 
     fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
-        let mut raw = Deserializer::from(std::io::Cursor::new(slice));
+        let mut raw = Deserializer::from(core2::io::Cursor::new(slice));
         cbor_event::de::Deserialize::deserialize(&mut raw)
     }
 }
+
 impl cbor_event::se::Serialize for ExtendedAddr {
     fn serialize<'se, W: Write>(
         &self,
@@ -356,10 +362,11 @@ impl cbor_event::se::Serialize for ExtendedAddr {
         Ok(serializer)
     }
 }
+
 impl cbor_event::de::Deserialize for ExtendedAddr {
     fn deserialize<R: BufRead>(reader: &mut Deserializer<R>) -> cbor_event::Result<Self> {
         let bytes = cbor::util::raw_with_crc32(reader)?;
-        let mut raw = Deserializer::from(std::io::Cursor::new(bytes));
+        let mut raw = Deserializer::from(core2::io::Cursor::new(bytes));
         raw.tuple(3, "ExtendedAddr")?;
         let addr_bytes = raw.bytes()?;
         let addr = addr_bytes.as_slice().try_into().map_err(|_| {
@@ -378,6 +385,7 @@ impl cbor_event::de::Deserialize for ExtendedAddr {
         })
     }
 }
+
 impl fmt::Display for ExtendedAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_address())
@@ -405,7 +413,7 @@ impl<'a> cbor_event::se::Serialize for SpendingData<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Addr, AddressMatchXPub};
-    use ed25519_bip32::XPub;
+    use ed25519_bip32_core::XPub;
 
     fn assert_same_address(address: Addr, xpub: XPub) {
         assert_eq!(
@@ -419,7 +427,7 @@ mod tests {
 
     #[test]
     fn test_vector_1() {
-        let address     = "DdzFFzCqrhsrcTVhLygT24QwTnNqQqQ8mZrq5jykUzMveU26sxaH529kMpo7VhPrt5pwW3dXeB2k3EEvKcNBRmzCfcQ7dTkyGzTs658C".parse().unwrap();
+        let address = "DdzFFzCqrhsrcTVhLygT24QwTnNqQqQ8mZrq5jykUzMveU26sxaH529kMpo7VhPrt5pwW3dXeB2k3EEvKcNBRmzCfcQ7dTkyGzTs658C".parse().unwrap();
         let public_key = XPub::from_bytes([
             0x6a, 0x50, 0x96, 0x89, 0xc6, 0x53, 0x17, 0x58, 0x65, 0x98, 0x5a, 0xd1, 0xe0, 0xeb,
             0x5f, 0xf9, 0xad, 0xa6, 0x99, 0x7a, 0xa4, 0x03, 0xe6, 0x48, 0x61, 0x4b, 0x3b, 0x78,

@@ -1,9 +1,10 @@
+use alloc::string::String;
 use crate::chain_crypto::bech32::{self, Bech32};
 use hex::FromHexError;
-use rand_os::rand_core::{CryptoRng, RngCore};
-use std::fmt;
-use std::hash::Hash;
-use std::str::FromStr;
+use rand::{CryptoRng, RngCore};
+use core::fmt;
+use core::hash::Hash;
+use core::str::FromStr;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SecretKeyError {
@@ -72,13 +73,13 @@ impl<A: AsymmetricKey> KeyPair<A> {
         KeyPair(SecretKey(sk), PublicKey(pk))
     }
 }
-impl<A: AsymmetricKey> std::fmt::Debug for KeyPair<A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<A: AsymmetricKey> core::fmt::Debug for KeyPair<A> {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "KeyPair(<secret key>, {:?})", self.public_key())
     }
 }
-impl<A: AsymmetricKey> std::fmt::Display for KeyPair<A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<A: AsymmetricKey> core::fmt::Display for KeyPair<A> {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "KeyPair(<secret key>, {})", self.public_key())
     }
 }
@@ -131,17 +132,11 @@ impl fmt::Display for PublicKeyFromStrError {
     }
 }
 
-impl std::error::Error for SecretKeyError {}
+impl core::error::Error for SecretKeyError {}
 
-impl std::error::Error for PublicKeyError {}
+impl core::error::Error for PublicKeyError {}
 
-impl std::error::Error for PublicKeyFromStrError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            PublicKeyFromStrError::HexMalformed(e) => Some(e),
-            PublicKeyFromStrError::KeyInvalid(e) => Some(e),
-        }
-    }
+impl core::error::Error for PublicKeyFromStrError {
 }
 
 impl<A: AsymmetricPublicKey> AsRef<[u8]> for PublicKey<A> {
@@ -199,22 +194,22 @@ impl<A: AsymmetricKey> Clone for KeyPair<A> {
     }
 }
 
-impl<A: AsymmetricPublicKey> std::cmp::PartialEq<Self> for PublicKey<A> {
+impl<A: AsymmetricPublicKey> PartialEq<Self> for PublicKey<A> {
     fn eq(&self, other: &Self) -> bool {
         self.0.as_ref().eq(other.0.as_ref())
     }
 }
 
-impl<A: AsymmetricPublicKey> std::cmp::Eq for PublicKey<A> {}
+impl<A: AsymmetricPublicKey> Eq for PublicKey<A> {}
 
-impl<A: AsymmetricPublicKey> std::cmp::PartialOrd<Self> for PublicKey<A> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl<A: AsymmetricPublicKey> PartialOrd<Self> for PublicKey<A> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.0.as_ref().partial_cmp(other.0.as_ref())
     }
 }
 
-impl<A: AsymmetricPublicKey> std::cmp::Ord for PublicKey<A> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+impl<A: AsymmetricPublicKey> Ord for PublicKey<A> {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.0.as_ref().cmp(other.0.as_ref())
     }
 }
@@ -222,7 +217,7 @@ impl<A: AsymmetricPublicKey> std::cmp::Ord for PublicKey<A> {
 impl<A: AsymmetricPublicKey> Hash for PublicKey<A> {
     fn hash<H>(&self, state: &mut H)
     where
-        H: std::hash::Hasher,
+        H: core::hash::Hasher,
     {
         self.0.as_ref().hash(state)
     }
@@ -259,11 +254,11 @@ mod test {
     use super::*;
 
     // ONLY ALLOWED WHEN TESTING
-    impl<A> std::fmt::Debug for SecretKey<A>
+    impl<A> core::fmt::Debug for SecretKey<A>
     where
         A: AsymmetricKey,
     {
-        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
             write!(f, "SecretKey ({:?})", self.0.as_ref())
         }
     }

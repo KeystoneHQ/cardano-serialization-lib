@@ -1,3 +1,6 @@
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::chain_crypto::key::{
     AsymmetricKey, AsymmetricPublicKey, PublicKeyError, SecretKeyError, SecretKeySizeStatic,
 };
@@ -5,9 +8,9 @@ use crate::chain_crypto::sign::{
     SignatureError, SigningAlgorithm, Verification, VerificationAlgorithm,
 };
 
-use ed25519_bip32 as i;
-use ed25519_bip32::{XPrv, XPub, XPRV_SIZE, XPUB_SIZE};
-use rand_os::rand_core::{CryptoRng, RngCore};
+use ed25519_bip32_core as i;
+use ed25519_bip32_core::{XPrv, XPub, XPRV_SIZE, XPUB_SIZE};
+use rand::{CryptoRng, RngCore};
 
 /// Ed25519 BIP32 Signature algorithm
 pub struct Ed25519Bip32;
@@ -70,19 +73,19 @@ impl From<i::SignatureError> for SignatureError {
     fn from(v: i::SignatureError) -> Self {
         match v {
             i::SignatureError::InvalidLength(got) => SignatureError::SizeInvalid {
-                expected: ed25519_bip32::SIGNATURE_SIZE,
+                expected: ed25519_bip32_core::SIGNATURE_SIZE,
                 got: got,
             },
         }
     }
 }
 
-type XSig = ed25519_bip32::Signature<u8>;
+type XSig = ed25519_bip32_core::Signature<u8>;
 
 impl VerificationAlgorithm for Ed25519Bip32 {
     type Signature = XSig;
 
-    const SIGNATURE_SIZE: usize = ed25519_bip32::SIGNATURE_SIZE;
+    const SIGNATURE_SIZE: usize = ed25519_bip32_core::SIGNATURE_SIZE;
     const SIGNATURE_BECH32_HRP: &'static str = "xsig";
 
     fn signature_from_bytes(data: &[u8]) -> Result<Self::Signature, SignatureError> {
@@ -112,11 +115,10 @@ mod test {
     use crate::chain_crypto::key::KeyPair;
     use crate::chain_crypto::sign::test::{keypair_signing_ko, keypair_signing_ok};
 
-    #[quickcheck]
     fn sign_ok(input: (KeyPair<Ed25519Bip32>, Vec<u8>)) -> bool {
         keypair_signing_ok(input)
     }
-    #[quickcheck]
+
     fn sign_ko(input: (KeyPair<Ed25519Bip32>, KeyPair<Ed25519Bip32>, Vec<u8>)) -> bool {
         keypair_signing_ko(input)
     }

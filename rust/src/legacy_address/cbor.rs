@@ -3,13 +3,15 @@
 pub mod util {
     //! CBor util and other stuff
 
+    use alloc::format;
+    use alloc::vec::Vec;
     use crate::legacy_address::crc32::crc32;
     use cbor_event::{self, cbor, de::Deserializer, se::Serializer, Len};
 
     pub fn encode_with_crc32_<T, W>(t: &T, s: &mut Serializer<W>) -> cbor_event::Result<()>
     where
         T: cbor_event::Serialize,
-        W: ::std::io::Write + Sized,
+        W: core2::io::Write + Sized,
     {
         let bytes = cbor!(t)?;
         let crc32 = crc32(&bytes);
@@ -19,7 +21,7 @@ pub mod util {
             .write_unsigned_integer(crc32 as u64)?;
         Ok(())
     }
-    pub fn raw_with_crc32<R: std::io::BufRead>(
+    pub fn raw_with_crc32<R: core2::io::BufRead>(
         raw: &mut Deserializer<R>,
     ) -> cbor_event::Result<Vec<u8>> {
         let len = raw.array()?;
@@ -90,7 +92,7 @@ pub mod util {
                 serializer: &'se mut Serializer<W>,
             ) -> cbor_event::Result<&'se mut Serializer<W>>
             where
-                W: ::std::io::Write,
+                W: ::core2::io::Write,
             {
                 serializer.write_bytes(self.0)
             }

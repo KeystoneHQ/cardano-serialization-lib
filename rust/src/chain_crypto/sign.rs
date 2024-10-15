@@ -1,10 +1,13 @@
+use alloc::string::String;
+use core::fmt;
+use core::marker::PhantomData;
+use core::str::FromStr;
 use crate::chain_crypto::{
     bech32::{self, Bech32},
     key,
 };
 use crate::typed_bytes::{ByteArray, ByteSlice};
 use hex::FromHexError;
-use std::{fmt, marker::PhantomData, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verification {
@@ -24,7 +27,8 @@ impl From<bool> for Verification {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SignatureError {
-    SizeInvalid { expected: usize, got: usize }, // expected, got in bytes
+    SizeInvalid { expected: usize, got: usize },
+    // expected, got in bytes
     StructureInvalid,
 }
 
@@ -41,14 +45,14 @@ pub trait VerificationAlgorithm: key::AsymmetricPublicKey {
     const SIGNATURE_BECH32_HRP: &'static str;
 
     fn verify_bytes(pubkey: &Self::Public, signature: &Self::Signature, msg: &[u8])
-        -> Verification;
+                    -> Verification;
 
     fn signature_from_bytes(data: &[u8]) -> Result<Self::Signature, SignatureError>;
 }
 
 pub trait SigningAlgorithm: key::AsymmetricKey
-where
-    Self::PubAlg: VerificationAlgorithm,
+    where
+        Self::PubAlg: VerificationAlgorithm,
 {
     fn sign(key: &Self::Secret, msg: &[u8]) -> <Self::PubAlg as VerificationAlgorithm>::Signature;
 }
@@ -63,11 +67,13 @@ impl<A: VerificationAlgorithm, T> fmt::Debug for Signature<T, A> {
         write!(f, "{}", hex::encode(self.signdata.as_ref()))
     }
 }
+
 impl<A: VerificationAlgorithm, T> fmt::Display for Signature<T, A> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", hex::encode(self.signdata.as_ref()))
     }
 }
+
 impl<T, A: VerificationAlgorithm> FromStr for Signature<T, A> {
     type Err = SignatureFromStrError;
 
@@ -89,25 +95,20 @@ impl fmt::Display for SignatureError {
         }
     }
 }
+
 impl fmt::Display for SignatureFromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             SignatureFromStrError::HexMalformed(_) => "hex encoding malformed",
             SignatureFromStrError::Invalid(_) => "invalid signature data",
         }
-        .fmt(f)
+            .fmt(f)
     }
 }
 
-impl std::error::Error for SignatureError {}
-impl std::error::Error for SignatureFromStrError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            SignatureFromStrError::HexMalformed(e) => Some(e),
-            SignatureFromStrError::Invalid(e) => Some(e),
-        }
-    }
-}
+impl core::error::Error for SignatureError {}
+
+impl core::error::Error for SignatureFromStrError {}
 
 impl<A: VerificationAlgorithm, T> Signature<T, A> {
     pub fn from_binary(sig: &[u8]) -> Result<Self, SignatureError> {
@@ -162,8 +163,8 @@ impl<A: SigningAlgorithm, T: AsRef<[u8]>> Signature<T, A::Public>
 }
 */
 impl<A: SigningAlgorithm> key::SecretKey<A>
-where
-    <A as key::AsymmetricKey>::PubAlg: VerificationAlgorithm,
+    where
+        <A as key::AsymmetricKey>::PubAlg: VerificationAlgorithm,
 {
     pub fn sign<T: AsRef<[u8]>>(&self, object: &T) -> Signature<T, A::PubAlg> {
         Signature {
@@ -184,7 +185,7 @@ impl<T, A: VerificationAlgorithm> Clone for Signature<T, A> {
     fn clone(&self) -> Self {
         Signature {
             signdata: self.signdata.clone(),
-            phantom: std::marker::PhantomData,
+            phantom: PhantomData,
         }
     }
 }
@@ -218,14 +219,15 @@ impl<T, A: VerificationAlgorithm> Bech32 for Signature<T, A> {
 
 #[cfg(test)]
 pub(crate) mod test {
+    use alloc::vec::Vec;
     use super::*;
     use crate::chain_crypto::key::{AsymmetricKey, KeyPair};
 
     pub(crate) fn keypair_signing_ok<A: AsymmetricKey + SigningAlgorithm>(
         input: (KeyPair<A>, Vec<u8>),
     ) -> bool
-    where
-        <A as AsymmetricKey>::PubAlg: VerificationAlgorithm,
+        where
+            <A as AsymmetricKey>::PubAlg: VerificationAlgorithm,
     {
         let (sk, pk) = input.0.into_keys();
         let data = input.1;
@@ -237,8 +239,8 @@ pub(crate) mod test {
     pub(crate) fn keypair_signing_ko<A: AsymmetricKey + SigningAlgorithm>(
         input: (KeyPair<A>, KeyPair<A>, Vec<u8>),
     ) -> bool
-    where
-        <A as AsymmetricKey>::PubAlg: VerificationAlgorithm,
+        where
+            <A as AsymmetricKey>::PubAlg: VerificationAlgorithm,
     {
         let (sk, pk) = input.0.into_keys();
         let pk_random = input.1.public_key();

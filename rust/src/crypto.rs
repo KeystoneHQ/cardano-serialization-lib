@@ -4,11 +4,12 @@ use bech32::ToBase32;
 use cbor_event::{de::Deserializer, se::Serializer};
 use chain::key;
 use crypto::bech32::Bech32 as _;
-use rand_os::OsRng;
-use std::io::{BufRead, Seek, Write};
-use std::str::FromStr;
-use std::fmt::Display;
-use std::fmt;
+use core2::io::{BufRead, Seek, Write};
+use core::str::FromStr;
+use core::fmt::Display;
+use core::fmt;
+use alloc::format;
+use bech32::Variant;
 
 use cryptoxide::blake2b::Blake2b;
 
@@ -83,13 +84,6 @@ impl Bip32PrivateKey {
         buf[64..96].clone_from_slice(&pub_key);
         buf[96..128].clone_from_slice(&cc);
         buf.to_vec()
-    }
-
-    pub fn generate_ed25519_bip32() -> Result<Bip32PrivateKey, JsError> {
-        OsRng::new()
-            .map(crypto::SecretKey::<crypto::Ed25519Bip32>::generate)
-            .map(Bip32PrivateKey)
-            .map_err(|e| JsError::from_str(&format!("{}", e)))
     }
 
     pub fn to_raw_key(&self) -> PrivateKey {
@@ -234,22 +228,6 @@ impl From<key::EitherEd25519SecretKey> for PrivateKey {
 impl PrivateKey {
     pub fn to_public(&self) -> PublicKey {
         self.0.to_public().into()
-    }
-
-    pub fn generate_ed25519() -> Result<PrivateKey, JsError> {
-        OsRng::new()
-            .map(crypto::SecretKey::<crypto::Ed25519>::generate)
-            .map(key::EitherEd25519SecretKey::Normal)
-            .map(PrivateKey)
-            .map_err(|e| JsError::from_str(&format!("{}", e)))
-    }
-
-    pub fn generate_ed25519extended() -> Result<PrivateKey, JsError> {
-        OsRng::new()
-            .map(crypto::SecretKey::<crypto::Ed25519Extended>::generate)
-            .map(key::EitherEd25519SecretKey::Extended)
-            .map(PrivateKey)
-            .map_err(|e| JsError::from_str(&format!("{}", e)))
     }
 
     /// Get private key from its bech32 representation
@@ -406,20 +384,8 @@ impl<'de> serde::de::Deserialize<'de> for PublicKey {
     }
 }
 
-impl JsonSchema for PublicKey {
-    fn schema_name() -> String {
-        String::from("PublicKey")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, )]
 pub struct Vkey(PublicKey);
 
 impl_to_from!(Vkey);
@@ -511,7 +477,7 @@ impl Deserialize for Vkeys {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, )]
 pub struct Vkeywitness {
     vkey: Vkey,
     signature: Ed25519Signature,
@@ -584,7 +550,7 @@ impl Deserialize for Vkeywitness {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, )]
 pub struct Vkeywitnesses(pub(crate) Vec<Vkeywitness>);
 
 impl_to_from!(Vkeywitnesses);
@@ -644,7 +610,7 @@ impl Deserialize for Vkeywitnesses {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize,)]
 pub struct BootstrapWitness {
     vkey: Vkey,
     signature: Ed25519Signature,
@@ -751,7 +717,7 @@ impl DeserializeEmbeddedGroup for BootstrapWitness {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize,)]
 pub struct BootstrapWitnesses(Vec<BootstrapWitness>);
 
 #[wasm_bindgen]
@@ -873,7 +839,7 @@ macro_rules! impl_signature {
         });
 
         impl cbor_event::se::Serialize for $name {
-            fn serialize<'se, W: std::io::Write>(
+            fn serialize<'se, W: core2::io::Write>(
                 &self,
                 serializer: &'se mut Serializer<W>,
             ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -882,7 +848,7 @@ macro_rules! impl_signature {
         }
 
         impl Deserialize for $name {
-            fn deserialize<R: std::io::BufRead>(
+            fn deserialize<R: core2::io::BufRead>(
                 raw: &mut Deserializer<R>,
             ) -> Result<Self, DeserializeError> {
                 Ok(Self(crypto::Signature::from_binary(raw.bytes()?.as_ref())?))
@@ -913,17 +879,7 @@ macro_rules! impl_signature {
             }
         }
 
-        impl JsonSchema for $name {
-            fn schema_name() -> String {
-                String::from(stringify!($name))
-            }
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                String::json_schema(gen)
-            }
-            fn is_referenceable() -> bool {
-                String::is_referenceable()
-            }
-        }
+
     };
 }
 
@@ -937,7 +893,7 @@ macro_rules! impl_hash_type {
         // hash types are the only types in this library to not expect the entire CBOR structure.
         // There is no CBOR binary tag here just the raw hash bytes.
         from_bytes!($name, bytes, {
-            use std::convert::TryInto;
+            use core::convert::TryInto;
             match bytes.len() {
                 $byte_count => Ok($name(bytes[..$byte_count].try_into().unwrap())),
                 other_len => {
@@ -963,12 +919,12 @@ macro_rules! impl_hash_type {
             }
 
             pub fn to_bech32(&self, prefix: &str) -> Result<String, JsError> {
-                bech32::encode(&prefix, self.to_bytes().to_base32())
+                bech32::encode(&prefix, self.to_bytes().to_base32(), bech32::Variant::Bech32)
                     .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
             }
 
             pub fn from_bech32(bech_str: &str) -> Result<$name, JsError> {
-                let (_hrp, u5data) =
+                let (_hrp, u5data, varint) =
                     bech32::decode(bech_str).map_err(|e| JsError::from_str(&e.to_string()))?;
                 let data: Vec<u8> = bech32::FromBase32::from_base32(&u5data).unwrap();
                 Ok(Self::from_bytes(data)?)
@@ -998,7 +954,7 @@ macro_rules! impl_hash_type {
         }
 
         impl cbor_event::se::Serialize for $name {
-            fn serialize<'se, W: std::io::Write>(
+            fn serialize<'se, W: core2::io::Write>(
                 &self,
                 serializer: &'se mut Serializer<W>,
             ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -1007,10 +963,10 @@ macro_rules! impl_hash_type {
         }
 
         impl Deserialize for $name {
-            fn deserialize<R: std::io::BufRead>(
+            fn deserialize<R: core2::io::BufRead>(
                 raw: &mut Deserializer<R>,
             ) -> Result<Self, DeserializeError> {
-                use std::convert::TryInto;
+                use core::convert::TryInto;
                 (|| -> Result<Self, DeserializeError> {
                     let bytes = raw.bytes()?;
                     if bytes.len() != $byte_count {
@@ -1051,17 +1007,7 @@ macro_rules! impl_hash_type {
             }
         }
 
-        impl JsonSchema for $name {
-            fn schema_name() -> String {
-                String::from(stringify!($name))
-            }
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                String::json_schema(gen)
-            }
-            fn is_referenceable() -> bool {
-                String::is_referenceable()
-            }
-        }
+
 
         impl Display for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1095,6 +1041,7 @@ impl LegacyDaedalusPrivateKey {
 
 impl_hash_type!(Ed25519KeyHash, 28);
 impl_hash_type!(ScriptHash, 28);
+impl_hash_type!(AnchorDataHash, 32);
 impl_hash_type!(TransactionHash, 32);
 impl_hash_type!(GenesisDelegateHash, 28);
 impl_hash_type!(GenesisHash, 28);
@@ -1146,7 +1093,7 @@ from_bytes!(KESSignature, bytes, {
 });
 
 impl cbor_event::se::Serialize for KESSignature {
-    fn serialize<'se, W: std::io::Write>(
+    fn serialize<'se, W: core2::io::Write>(
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -1155,7 +1102,7 @@ impl cbor_event::se::Serialize for KESSignature {
 }
 
 impl Deserialize for KESSignature {
-    fn deserialize<R: std::io::BufRead>(
+    fn deserialize<R: core2::io::BufRead>(
         raw: &mut Deserializer<R>,
     ) -> Result<Self, DeserializeError> {
         (|| -> Result<Self, DeserializeError> {
@@ -1201,22 +1148,19 @@ impl<'de> serde::de::Deserialize<'de> for KESSignature {
     }
 }
 
-impl JsonSchema for KESSignature {
-    fn schema_name() -> String {
-        String::from("KESSignature")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
 
 // Evolving nonce type (used for Update's crypto)
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone,
+    Debug,
+    Hash,
+    Eq,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub struct Nonce {
     hash: Option<[u8; 32]>,
@@ -1236,7 +1180,7 @@ impl Nonce {
     }
 
     pub fn new_from_hash(hash: Vec<u8>) -> Result<Nonce, JsError> {
-        use std::convert::TryInto;
+        use core::convert::TryInto;
         match hash[..Self::HASH_LEN].try_into() {
             Ok(bytes_correct_size) => Ok(Self {
                 hash: Some(bytes_correct_size),
@@ -1251,7 +1195,7 @@ impl Nonce {
 }
 
 impl cbor_event::se::Serialize for Nonce {
-    fn serialize<'se, W: std::io::Write>(
+    fn serialize<'se, W: core2::io::Write>(
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -1270,7 +1214,7 @@ impl cbor_event::se::Serialize for Nonce {
 }
 
 impl Deserialize for Nonce {
-    fn deserialize<R: std::io::BufRead>(
+    fn deserialize<R: core2::io::BufRead>(
         raw: &mut Deserializer<R>,
     ) -> Result<Self, DeserializeError> {
         (|| -> Result<Self, DeserializeError> {
@@ -1319,7 +1263,7 @@ impl Deserialize for Nonce {
 
 #[wasm_bindgen]
 #[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct VRFCert {
     output: Vec<u8>,
@@ -1413,7 +1357,7 @@ mod tests {
     #[test]
     fn nonce_identity() {
         let orig = Nonce::new_identity();
-        let deser = Nonce::deserialize(&mut Deserializer::from(std::io::Cursor::new(
+        let deser = Nonce::deserialize(&mut Deserializer::from(core2::io::Cursor::new(
             orig.to_bytes(),
         )))
         .unwrap();
@@ -1427,7 +1371,7 @@ mod tests {
             24, 25, 26, 27, 28, 29, 30, 31,
         ])
         .unwrap();
-        let deser = Nonce::deserialize(&mut Deserializer::from(std::io::Cursor::new(
+        let deser = Nonce::deserialize(&mut Deserializer::from(core2::io::Cursor::new(
             orig.to_bytes(),
         )))
         .unwrap();
@@ -1473,25 +1417,5 @@ mod tests {
             hex::encode(&pub_chaincode),
             "91e248de509c070d812ab2fda57860ac876bc489192c1ef4ce253c197ee219a4"
         );
-    }
-
-    #[test]
-    fn private_key_from_bech32() {
-        let pk = PrivateKey::generate_ed25519().unwrap();
-        let pk_ext = PrivateKey::generate_ed25519extended().unwrap();
-
-        assert_eq!(
-            PrivateKey::from_bech32(&pk.to_bech32()).unwrap().as_bytes(),
-            pk.as_bytes(),
-        );
-        assert_eq!(
-            PrivateKey::from_bech32(&pk_ext.to_bech32())
-                .unwrap()
-                .as_bytes(),
-            pk_ext.as_bytes(),
-        );
-
-        let er = PrivateKey::from_bech32("qwe");
-        assert!(er.is_err());
     }
 }

@@ -1,3 +1,6 @@
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::chain_crypto::key::{
     AsymmetricKey, AsymmetricPublicKey, PublicKeyError, SecretKeyError, SecretKeySizeStatic,
 };
@@ -5,9 +8,9 @@ use crate::chain_crypto::sign::{
     SignatureError, SigningAlgorithm, Verification, VerificationAlgorithm,
 };
 use cryptoxide::ed25519;
-use rand_os::rand_core::{CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 
-use ed25519_bip32::XPub;
+use ed25519_bip32_core::XPub;
 
 /// ED25519 Signing Algorithm
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -136,12 +139,11 @@ mod test {
     use crate::chain_crypto::key::KeyPair;
     use crate::chain_crypto::sign::test::{keypair_signing_ko, keypair_signing_ok};
 
-    #[quickcheck]
+
     fn sign_ok(input: (KeyPair<Ed25519>, Vec<u8>)) -> bool {
         keypair_signing_ok(input)
     }
 
-    #[quickcheck]
     fn sign_ko(input: (KeyPair<Ed25519>, KeyPair<Ed25519>, Vec<u8>)) -> bool {
         keypair_signing_ko(input)
     }
