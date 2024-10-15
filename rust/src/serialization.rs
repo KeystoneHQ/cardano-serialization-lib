@@ -2209,7 +2209,7 @@ pub(super) fn skip_tag<R: BufRead + Seek>(
 
 pub(super) fn skip_set_tag<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
-) -> Result<(), DeserializeError> {
+) -> Result<bool, DeserializeError> {
     skip_tag(raw, 258)
 }
 
