@@ -198,7 +198,8 @@ impl cbor_event::se::Serialize for TransactionInputs {
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        serializer.write_array(cbor_event::Len::Len(self.inputs.len() as u64))?;
+        serializer.write_tag(258)?;
+        serializer.write_array(cbor_event::Len::Len(self.len() as u64))?;
         for element in &self.inputs {
             element.serialize(serializer)?;
         }
@@ -208,6 +209,7 @@ impl cbor_event::se::Serialize for TransactionInputs {
 
 impl Deserialize for TransactionInputs {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
+        let has_set_tag = skip_set_tag(raw)?;
         let mut arr = Vec::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.array()?;
@@ -215,16 +217,21 @@ impl Deserialize for TransactionInputs {
                 cbor_event::Len::Len(n) => arr.len() < n as usize,
                 cbor_event::Len::Indefinite => true,
             } {
-                if raw.cbor_type()? == CBORType::Special {
-                    assert_eq!(raw.special()?, CBORSpecial::Break);
+                if is_break_tag(raw, "TransactionInputs")? {
                     break;
                 }
                 arr.push(TransactionInput::deserialize(raw)?);
             }
             Ok(())
         })()
-        .map_err(|e| e.annotate("TransactionInputs"))?;
-        Ok(Self::from_vec(arr))
+            .map_err(|e| e.annotate("TransactionInputs"))?;
+        let mut inputs = TransactionInputs::from_vec(arr);
+        if has_set_tag {
+            inputs.set_set_type(CborSetType::Tagged);
+        } else {
+            inputs.set_set_type(CborSetType::Untagged);
+        }
+        Ok(inputs)
     }
 }
 
