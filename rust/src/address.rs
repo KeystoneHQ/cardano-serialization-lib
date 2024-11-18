@@ -1,6 +1,6 @@
-use alloc::format;
 use super::*;
 use crate::legacy_address::ExtendedAddr;
+use alloc::format;
 use bech32::{ToBase32, Variant};
 use ed25519_bip32_core::XPub;
 
@@ -68,7 +68,10 @@ impl NetworkInfo {
     }
     /// !!! DEPRECATED !!!
     /// This network does not exist anymore. Use `.testnet_preview()` or `.testnet_preprod()`
-    #[deprecated(since = "11.2.0", note = "Use `.testnet_preview` or `.testnet_preprod`")]
+    #[deprecated(
+        since = "11.2.0",
+        note = "Use `.testnet_preview` or `.testnet_preprod`"
+    )]
     pub fn testnet() -> NetworkInfo {
         NetworkInfo {
             network_id: 0b0000,
@@ -84,16 +87,7 @@ impl NetworkInfo {
 }
 
 #[derive(
-    Debug,
-    Clone,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-
+    Debug, Clone, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum StakeCredType {
     Key(Ed25519KeyHash),
@@ -110,15 +104,7 @@ pub enum StakeCredKind {
 
 #[wasm_bindgen]
 #[derive(
-    Debug,
-    Clone,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Debug, Clone, Eq, Hash, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct StakeCredential(pub(crate) StakeCredType);
 
@@ -200,7 +186,7 @@ impl Deserialize for StakeCredential {
                         len,
                         "[id, hash]",
                     ))
-                        .into());
+                    .into());
                 }
             }
             let cred_type = match raw.unsigned_integer()? {
@@ -211,7 +197,7 @@ impl Deserialize for StakeCredential {
                         found: Key::Uint(n),
                         expected: vec![Key::Uint(0), Key::Uint(1)],
                     }
-                        .into());
+                    .into());
                 }
             };
             if let cbor_event::Len::Indefinite = len {
@@ -221,7 +207,7 @@ impl Deserialize for StakeCredential {
             }
             Ok(StakeCredential(cred_type))
         })()
-            .map_err(|e| e.annotate("StakeCredential"))
+        .map_err(|e| e.annotate("StakeCredential"))
     }
 }
 
@@ -1451,7 +1437,11 @@ mod tests {
     #[test]
     fn prepod_network_id_test() {
         let address = "KjgoiXJS2coTnqpCLHXFtd89Hv9ttjsE6yW4msyLXFNkykUpTsyBs85r2rDDia2uKrhdpGKCJnmFXwvPSWLe75564ixZWdTxRh7TnuaDLnHx";
-        let network_id = ByronAddress::from_base58(address).unwrap().to_address().network_id().unwrap();
+        let network_id = ByronAddress::from_base58(address)
+            .unwrap()
+            .to_address()
+            .network_id()
+            .unwrap();
         assert_eq!(network_id, NetworkInfo::testnet_preprod().network_id());
     }
 }

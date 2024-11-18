@@ -18,7 +18,6 @@ pub struct FixedTransaction {
 
 to_from_bytes!(FixedTransaction);
 
-
 #[wasm_bindgen]
 impl FixedTransaction {
     pub fn new(
@@ -57,7 +56,7 @@ impl FixedTransaction {
             witness_bytes: raw_witness_set.to_vec(),
             is_valid,
             auxiliary_data,
-            auxiliary_bytes: Some(raw_auxiliary_data.to_vec())
+            auxiliary_bytes: Some(raw_auxiliary_data.to_vec()),
         })
     }
 
@@ -205,10 +204,11 @@ impl DeserializeEmbeddedGroup for FixedTransaction {
                 Ok(match raw.cbor_type()? != CBORType::Special {
                     true => {
                         let (auxiliary_data_deser, auxiliary_bytes_deser) =
-                            deserilized_with_orig_bytes(raw, |raw| AuxiliaryData::deserialize(raw))?;
+                            deserilized_with_orig_bytes(raw, |raw| {
+                                AuxiliaryData::deserialize(raw)
+                            })?;
                         (Some(auxiliary_data_deser), Some(auxiliary_bytes_deser))
-
-                    },
+                    }
                     false => {
                         if raw.special()? != CBORSpecial::Null {
                             return Err(DeserializeFailure::ExpectedNull.into());
@@ -226,7 +226,7 @@ impl DeserializeEmbeddedGroup for FixedTransaction {
             witness_bytes,
             is_valid,
             auxiliary_data,
-            auxiliary_bytes
+            auxiliary_bytes,
         })
     }
 }

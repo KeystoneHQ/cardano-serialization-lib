@@ -1,15 +1,7 @@
 use crate::*;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub enum VoteKind {
@@ -19,15 +11,7 @@ pub enum VoteKind {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct VotingProcedure {
@@ -61,7 +45,6 @@ impl VotingProcedure {
         self.anchor.clone()
     }
 }
-
 
 impl cbor_event::se::Serialize for VotingProcedure {
     fn serialize<'se, W: Write>(

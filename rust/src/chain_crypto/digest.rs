@@ -1,12 +1,12 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
-use core::{error, fmt, result};
+use alloc::string::String;
 use core::convert::TryFrom;
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use core::str::FromStr;
-use alloc::string::String;
+use core::{error, fmt, result};
 
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
@@ -36,8 +36,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-}
+impl error::Error for Error {}
 
 impl From<FromHexError> for Error {
     fn from(err: FromHexError) -> Self {

@@ -1,10 +1,10 @@
-use alloc::format;
 use crate::chain_crypto::key::{
     AsymmetricKey, AsymmetricPublicKey, PublicKeyError, SecretKeyError, SecretKeySizeStatic,
 };
 use crate::chain_crypto::sign::{
     SignatureError, SigningAlgorithm, Verification, VerificationAlgorithm,
 };
+use alloc::format;
 
 use cryptoxide::digest::Digest;
 use cryptoxide::hmac::Hmac;
@@ -164,8 +164,8 @@ fn mk_ed25519_extended(extended_out: &mut [u8], secret: &[u8]) {
 
 #[cfg(test)]
 mod test {
-    use alloc::vec::Vec;
     use super::*;
+    use alloc::vec::Vec;
 
     use crate::chain_crypto::key::KeyPair;
     use crate::chain_crypto::sign::test::{keypair_signing_ko, keypair_signing_ok};

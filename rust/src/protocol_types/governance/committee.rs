@@ -1,17 +1,9 @@
 use crate::*;
 use alloc::collections::BTreeMap;
-use serialization::{is_break_tag, check_len};
+use serialization::{check_len, is_break_tag};
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct CommitteeMember {
     stake_credential: StakeCredential,
@@ -19,15 +11,7 @@ struct CommitteeMember {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct CommitteeJsonStruct {
     members: Vec<CommitteeMember>,
@@ -120,7 +104,10 @@ impl Serialize for Committee {
 }
 
 impl SerializeEmbeddedGroup for Committee {
-    fn serialize_as_embedded_group<'a, W: Write + Sized>(&self, serializer: &'a mut Serializer<W>) -> cbor_event::Result<&'a mut Serializer<W>> {
+    fn serialize_as_embedded_group<'a, W: Write + Sized>(
+        &self,
+        serializer: &'a mut Serializer<W>,
+    ) -> cbor_event::Result<&'a mut Serializer<W>> {
         serializer.write_map(cbor_event::Len::Len(self.members.len() as u64))?;
         for (key, value) in &self.members {
             key.serialize(serializer)?;

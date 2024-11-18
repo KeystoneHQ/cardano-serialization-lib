@@ -1,4 +1,3 @@
-
 #[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub enum TxBodyNames {
     Inputs = 0,

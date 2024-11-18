@@ -1,6 +1,6 @@
-use alloc::format;
 use super::error::JsError;
 use super::*;
+use alloc::format;
 
 use cryptoxide::chacha20poly1305::ChaCha20Poly1305;
 use cryptoxide::hmac::Hmac;

@@ -3,15 +3,7 @@ use serialization::check_len;
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PoolVotingThresholds {
     pub(crate) motion_no_confidence: UnitInterval,
@@ -203,15 +195,7 @@ impl DrepVotingThresholds {
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ProtocolParamUpdate {
     pub(crate) minfee_a: Option<Coin>,
@@ -489,7 +473,10 @@ impl ProtocolParamUpdate {
         self.committee_term_limit.clone()
     }
 
-    pub fn set_governance_action_validity_period(&mut self, governance_action_validity_period: Epoch) {
+    pub fn set_governance_action_validity_period(
+        &mut self,
+        governance_action_validity_period: Epoch,
+    ) {
         self.governance_action_validity_period = Some(governance_action_validity_period)
     }
 
@@ -567,7 +554,6 @@ impl ProtocolParamUpdate {
         }
     }
 }
-
 
 impl Serialize for PoolVotingThresholds {
     fn serialize<'se, W: Write>(
@@ -807,7 +793,7 @@ impl cbor_event::se::Serialize for ProtocolParamUpdate {
             } + match &self.ref_script_coins_per_byte {
                 Some(_) => 1,
                 None => 0,
-            }
+            },
         ))?;
         if let Some(field) = &self.minfee_a {
             serializer.write_unsigned_integer(0)?;
@@ -1384,7 +1370,7 @@ impl Deserialize for ProtocolParamUpdate {
                                     read_len.read_elems(1)?;
                                     Ok(UnitInterval::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("ref_script_coins_per_byte"))?,
+                                .map_err(|e| e.annotate("ref_script_coins_per_byte"))?,
                             );
                         }
                         unknown_key => {

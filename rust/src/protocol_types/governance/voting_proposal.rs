@@ -2,15 +2,7 @@ use crate::*;
 use serialization::check_len;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct VotingProposal {
@@ -63,7 +55,6 @@ impl VotingProposal {
     }
 }
 
-
 impl Serialize for VotingProposal {
     fn serialize<'se, W: Write>(
         &self,
@@ -85,20 +76,14 @@ impl DeserializeEmbeddedGroup for VotingProposal {
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-        check_len(
-            len,
-            4,
-            "(deposit, reward_account, gov_action, anchor)",
-        )?;
+        check_len(len, 4, "(deposit, reward_account, gov_action, anchor)")?;
 
-        let deposit = Coin::deserialize(raw)
-            .map_err(|e| e.annotate("deposit"))?;
-        let reward_account = RewardAddress::deserialize(raw)
-            .map_err(|e| e.annotate("reward_account"))?;
-        let gov_action = GovernanceAction::deserialize(raw)
-            .map_err(|e| e.annotate("gov_action"))?;
-        let anchor = Anchor::deserialize(raw)
-            .map_err(|e| e.annotate("anchor"))?;
+        let deposit = Coin::deserialize(raw).map_err(|e| e.annotate("deposit"))?;
+        let reward_account =
+            RewardAddress::deserialize(raw).map_err(|e| e.annotate("reward_account"))?;
+        let gov_action =
+            GovernanceAction::deserialize(raw).map_err(|e| e.annotate("gov_action"))?;
+        let anchor = Anchor::deserialize(raw).map_err(|e| e.annotate("anchor"))?;
 
         return Ok(VotingProposal {
             deposit,

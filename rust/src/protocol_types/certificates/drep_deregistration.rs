@@ -1,18 +1,8 @@
+use crate::serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
 use crate::*;
-use crate::serialization::{
-    check_len, deserialize_and_check_index, serialize_and_check_index,
-};
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct DrepDeregistration {
@@ -51,7 +41,8 @@ impl cbor_event::se::Serialize for DrepDeregistration {
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
         serializer.write_array(cbor_event::Len::Len(3))?;
 
-        let proposal_index = certificate_index_names::CertificateIndexNames::DrepDeregistration.to_u64();
+        let proposal_index =
+            certificate_index_names::CertificateIndexNames::DrepDeregistration.to_u64();
         serialize_and_check_index(serializer, proposal_index, "DrepDeregistration")?;
 
         self.voting_credential.serialize(serializer)?;
@@ -69,7 +60,8 @@ impl DeserializeEmbeddedGroup for DrepDeregistration {
     ) -> Result<Self, DeserializeError> {
         check_len(len, 3, "(cert_index, voting_credential, coin)")?;
 
-        let cert_index = certificate_index_names::CertificateIndexNames::DrepDeregistration.to_u64();
+        let cert_index =
+            certificate_index_names::CertificateIndexNames::DrepDeregistration.to_u64();
         deserialize_and_check_index(raw, cert_index, "cert_index")?;
 
         let voting_credential =

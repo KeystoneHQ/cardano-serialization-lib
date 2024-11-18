@@ -2,15 +2,7 @@ use crate::*;
 use serialization::check_len;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct Constitution {
@@ -44,8 +36,6 @@ impl Constitution {
         }
     }
 }
-
-
 
 impl Serialize for Constitution {
     fn serialize<'se, W: Write>(

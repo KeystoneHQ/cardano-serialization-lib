@@ -3,9 +3,9 @@
 pub mod util {
     //! CBor util and other stuff
 
+    use crate::legacy_address::crc32::crc32;
     use alloc::format;
     use alloc::vec::Vec;
-    use crate::legacy_address::crc32::crc32;
     use cbor_event::{self, cbor, de::Deserializer, se::Serializer, Len};
 
     pub fn encode_with_crc32_<T, W>(t: &T, s: &mut Serializer<W>) -> cbor_event::Result<()>

@@ -1,18 +1,10 @@
 use crate::*;
 use core2::io::SeekFrom;
-use voting_proposal_index_names::VotingProposalIndexNames;
 use serialization::check_len_indefinite;
+use voting_proposal_index_names::VotingProposalIndexNames;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub(crate) enum GovernanceActionEnum {
     ParameterChangeAction(ParameterChangeAction),
@@ -25,15 +17,7 @@ pub(crate) enum GovernanceActionEnum {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub enum GovernanceActionKind {
@@ -47,15 +31,7 @@ pub enum GovernanceActionKind {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct GovernanceAction(pub(crate) GovernanceActionEnum);
@@ -64,9 +40,7 @@ impl_to_from!(GovernanceAction);
 
 #[wasm_bindgen]
 impl GovernanceAction {
-    pub fn new_parameter_change_action(
-        parameter_change_action: &ParameterChangeAction,
-    ) -> Self {
+    pub fn new_parameter_change_action(parameter_change_action: &ParameterChangeAction) -> Self {
         Self(GovernanceActionEnum::ParameterChangeAction(
             parameter_change_action.clone(),
         ))
@@ -100,9 +74,7 @@ impl GovernanceAction {
         ))
     }
 
-    pub fn new_new_constitution_action(
-        new_constitution_action: &NewConstitutionAction,
-    ) -> Self {
+    pub fn new_new_constitution_action(new_constitution_action: &NewConstitutionAction) -> Self {
         Self(GovernanceActionEnum::NewConstitutionAction(
             new_constitution_action.clone(),
         ))
@@ -124,7 +96,9 @@ impl GovernanceAction {
                 GovernanceActionKind::TreasuryWithdrawalsAction
             }
             GovernanceActionEnum::NoConfidenceAction(_) => GovernanceActionKind::NoConfidenceAction,
-            GovernanceActionEnum::UpdateCommitteeAction(_) => GovernanceActionKind::UpdateCommitteeAction,
+            GovernanceActionEnum::UpdateCommitteeAction(_) => {
+                GovernanceActionKind::UpdateCommitteeAction
+            }
             GovernanceActionEnum::NewConstitutionAction(_) => {
                 GovernanceActionKind::NewConstitutionAction
             }
@@ -174,14 +148,13 @@ impl GovernanceAction {
         }
     }
 
-    pub fn as_info_action (&self) -> Option<InfoAction> {
+    pub fn as_info_action(&self) -> Option<InfoAction> {
         match &self.0 {
             GovernanceActionEnum::InfoAction(p) => Some(p.clone()),
             _ => None,
         }
     }
 }
-
 
 impl Serialize for GovernanceAction {
     fn serialize<'se, W: Write>(

@@ -1,17 +1,9 @@
 use crate::*;
-use serialization::{check_len, serialize_and_check_index, deserialize_and_check_index};
+use serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
 use voting_proposal_index_names::VotingProposalIndexNames;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct TreasuryWithdrawalsAction {
@@ -53,7 +45,6 @@ impl TreasuryWithdrawalsAction {
     }
 }
 
-
 impl Serialize for TreasuryWithdrawalsAction {
     fn serialize<'se, W: Write>(
         &self,
@@ -78,16 +69,18 @@ impl DeserializeEmbeddedGroup for TreasuryWithdrawalsAction {
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError> {
-
         let has_policy_hash = len == cbor_event::Len::Len(3) || len == cbor_event::Len::Indefinite;
 
         //for sancho backwards compatibility
         if !has_policy_hash {
             check_len(len, 2, "(proposal_index, { reward_account => coin })")?;
         } else {
-            check_len(len, 3, "(proposal_index, { reward_account => coin }, policy_hash / null)")?;
+            check_len(
+                len,
+                3,
+                "(proposal_index, { reward_account => coin }, policy_hash / null)",
+            )?;
         }
-
 
         let desired_index = VotingProposalIndexNames::TreasuryWithdrawalsAction.to_u64();
         deserialize_and_check_index(raw, desired_index, "proposal_index")?;
@@ -100,6 +93,9 @@ impl DeserializeEmbeddedGroup for TreasuryWithdrawalsAction {
             None
         };
 
-        return Ok(TreasuryWithdrawalsAction { withdrawals , policy_hash});
+        return Ok(TreasuryWithdrawalsAction {
+            withdrawals,
+            policy_hash,
+        });
     }
 }

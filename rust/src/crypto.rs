@@ -1,15 +1,15 @@
 use crate::chain_crypto as crypto;
 use crate::impl_mockchain as chain;
+use alloc::format;
 use bech32::ToBase32;
+use bech32::Variant;
 use cbor_event::{de::Deserializer, se::Serializer};
 use chain::key;
-use crypto::bech32::Bech32 as _;
-use core2::io::{BufRead, Seek, Write};
-use core::str::FromStr;
-use core::fmt::Display;
 use core::fmt;
-use alloc::format;
-use bech32::Variant;
+use core::fmt::Display;
+use core::str::FromStr;
+use core2::io::{BufRead, Seek, Write};
+use crypto::bech32::Bech32 as _;
 
 use cryptoxide::blake2b::Blake2b;
 
@@ -385,7 +385,7 @@ impl<'de> serde::de::Deserialize<'de> for PublicKey {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, )]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Vkey(PublicKey);
 
 impl_to_from!(Vkey);
@@ -477,7 +477,7 @@ impl Deserialize for Vkeys {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, )]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Vkeywitness {
     vkey: Vkey,
     signature: Ed25519Signature,
@@ -550,7 +550,7 @@ impl Deserialize for Vkeywitness {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, )]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Vkeywitnesses(pub(crate) Vec<Vkeywitness>);
 
 impl_to_from!(Vkeywitnesses);
@@ -610,7 +610,7 @@ impl Deserialize for Vkeywitnesses {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize,)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct BootstrapWitness {
     vkey: Vkey,
     signature: Ed25519Signature,
@@ -717,7 +717,7 @@ impl DeserializeEmbeddedGroup for BootstrapWitness {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize,)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct BootstrapWitnesses(Vec<BootstrapWitness>);
 
 #[wasm_bindgen]
@@ -878,8 +878,6 @@ macro_rules! impl_signature {
                 })
             }
         }
-
-
     };
 }
 
@@ -919,8 +917,12 @@ macro_rules! impl_hash_type {
             }
 
             pub fn to_bech32(&self, prefix: &str) -> Result<String, JsError> {
-                bech32::encode(&prefix, self.to_bytes().to_base32(), bech32::Variant::Bech32)
-                    .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
+                bech32::encode(
+                    &prefix,
+                    self.to_bytes().to_base32(),
+                    bech32::Variant::Bech32,
+                )
+                .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
             }
 
             pub fn from_bech32(bech_str: &str) -> Result<$name, JsError> {
@@ -1006,8 +1008,6 @@ macro_rules! impl_hash_type {
                 })
             }
         }
-
-
 
         impl Display for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1148,19 +1148,10 @@ impl<'de> serde::de::Deserialize<'de> for KESSignature {
     }
 }
 
-
 // Evolving nonce type (used for Update's crypto)
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Nonce {
     hash: Option<[u8; 32]>,
@@ -1262,9 +1253,7 @@ impl Deserialize for Nonce {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct VRFCert {
     output: Vec<u8>,
     proof: Vec<u8>,

@@ -1,17 +1,17 @@
 use alloc::borrow::ToOwned;
 use alloc::format;
-use core::convert::TryFrom;
 use cbor_event::{
     self,
     de::Deserializer,
     se::{Serialize, Serializer},
 };
-use hex::FromHex;
-use num_bigint::Sign;
-use serde_json;
+use core::convert::TryFrom;
 use core::fmt::Display;
 use core::ops::Div;
+use hex::FromHex;
+use num_bigint::Sign;
 use ritelinked::LinkedHashMap;
+use serde_json;
 
 use super::*;
 use crate::error::{DeserializeError, DeserializeFailure};
@@ -27,8 +27,6 @@ pub fn from_bytes<T: Deserialize>(data: &Vec<u8>) -> Result<T, DeserializeError>
     let mut raw = Deserializer::from(core2::io::Cursor::new(data));
     T::deserialize(&mut raw)
 }
-
-
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -77,19 +75,19 @@ impl Deserialize for TransactionUnspentOutput {
                     let input = (|| -> Result<_, DeserializeError> {
                         Ok(TransactionInput::deserialize(raw)?)
                     })()
-                        .map_err(|e| e.annotate("input"))?;
+                    .map_err(|e| e.annotate("input"))?;
                     let output = (|| -> Result<_, DeserializeError> {
                         Ok(TransactionOutput::deserialize(raw)?)
                     })()
-                        .map_err(|e| e.annotate("output"))?;
+                    .map_err(|e| e.annotate("output"))?;
                     let ret = Ok(Self { input, output });
                     match len {
                         cbor_event::Len::Len(n) => match n {
                             2 =>
                             /* it's ok */
-                                {
-                                    ()
-                                }
+                            {
+                                ()
+                            }
                             n => {
                                 return Err(
                                     DeserializeFailure::DefiniteLenMismatch(n, Some(2)).into()
@@ -99,9 +97,9 @@ impl Deserialize for TransactionUnspentOutput {
                         cbor_event::Len::Indefinite => match raw.special()? {
                             CBORSpecial::Break =>
                             /* it's ok */
-                                {
-                                    ()
-                                }
+                            {
+                                ()
+                            }
                             _ => return Err(DeserializeFailure::EndingBreakMissing.into()),
                         },
                     }
@@ -110,7 +108,7 @@ impl Deserialize for TransactionUnspentOutput {
                 _ => Err(DeserializeFailure::NoVariantMatched.into()),
             }
         })()
-            .map_err(|e| e.annotate("TransactionUnspentOutput"))
+        .map_err(|e| e.annotate("TransactionUnspentOutput"))
     }
 }
 
@@ -242,7 +240,11 @@ impl BigNum {
     }
 
     pub fn max(a: &BigNum, b: &BigNum) -> BigNum {
-        if a.less_than(b) { b.clone() } else { a.clone() }
+        if a.less_than(b) {
+            b.clone()
+        } else {
+            a.clone()
+        }
     }
 }
 
@@ -263,7 +265,6 @@ impl TryFrom<BigNum> for u32 {
 }
 
 impl From<BigNum> for u64 {
-
     fn from(value: BigNum) -> Self {
         value.0
     }
@@ -307,8 +308,8 @@ impl Deserialize for BigNum {
 
 impl serde::Serialize for BigNum {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_str())
     }
@@ -316,8 +317,8 @@ impl serde::Serialize for BigNum {
 
 impl<'de> serde::de::Deserialize<'de> for BigNum {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
         let s = <String as serde::de::Deserialize>::deserialize(deserializer)?;
         Self::from_str(&s).map_err(|_e| {
@@ -345,15 +346,7 @@ pub fn to_bigint(val: u64) -> BigInt {
 pub type Coin = BigNum;
 
 #[wasm_bindgen]
-#[derive(
-Clone,
-Debug,
-Eq,
-/*Hash,*/ Ord,
-PartialEq,
-serde::Serialize,
-serde::Deserialize,
-)]
+#[derive(Clone, Debug, Eq, /*Hash,*/ Ord, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Value {
     pub(crate) coin: Coin,
     pub(crate) multiasset: Option<MultiAsset>,
@@ -391,10 +384,10 @@ impl Value {
     pub fn is_zero(&self) -> bool {
         self.coin.is_zero()
             && self
-            .multiasset
-            .as_ref()
-            .map(|m| m.len() == 0)
-            .unwrap_or(true)
+                .multiasset
+                .as_ref()
+                .map(|m| m.len() == 0)
+                .unwrap_or(true)
     }
 
     pub fn coin(&self) -> Coin {
@@ -565,9 +558,9 @@ impl Deserialize for Value {
                         cbor_event::Len::Len(n) => match n {
                             2 =>
                             /* it's ok */
-                                {
-                                    ()
-                                }
+                            {
+                                ()
+                            }
                             n => {
                                 return Err(
                                     DeserializeFailure::DefiniteLenMismatch(n, Some(2)).into()
@@ -577,9 +570,9 @@ impl Deserialize for Value {
                         cbor_event::Len::Indefinite => match raw.special()? {
                             CBORSpecial::Break =>
                             /* it's ok */
-                                {
-                                    ()
-                                }
+                            {
+                                ()
+                            }
                             _ => return Err(DeserializeFailure::EndingBreakMissing.into()),
                         },
                     }
@@ -588,7 +581,7 @@ impl Deserialize for Value {
                 _ => Err(DeserializeFailure::NoVariantMatched.into()),
             }
         })()
-            .map_err(|e| e.annotate("Value"))
+        .map_err(|e| e.annotate("Value"))
     }
 }
 
@@ -649,8 +642,8 @@ impl Int {
     /// Returns an i32 value in case the underlying original i128 value is within the limits.
     /// Otherwise will just return an empty value (undefined).
     #[deprecated(
-    since = "10.0.0",
-    note = "Unsafe ignoring of possible boundary error and it's not clear from the function name. Use `as_i32_or_nothing`, `as_i32_or_fail`, or `to_str`"
+        since = "10.0.0",
+        note = "Unsafe ignoring of possible boundary error and it's not clear from the function name. Use `as_i32_or_nothing`, `as_i32_or_fail`, or `to_str`"
     )]
     pub fn as_i32(&self) -> Option<i32> {
         self.as_i32_or_nothing()
@@ -714,14 +707,14 @@ impl Deserialize for Int {
                 _ => Err(DeserializeFailure::NoVariantMatched.into()),
             }
         })()
-            .map_err(|e| e.annotate("Int"))
+        .map_err(|e| e.annotate("Int"))
     }
 }
 
 impl serde::Serialize for Int {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_str())
     }
@@ -729,8 +722,8 @@ impl serde::Serialize for Int {
 
 impl<'de> serde::de::Deserialize<'de> for Int {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
         let s = <String as serde::de::Deserialize>::deserialize(deserializer)?;
         Self::from_str(&s).map_err(|_e| {
@@ -754,7 +747,7 @@ fn read_nint<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<i128, Deser
         cbor_event::Len::Indefinite => Err(cbor_event::Error::IndefiniteLenNotSupported(
             cbor_event::Type::NegativeInteger,
         )
-            .into()),
+        .into()),
         cbor_event::Len::Len(v) => {
             raw.advance(1 + len_sz)?;
             Ok(-(v as i128) - 1)
@@ -798,7 +791,7 @@ pub(crate) fn read_bounded_bytes<R: BufRead + Seek>(
                     max: BOUNDED_BYTES_CHUNK_SIZE,
                     found: bytes.len(),
                 }
-                    .into());
+                .into());
             }
             Ok(bytes)
         }
@@ -825,7 +818,7 @@ pub(crate) fn read_bounded_bytes<R: BufRead + Seek>(
                         return Err(cbor_event::Error::CustomError(String::from(
                             "Illegal CBOR: Indefinite string found inside indefinite string",
                         ))
-                            .into());
+                        .into());
                     }
                     cbor_event::Len::Len(len) => {
                         if chunk_len_sz > BOUNDED_BYTES_CHUNK_SIZE {
@@ -834,7 +827,7 @@ pub(crate) fn read_bounded_bytes<R: BufRead + Seek>(
                                 max: BOUNDED_BYTES_CHUNK_SIZE,
                                 found: chunk_len_sz,
                             }
-                                .into());
+                            .into());
                         }
                         raw.advance(1 + chunk_len_sz)?;
                         raw.as_mut_ref()
@@ -861,8 +854,8 @@ impl_to_from!(BigInt);
 
 impl serde::Serialize for BigInt {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_str())
     }
@@ -870,8 +863,8 @@ impl serde::Serialize for BigInt {
 
 impl<'de> serde::de::Deserialize<'de> for BigInt {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
         let s = <String as serde::de::Deserialize>::deserialize(deserializer)?;
         BigInt::from_str(&s).map_err(|_e| {
@@ -1038,7 +1031,7 @@ impl Deserialize for BigInt {
                                 found: tag,
                                 expected: 2,
                             }
-                                .into());
+                            .into());
                         }
                     }
                 }
@@ -1051,22 +1044,20 @@ impl Deserialize for BigInt {
                 _ => return Err(DeserializeFailure::NoVariantMatched.into()),
             }
         })()
-            .map_err(|e| e.annotate("BigInt"))
+        .map_err(|e| e.annotate("BigInt"))
     }
 }
 
 impl<T> std::convert::From<T> for BigInt
-    where
-        T: std::convert::Into<num_bigint::BigInt>,
+where
+    T: std::convert::Into<num_bigint::BigInt>,
 {
     fn from(x: T) -> Self {
         Self(x.into())
     }
 }
 
-impl From<BigNum> for BigInt
-    where
-{
+impl From<BigNum> for BigInt {
     fn from(x: BigNum) -> Self {
         Self(x.0.into())
     }
@@ -1085,8 +1076,8 @@ pub(crate) trait SerializeEmbeddedGroup {
 // same as cbor_event::de::Deserialize but with our DeserializeError
 pub trait Deserialize {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError>
-        where
-            Self: Sized;
+    where
+        Self: Sized;
 }
 
 // auto-implement for all cbor_event Deserialize implementors
@@ -1102,8 +1093,8 @@ pub trait DeserializeEmbeddedGroup {
         raw: &mut Deserializer<R>,
         len: cbor_event::Len,
     ) -> Result<Self, DeserializeError>
-        where
-            Self: Sized;
+    where
+        Self: Sized;
 }
 
 pub struct CBORReadLen {
@@ -1377,14 +1368,18 @@ impl MinOutputAdaCalculator {
     pub fn calc_size_cost(data_cost: &DataCost, size: usize) -> Result<Coin, JsError> {
         //according to https://hydra.iohk.io/build/15339994/download/1/babbage-changes.pdf
         //See on the page 9 getValue txout
-        to_bignum(size as u64).checked_add(&to_bignum(160))?
+        to_bignum(size as u64)
+            .checked_add(&to_bignum(160))?
             .checked_mul(&data_cost.coins_per_byte())
     }
 
-    pub fn calc_required_coin(output: &TransactionOutput, data_cost: &DataCost) -> Result<Coin, JsError> {
+    pub fn calc_required_coin(
+        output: &TransactionOutput,
+        data_cost: &DataCost,
+    ) -> Result<Coin, JsError> {
         //according to https://hydra.iohk.io/build/15339994/download/1/babbage-changes.pdf
         //See on the page 9 getValue txout
-        Self::calc_size_cost(data_cost,output.to_bytes().len())
+        Self::calc_size_cost(data_cost, output.to_bytes().len())
     }
 }
 
@@ -1454,32 +1449,32 @@ fn encode_wallet_value_to_native_script(
 ) -> Result<NativeScript, JsError> {
     match value {
         serde_json::Value::Object(map)
-        if map.contains_key("cosigners") && map.contains_key("template") =>
-            {
-                let mut cosigners = ritelinked::LinkedHashMap::new();
+            if map.contains_key("cosigners") && map.contains_key("template") =>
+        {
+            let mut cosigners = ritelinked::LinkedHashMap::new();
 
-                if let serde_json::Value::Object(cosigner_map) = map.get("cosigners").unwrap() {
-                    for (key, value) in cosigner_map.iter() {
-                        if let serde_json::Value::String(xpub) = value {
-                            if xpub == "self" {
-                                cosigners.insert(key.to_owned(), self_xpub.to_owned());
-                            } else {
-                                cosigners.insert(key.to_owned(), xpub.to_owned());
-                            }
+            if let serde_json::Value::Object(cosigner_map) = map.get("cosigners").unwrap() {
+                for (key, value) in cosigner_map.iter() {
+                    if let serde_json::Value::String(xpub) = value {
+                        if xpub == "self" {
+                            cosigners.insert(key.to_owned(), self_xpub.to_owned());
                         } else {
-                            return Err(JsError::from_str("cosigner value must be a string"));
+                            cosigners.insert(key.to_owned(), xpub.to_owned());
                         }
+                    } else {
+                        return Err(JsError::from_str("cosigner value must be a string"));
                     }
-                } else {
-                    return Err(JsError::from_str("cosigners must be a map"));
                 }
-
-                let template = map.get("template").unwrap();
-
-                let template_native_script = encode_template_to_native_script(template, &cosigners)?;
-
-                Ok(template_native_script)
+            } else {
+                return Err(JsError::from_str("cosigners must be a map"));
             }
+
+            let template = map.get("template").unwrap();
+
+            let template_native_script = encode_template_to_native_script(template, &cosigners)?;
+
+            Ok(template_native_script)
+        }
         _ => Err(JsError::from_str(
             "top level must be an object. cosigners and template keys are required",
         )),
@@ -1537,7 +1532,7 @@ fn encode_template_to_native_script(
             if let serde_json::Value::Object(some) = map.get("some").unwrap() {
                 if some.contains_key("at_least") && some.contains_key("from") {
                     let n = if let serde_json::Value::Number(at_least) =
-                    some.get("at_least").unwrap()
+                        some.get("at_least").unwrap()
                     {
                         if let Some(n) = at_least.as_u64() {
                             n as u32
@@ -1611,6 +1606,30 @@ pub(crate) fn opt64<T>(o: &Option<T>) -> u64 {
     o.is_some() as u64
 }
 
+pub(super) fn skip_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+    tag: u64,
+) -> Result<bool, DeserializeError> {
+    if let Ok(extracted_tag) = raw.tag() {
+        if extracted_tag != tag {
+            return Err(DeserializeError::new(
+                "skip_tag",
+                DeserializeFailure::TagMismatch {
+                    found: extracted_tag,
+                    expected: tag,
+                },
+            ));
+        }
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+pub(super) fn skip_set_tag<R: BufRead + Seek>(
+    raw: &mut Deserializer<R>,
+) -> Result<bool, DeserializeError> {
+    skip_tag(raw, 258)
+}
 pub struct ValueShortage {
     pub(crate) ada_shortage: Option<(Coin, Coin, Coin)>,
     pub(crate) asset_shortage: Vec<(PolicyID, AssetName, Coin, Coin)>,
@@ -1620,30 +1639,48 @@ impl Display for ValueShortage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "shortage: {{")?;
         if let Some((input_data, out_data, fee)) = self.ada_shortage {
-            writeln!(f, "ada in inputs: {}, ada in outputs: {}, fee {}", input_data, out_data, fee)?;
+            writeln!(
+                f,
+                "ada in inputs: {}, ada in outputs: {}, fee {}",
+                input_data, out_data, fee
+            )?;
             writeln!(f, "NOTE! \"ada in inputs\" must be >= (\"ada in outputs\" + fee) before adding change")?;
-            writeln!(f, "and  \"ada in inputs\" must be == (\"ada in outputs\" + fee) after adding change")?;
+            writeln!(
+                f,
+                "and  \"ada in inputs\" must be == (\"ada in outputs\" + fee) after adding change"
+            )?;
         }
-        for (policy_id, asset_name, asset_shortage, asset_available) in
-            &self.asset_shortage
-        {
-            write!(f, "policy id: \"{}\", asset name: \"{}\" ", policy_id, asset_name)?;
-            writeln!(f, "coins in inputs: {}, coins in outputs: {}", asset_shortage, asset_available)?;
+        for (policy_id, asset_name, asset_shortage, asset_available) in &self.asset_shortage {
+            write!(
+                f,
+                "policy id: \"{}\", asset name: \"{}\" ",
+                policy_id, asset_name
+            )?;
+            writeln!(
+                f,
+                "coins in inputs: {}, coins in outputs: {}",
+                asset_shortage, asset_available
+            )?;
         }
         write!(f, " }}")
     }
 }
 
-pub(crate) fn get_input_shortage(all_inputs_value: &Value, all_outputs_value: &Value, fee: &Coin)
-    -> Result<Option<ValueShortage>, JsError> {
-    let mut shortage = ValueShortage{
+pub(crate) fn get_input_shortage(
+    all_inputs_value: &Value,
+    all_outputs_value: &Value,
+    fee: &Coin,
+) -> Result<Option<ValueShortage>, JsError> {
+    let mut shortage = ValueShortage {
         ada_shortage: None,
-        asset_shortage: Vec::new()};
+        asset_shortage: Vec::new(),
+    };
     if all_inputs_value.coin < all_outputs_value.coin.checked_add(fee)? {
         shortage.ada_shortage = Some((
             all_inputs_value.coin.clone(),
             all_outputs_value.coin.clone(),
-            fee.clone()));
+            fee.clone(),
+        ));
     }
 
     if let Some(policies) = &all_outputs_value.multiasset {
@@ -1651,11 +1688,16 @@ pub(crate) fn get_input_shortage(all_inputs_value: &Value, all_outputs_value: &V
             for (asset_name, coins) in &assets.0 {
                 let inputs_coins = match &all_inputs_value.multiasset {
                     Some(multiasset) => multiasset.get_asset(policy_id, asset_name),
-                    None => Coin::zero()
+                    None => Coin::zero(),
                 };
 
                 if inputs_coins < *coins {
-                    shortage.asset_shortage.push((policy_id.clone(), asset_name.clone(), inputs_coins, coins.clone()));
+                    shortage.asset_shortage.push((
+                        policy_id.clone(),
+                        asset_name.clone(),
+                        inputs_coins,
+                        coins.clone(),
+                    ));
                 }
             }
         }
@@ -1780,7 +1822,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             969750,
         );
@@ -1795,7 +1837,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_120_600,
         );
@@ -1810,7 +1852,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_124_910,
         );
@@ -1825,7 +1867,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_150_770,
         );
@@ -1840,7 +1882,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_262_830,
         );
@@ -1855,7 +1897,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_271_450,
         );
@@ -1870,7 +1912,7 @@ mod tests {
                     false,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             2_633_410,
         );
@@ -1885,7 +1927,7 @@ mod tests {
                     true,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_267_140,
         );
@@ -1900,7 +1942,7 @@ mod tests {
                     true,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_711_070,
         );
@@ -1915,7 +1957,7 @@ mod tests {
                     true,
                     &to_bignum(COINS_PER_UTXO_WORD),
                 )
-                    .unwrap()
+                .unwrap()
             ),
             1_409_370,
         );
@@ -2374,7 +2416,7 @@ mod tests {
             240, 24, 32, 26, 0, 2, 73, 240, 24, 32, 26, 0, 2, 73, 240, 24, 32, 26, 0, 2, 73, 240,
             24, 32, 26, 0, 2, 73, 240, 24, 32, 26, 0, 51, 13, 167, 1, 1, 255,
         ])
-            .unwrap();
+        .unwrap();
         let mut cost_models = Costmdls::new();
         cost_models.insert(&Language::new_plutus_v1(), &plutus_cost_model);
         let script_data_hash = hash_script_data(&redeemers, &cost_models, Some(datums));
@@ -2602,35 +2644,35 @@ mod tests {
 
     #[test]
     fn test_bigint_add() {
-        assert_eq!(to_bigint(10).add(&to_bigint(20)), to_bigint(30), );
-        assert_eq!(to_bigint(500).add(&to_bigint(800)), to_bigint(1300), );
+        assert_eq!(to_bigint(10).add(&to_bigint(20)), to_bigint(30),);
+        assert_eq!(to_bigint(500).add(&to_bigint(800)), to_bigint(1300),);
     }
 
     #[test]
     fn test_bigint_mul() {
-        assert_eq!(to_bigint(10).mul(&to_bigint(20)), to_bigint(200), );
-        assert_eq!(to_bigint(500).mul(&to_bigint(800)), to_bigint(400000), );
-        assert_eq!(to_bigint(12).mul(&to_bigint(22)), to_bigint(264), );
+        assert_eq!(to_bigint(10).mul(&to_bigint(20)), to_bigint(200),);
+        assert_eq!(to_bigint(500).mul(&to_bigint(800)), to_bigint(400000),);
+        assert_eq!(to_bigint(12).mul(&to_bigint(22)), to_bigint(264),);
     }
 
     #[test]
     fn test_bigint_div_ceil() {
-        assert_eq!(to_bigint(20).div_ceil(&to_bigint(10)), to_bigint(2), );
-        assert_eq!(to_bigint(20).div_ceil(&to_bigint(2)), to_bigint(10), );
-        assert_eq!(to_bigint(21).div_ceil(&to_bigint(2)), to_bigint(11), );
-        assert_eq!(to_bigint(6).div_ceil(&to_bigint(3)), to_bigint(2), );
-        assert_eq!(to_bigint(5).div_ceil(&to_bigint(3)), to_bigint(2), );
-        assert_eq!(to_bigint(7).div_ceil(&to_bigint(3)), to_bigint(3), );
+        assert_eq!(to_bigint(20).div_ceil(&to_bigint(10)), to_bigint(2),);
+        assert_eq!(to_bigint(20).div_ceil(&to_bigint(2)), to_bigint(10),);
+        assert_eq!(to_bigint(21).div_ceil(&to_bigint(2)), to_bigint(11),);
+        assert_eq!(to_bigint(6).div_ceil(&to_bigint(3)), to_bigint(2),);
+        assert_eq!(to_bigint(5).div_ceil(&to_bigint(3)), to_bigint(2),);
+        assert_eq!(to_bigint(7).div_ceil(&to_bigint(3)), to_bigint(3),);
     }
 
     #[test]
     fn test_bignum_div() {
-        assert_eq!(to_bignum(10).div_floor(&to_bignum(1)), to_bignum(10), );
-        assert_eq!(to_bignum(10).div_floor(&to_bignum(3)), to_bignum(3), );
-        assert_eq!(to_bignum(10).div_floor(&to_bignum(4)), to_bignum(2), );
-        assert_eq!(to_bignum(10).div_floor(&to_bignum(5)), to_bignum(2), );
-        assert_eq!(to_bignum(10).div_floor(&to_bignum(6)), to_bignum(1), );
-        assert_eq!(to_bignum(10).div_floor(&to_bignum(12)), to_bignum(0), );
+        assert_eq!(to_bignum(10).div_floor(&to_bignum(1)), to_bignum(10),);
+        assert_eq!(to_bignum(10).div_floor(&to_bignum(3)), to_bignum(3),);
+        assert_eq!(to_bignum(10).div_floor(&to_bignum(4)), to_bignum(2),);
+        assert_eq!(to_bignum(10).div_floor(&to_bignum(5)), to_bignum(2),);
+        assert_eq!(to_bignum(10).div_floor(&to_bignum(6)), to_bignum(1),);
+        assert_eq!(to_bignum(10).div_floor(&to_bignum(12)), to_bignum(0),);
     }
 
     #[test]

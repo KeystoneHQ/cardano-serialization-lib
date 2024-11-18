@@ -299,8 +299,8 @@ impl<'a> Decoder<'a> {
 
 #[cfg(test)]
 mod tests {
-    use alloc::vec;
     use super::*;
+    use alloc::vec;
 
     #[test]
     pub fn serialize_unit1() {

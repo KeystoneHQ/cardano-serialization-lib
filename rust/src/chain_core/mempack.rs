@@ -3,8 +3,8 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::error::Error;
-use core::num::{NonZeroU32, NonZeroU64};
 use core::fmt;
+use core::num::{NonZeroU32, NonZeroU64};
 
 /// A local memory buffer to serialize data to
 pub struct WriteBuf(Vec<u8>);

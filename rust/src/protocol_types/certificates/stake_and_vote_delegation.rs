@@ -1,19 +1,9 @@
-use crate::*;
-use crate::serialization::{
-    check_len, deserialize_and_check_index, serialize_and_check_index,
-};
 use crate::certificate_index_names::CertificateIndexNames;
+use crate::serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
+use crate::*;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct StakeAndVoteDelegation {
@@ -38,7 +28,11 @@ impl StakeAndVoteDelegation {
         self.drep.clone()
     }
 
-    pub fn new(stake_credential: &StakeCredential, pool_keyhash: &Ed25519KeyHash, drep: &DRep) -> Self {
+    pub fn new(
+        stake_credential: &StakeCredential,
+        pool_keyhash: &Ed25519KeyHash,
+        drep: &DRep,
+    ) -> Self {
         Self {
             stake_credential: stake_credential.clone(),
             pool_keyhash: pool_keyhash.clone(),
