@@ -12,10 +12,10 @@
 #[cfg(feature = "alloc")]
 use core as std;
 
-use alloc::format;
-use alloc::vec::Vec;
 use crate::legacy_address::base58;
 use crate::legacy_address::cbor;
+use alloc::format;
+use alloc::vec::Vec;
 use cbor_event::{self, cbor, de::Deserializer, se::Serializer};
 use core2::io::{BufRead, Write};
 use cryptoxide::blake2b::Blake2b;
@@ -24,8 +24,8 @@ use cryptoxide::sha3;
 use ed25519_bip32_core::XPub;
 
 use std::{
-    fmt,
     convert::{TryFrom, TryInto},
+    fmt,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
@@ -153,7 +153,8 @@ impl cbor_event::de::Deserialize for Attributes {
                 ATTRIBUTE_NAME_TAG_PROTOCOL_MAGIC => {
                     // Yes, this is an integer encoded as CBOR encoded as Bytes in CBOR.
                     let bytes = reader.bytes()?;
-                    let n = Deserializer::from(core2::io::Cursor::new(bytes)).deserialize::<u32>()?;
+                    let n =
+                        Deserializer::from(core2::io::Cursor::new(bytes)).deserialize::<u32>()?;
                     protocol_magic = Some(n);
                 }
                 _ => {

@@ -1,6 +1,6 @@
+use super::*;
 use alloc::borrow::ToOwned;
 use alloc::format;
-use super::*;
 use ritelinked::linked_hash_map::LinkedHashMap;
 
 const MD_MAX_LEN: usize = 64;
@@ -238,7 +238,6 @@ impl<'de> serde::de::Deserialize<'de> for TransactionMetadatum {
     }
 }
 
-
 pub type TransactionMetadatumLabel = BigNum;
 
 #[wasm_bindgen]
@@ -311,7 +310,10 @@ impl serde::Serialize for GeneralTransactionMetadata {
     where
         S: serde::Serializer,
     {
-        let map = self.0.iter().collect::<alloc::collections::BTreeMap<_, _>>();
+        let map = self
+            .0
+            .iter()
+            .collect::<alloc::collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }

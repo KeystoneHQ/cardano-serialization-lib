@@ -1,14 +1,14 @@
 //! Module provides cryptographic utilities and types related to
 //! the user keys.
 //!
-use alloc::string::ToString;
-use alloc::{format, vec};
 use crate::chain_core::mempack::{read_mut_slice, ReadBuf, ReadError, Readable};
 use crate::chain_core::property;
 use crate::chain_crypto as crypto;
 use crate::chain_crypto::{
     AsymmetricKey, AsymmetricPublicKey, SecretKey, SigningAlgorithm, VerificationAlgorithm,
 };
+use alloc::string::ToString;
+use alloc::{format, vec};
 use rand::{CryptoRng, RngCore};
 
 #[derive(Clone)]

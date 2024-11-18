@@ -1,16 +1,8 @@
 use crate::*;
-use serialization::{skip_set_tag, is_break_tag};
+use serialization::{is_break_tag, skip_set_tag};
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct VotingProposals(pub(crate) Vec<VotingProposal>);
@@ -41,7 +33,6 @@ impl VotingProposals {
         self.0.push(proposal.clone());
     }
 }
-
 
 impl cbor_event::se::Serialize for VotingProposals {
     fn serialize<'se, W: Write>(

@@ -1,10 +1,10 @@
-use alloc::vec::Vec;
 use super::*;
 use crate::chain_crypto::digest;
+use alloc::vec::Vec;
 
 use quickcheck::{Arbitrary, Gen};
-use rand_chacha::ChaChaRng;
 use rand::SeedableRng;
+use rand_chacha::ChaChaRng;
 
 /// an Arbitrary friendly cryptographic generator
 ///

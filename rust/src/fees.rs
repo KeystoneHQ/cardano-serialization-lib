@@ -1,5 +1,5 @@
-use alloc::format;
 use super::*;
+use alloc::format;
 use utils::*;
 
 #[wasm_bindgen]

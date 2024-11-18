@@ -1,10 +1,10 @@
-use alloc::string::String;
 use crate::chain_crypto::bech32::{self, Bech32};
-use hex::FromHexError;
-use rand::{CryptoRng, RngCore};
+use alloc::string::String;
 use core::fmt;
 use core::hash::Hash;
 use core::str::FromStr;
+use hex::FromHexError;
+use rand::{CryptoRng, RngCore};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SecretKeyError {
@@ -136,8 +136,7 @@ impl core::error::Error for SecretKeyError {}
 
 impl core::error::Error for PublicKeyError {}
 
-impl core::error::Error for PublicKeyFromStrError {
-}
+impl core::error::Error for PublicKeyFromStrError {}
 
 impl<A: AsymmetricPublicKey> AsRef<[u8]> for PublicKey<A> {
     fn as_ref(&self) -> &[u8] {

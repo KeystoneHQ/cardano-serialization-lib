@@ -1,17 +1,9 @@
 use crate::*;
-use serialization::{check_len, serialize_and_check_index, deserialize_and_check_index};
+use serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
 use voting_proposal_index_names::VotingProposalIndexNames;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct NoConfidenceAction {
@@ -38,7 +30,6 @@ impl NoConfidenceAction {
         }
     }
 }
-
 
 impl cbor_event::se::Serialize for NoConfidenceAction {
     fn serialize<'se, W: Write>(

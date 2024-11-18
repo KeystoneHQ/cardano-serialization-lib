@@ -1,12 +1,12 @@
-use alloc::borrow::ToOwned;
-use alloc::format;
 use super::*;
 use crate::utils::*;
 use address::*;
+use alloc::borrow::ToOwned;
+use alloc::format;
+use certificate_index_names::CertificateIndexNames;
+use core2::io::{Seek, SeekFrom};
 use crypto::*;
 use error::*;
-use core2::io::{Seek, SeekFrom};
-use certificate_index_names::CertificateIndexNames;
 
 pub(super) fn check_len_indefinite<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
@@ -209,6 +209,7 @@ impl cbor_event::se::Serialize for TransactionInputs {
 impl Deserialize for TransactionInputs {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
         let mut arr = Vec::new();
+        skip_set_tag(raw)?;
         (|| -> Result<_, DeserializeError> {
             let len = raw.array()?;
             while match len {
@@ -427,7 +428,7 @@ impl Deserialize for TransactionBody {
                                 (|| -> Result<_, DeserializeError> {
                                     Ok(TransactionInputs::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("inputs"))?,
+                                .map_err(|e| e.annotate("inputs"))?,
                             );
                         }
                         1 => {
@@ -438,7 +439,7 @@ impl Deserialize for TransactionBody {
                                 (|| -> Result<_, DeserializeError> {
                                     Ok(TransactionOutputs::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("outputs"))?,
+                                .map_err(|e| e.annotate("outputs"))?,
                             );
                         }
                         2 => {
@@ -450,7 +451,7 @@ impl Deserialize for TransactionBody {
                                     (|| -> Result<_, DeserializeError> {
                                         Ok(Coin::deserialize(raw)?)
                                     })()
-                                        .map_err(|e| e.annotate("fee"))?,
+                                    .map_err(|e| e.annotate("fee"))?,
                                 );
                         }
                         3 => {
@@ -462,7 +463,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(SlotBigNum::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("ttl"))?,
+                                .map_err(|e| e.annotate("ttl"))?,
                             );
                         }
                         4 => {
@@ -474,7 +475,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Certificates::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("certs"))?,
+                                .map_err(|e| e.annotate("certs"))?,
                             );
                         }
                         5 => {
@@ -486,7 +487,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Withdrawals::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("withdrawals"))?,
+                                .map_err(|e| e.annotate("withdrawals"))?,
                             );
                         }
                         6 => {
@@ -498,7 +499,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Update::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("update"))?,
+                                .map_err(|e| e.annotate("update"))?,
                             );
                         }
                         7 => {
@@ -510,7 +511,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(AuxiliaryDataHash::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("auxiliary_data_hash"))?,
+                                .map_err(|e| e.annotate("auxiliary_data_hash"))?,
                             );
                         }
                         8 => {
@@ -522,7 +523,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(SlotBigNum::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("validity_start_interval"))?,
+                                .map_err(|e| e.annotate("validity_start_interval"))?,
                             );
                         }
                         9 => {
@@ -534,7 +535,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Mint::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("mint"))?,
+                                .map_err(|e| e.annotate("mint"))?,
                             );
                         }
                         11 => {
@@ -546,7 +547,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(ScriptDataHash::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("script_data_hash"))?,
+                                .map_err(|e| e.annotate("script_data_hash"))?,
                             );
                         }
                         13 => {
@@ -558,7 +559,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(TransactionInputs::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("collateral"))?,
+                                .map_err(|e| e.annotate("collateral"))?,
                             );
                         }
                         14 => {
@@ -570,7 +571,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Ed25519KeyHashes::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("required_signers"))?,
+                                .map_err(|e| e.annotate("required_signers"))?,
                             );
                         }
                         15 => {
@@ -582,7 +583,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(NetworkId::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("network_id"))?,
+                                .map_err(|e| e.annotate("network_id"))?,
                             );
                         }
                         16 => {
@@ -594,7 +595,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(TransactionOutput::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("collateral_return"))?,
+                                .map_err(|e| e.annotate("collateral_return"))?,
                             );
                         }
                         17 => {
@@ -606,7 +607,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Coin::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("total_collateral"))?,
+                                .map_err(|e| e.annotate("total_collateral"))?,
                             );
                         }
                         18 => {
@@ -618,7 +619,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(TransactionInputs::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("reference_inputs"))?,
+                                .map_err(|e| e.annotate("reference_inputs"))?,
                             );
                         }
                         19 => {
@@ -630,7 +631,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(VotingProcedures::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("voting_procedures"))?,
+                                .map_err(|e| e.annotate("voting_procedures"))?,
                             );
                         }
                         20 => {
@@ -642,7 +643,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(VotingProposals::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("voting_proposals"))?,
+                                .map_err(|e| e.annotate("voting_proposals"))?,
                             );
                         }
                         21 => {
@@ -654,7 +655,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Coin::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("current_treasury_value"))?,
+                                .map_err(|e| e.annotate("current_treasury_value"))?,
                             );
                         }
                         22 => {
@@ -666,7 +667,7 @@ impl Deserialize for TransactionBody {
                                     read_len.read_elems(1)?;
                                     Ok(Coin::deserialize(raw)?)
                                 })()
-                                    .map_err(|e| e.annotate("donation"))?,
+                                .map_err(|e| e.annotate("donation"))?,
                             );
                         }
                         unknown_key => {
@@ -680,7 +681,7 @@ impl Deserialize for TransactionBody {
                             return Err(DeserializeFailure::UnknownKey(Key::Str(
                                 unknown_key.to_owned(),
                             ))
-                                .into())
+                            .into())
                         }
                     },
                     CBORType::Special => match len {
@@ -735,7 +736,7 @@ impl Deserialize for TransactionBody {
                 current_treasury_value,
             })
         })()
-            .map_err(|e| e.annotate("TransactionBody"))
+        .map_err(|e| e.annotate("TransactionBody"))
     }
 }
 
@@ -2084,16 +2085,12 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
                     MoveInstantaneousRewardsCert::deserialize_as_embedded_group(raw, len)?,
                 ))
             }
-            CertificateIndexNames::CommitteeHotAuth => {
-                Ok(CertificateEnum::CommitteeHotAuth(
-                    CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
-                ))
-            }
-            CertificateIndexNames::CommitteeColdResign => {
-                Ok(CertificateEnum::CommitteeColdResign(
-                    CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
-                ))
-            }
+            CertificateIndexNames::CommitteeHotAuth => Ok(CertificateEnum::CommitteeHotAuth(
+                CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::CommitteeColdResign => Ok(CertificateEnum::CommitteeColdResign(
+                CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
+            )),
             CertificateIndexNames::DrepRegistration => Ok(CertificateEnum::DrepRegistration(
                 DrepRegistration::deserialize_as_embedded_group(raw, len)?,
             )),
@@ -2147,8 +2144,8 @@ impl Deserialize for Certificate {
 
 impl serde::Serialize for StakeCredentials {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         self.credentials.serialize(serializer)
     }
@@ -2156,12 +2153,10 @@ impl serde::Serialize for StakeCredentials {
 
 impl<'de> serde::de::Deserialize<'de> for StakeCredentials {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
-        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(
-            deserializer,
-        )?;
+        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(vec))
     }
 }
@@ -2240,7 +2235,7 @@ impl Deserialize for StakeCredentials {
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("CredentialsSet"))?;
+        .map_err(|e| e.annotate("CredentialsSet"))?;
         Ok(creds)
     }
 }
@@ -4800,7 +4795,7 @@ impl DeserializeEmbeddedGroup for VoteDelegation {
         deserialize_and_check_index(raw, Some(cert_index), "cert_index")?;
 
         let stake_credential =
-        StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential1"))?;
+            StakeCredential::deserialize(raw).map_err(|e| e.annotate("stake_credential1"))?;
 
         let drep = DRep::deserialize(raw).map_err(|e| e.annotate("drep"))?;
 
@@ -4829,7 +4824,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_data_hash(&DataHash::from([47u8; DataHash::BYTE_COUNT]));
@@ -4855,7 +4850,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_plutus_data(&PlutusData::new_bytes(fake_bytes_32(11)));
@@ -4884,7 +4879,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_script_ref(&ScriptRef::new_plutus_script(&PlutusScript::new(
@@ -4912,7 +4907,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_plutus_data(&PlutusData::new_bytes(fake_bytes_32(11)));
@@ -4938,7 +4933,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         let native_script = NativeScript::new_timelock_start(&TimelockStart::new(20));
@@ -4966,7 +4961,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         let native_script = NativeScript::new_timelock_start(&TimelockStart::new(20));
@@ -4993,7 +4988,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         let native_script = NativeScript::new_timelock_start(&TimelockStart::new(20));
@@ -5026,7 +5021,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_data_hash(&DataHash::from([47u8; DataHash::BYTE_COUNT]));
@@ -5053,7 +5048,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_plutus_data(&PlutusData::new_bytes(fake_bytes_32(11)));
@@ -5083,7 +5078,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_script_ref(&ScriptRef::new_plutus_script(&PlutusScript::new(
@@ -5112,7 +5107,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         txo_dh.set_plutus_data(&PlutusData::new_bytes(fake_bytes_32(11)));
@@ -5139,7 +5134,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         let native_script = NativeScript::new_timelock_start(&TimelockStart::new(20));
@@ -5168,7 +5163,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         let native_script = NativeScript::new_timelock_start(&TimelockStart::new(20));
@@ -5196,7 +5191,7 @@ mod tests {
             amount: val.clone(),
             plutus_data: None,
             script_ref: None,
-            serialization_format: None
+            serialization_format: None,
         };
         let mut txo_dh = txo.clone();
         let native_script = NativeScript::new_timelock_start(&TimelockStart::new(20));
@@ -5274,7 +5269,6 @@ mod tests {
         assert_eq!(txb, txb2);
     }
 
-
     #[test]
     fn test_script_ref_roundtrip() {
         let ref0 = ScriptRef::new_native_script(&NativeScript::new_timelock_start(
@@ -5348,8 +5342,13 @@ mod tests {
     fn tx_output_ser_type() {
         let array_tx_output = TransactionOutput::from_hex("8258390000efb5788e8713c844dfd32b2e91de1e309fefffd555f827cc9ee16400efb5788e8713c844dfd32b2e91de1e309fefffd555f827cc9ee1641a000f4240").unwrap();
         let map_tx_output = TransactionOutput::from_hex("a30058390000efb5788e8713c844dfd32b2e91de1e309fefffd555f827cc9ee16400efb5788e8713c844dfd32b2e91de1e309fefffd555f827cc9ee164011a00039447028201d81844d9052380").unwrap();
-        assert_eq!(array_tx_output.serialization_format().unwrap(), CborContainerType::Array);
-        assert_eq!(map_tx_output.serialization_format().unwrap(), CborContainerType::Map);
-
+        assert_eq!(
+            array_tx_output.serialization_format().unwrap(),
+            CborContainerType::Array
+        );
+        assert_eq!(
+            map_tx_output.serialization_format().unwrap(),
+            CborContainerType::Map
+        );
     }
 }

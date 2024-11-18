@@ -1,15 +1,7 @@
 use crate::*;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct GovernanceActionId {
@@ -36,7 +28,6 @@ impl GovernanceActionId {
         }
     }
 }
-
 
 impl cbor_event::se::Serialize for GovernanceActionId {
     fn serialize<'se, W: Write>(

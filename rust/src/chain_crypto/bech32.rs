@@ -1,9 +1,9 @@
 use alloc::boxed::Box;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use bech32::{FromBase32, ToBase32, Variant, Error as Bech32Error};
-use core::fmt;
+use bech32::{Error as Bech32Error, FromBase32, ToBase32, Variant};
 use core::error::Error as StdError;
+use core::fmt;
 use core::result::Result as StdResult;
 
 pub type Result<T> = StdResult<T, Error>;
@@ -12,8 +12,8 @@ pub trait Bech32 {
     const BECH32_HRP: &'static str;
 
     fn try_from_bech32_str(bech32_str: &str) -> Result<Self>
-        where
-            Self: Sized;
+    where
+        Self: Sized;
 
     fn to_bech32_str(&self) -> String;
 }

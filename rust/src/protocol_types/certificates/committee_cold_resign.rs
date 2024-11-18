@@ -1,18 +1,8 @@
+use crate::serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
 use crate::*;
-use crate::serialization::{
-    check_len, deserialize_and_check_index, serialize_and_check_index,
-};
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct CommitteeColdResign {
@@ -57,7 +47,8 @@ impl cbor_event::se::Serialize for CommitteeColdResign {
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
         serializer.write_array(cbor_event::Len::Len(3))?;
-        let proposal_index = certificate_index_names::CertificateIndexNames::CommitteeColdResign.to_u64();
+        let proposal_index =
+            certificate_index_names::CertificateIndexNames::CommitteeColdResign.to_u64();
         serialize_and_check_index(serializer, proposal_index, "CommitteeColdResign")?;
 
         self.committee_cold_key.serialize(serializer)?;
@@ -75,13 +66,17 @@ impl DeserializeEmbeddedGroup for CommitteeColdResign {
     ) -> Result<Self, DeserializeError> {
         check_len(len, 3, "(cert_index, committee_cold_key, anchor)")?;
 
-        let cert_index = certificate_index_names::CertificateIndexNames::CommitteeColdResign.to_u64();
+        let cert_index =
+            certificate_index_names::CertificateIndexNames::CommitteeColdResign.to_u64();
         deserialize_and_check_index(raw, cert_index, "cert_index")?;
 
         let committee_cold_key =
             StakeCredential::deserialize(raw).map_err(|e| e.annotate("committee_cold_key"))?;
         let anchor = Anchor::deserialize_nullable(raw).map_err(|e| e.annotate("anchor"))?;
 
-        Ok(CommitteeColdResign { committee_cold_key, anchor })
+        Ok(CommitteeColdResign {
+            committee_cold_key,
+            anchor,
+        })
     }
 }

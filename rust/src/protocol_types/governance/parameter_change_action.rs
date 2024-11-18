@@ -1,17 +1,9 @@
 use crate::*;
-use serialization::{deserialize_and_check_index, serialize_and_check_index, check_len};
+use serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
 use voting_proposal_index_names::VotingProposalIndexNames;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct ParameterChangeAction {
@@ -82,7 +74,6 @@ impl ParameterChangeAction {
         self.policy_hash.is_some()
     }
 }
-
 
 impl cbor_event::se::Serialize for ParameterChangeAction {
     fn serialize<'se, W: Write>(

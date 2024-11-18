@@ -1,17 +1,9 @@
-use crate::*;
 use crate::serialization::check_len;
+use crate::*;
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Anchor {
     pub(crate) anchor_url: URL,
@@ -37,7 +29,6 @@ impl Anchor {
         }
     }
 }
-
 
 impl cbor_event::se::Serialize for Anchor {
     fn serialize<'se, W: Write>(

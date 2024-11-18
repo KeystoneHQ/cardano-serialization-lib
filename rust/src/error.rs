@@ -1,7 +1,7 @@
-use alloc::borrow::ToOwned;
-use alloc::format;
 use super::*;
 use crate::chain_crypto;
+use alloc::borrow::ToOwned;
+use alloc::format;
 use cbor_event::{self};
 
 // This file was code-generated using an experimental CDDL to rust tool:

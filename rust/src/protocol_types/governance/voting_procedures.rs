@@ -1,19 +1,11 @@
 use crate::*;
-use serde::ser::SerializeSeq;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
+use serde::ser::SerializeSeq;
 use serialization::is_break_tag;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct VoterVotes {
     voter: Voter,
@@ -21,15 +13,7 @@ struct VoterVotes {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct Vote {
     action_id: GovernanceActionId,
@@ -133,7 +117,6 @@ impl<'de> serde::de::Deserialize<'de> for VotingProcedures {
         Ok(voting_procedures)
     }
 }
-
 
 impl cbor_event::se::Serialize for VotingProcedures {
     fn serialize<'se, W: Write>(

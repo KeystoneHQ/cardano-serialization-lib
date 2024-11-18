@@ -1,18 +1,8 @@
+use crate::serialization::{check_len, deserialize_and_check_index, serialize_and_check_index};
 use crate::*;
-use crate::serialization::{
-    check_len, deserialize_and_check_index, serialize_and_check_index,
-};
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct DrepUpdate {

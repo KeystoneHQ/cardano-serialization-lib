@@ -1,15 +1,7 @@
 use crate::*;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub(crate) enum VoterEnum {
     ConstitutionalCommitteeHotKey(StakeCredential),
@@ -28,15 +20,7 @@ pub enum VoterKind {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct Voter(pub(crate) VoterEnum);
@@ -108,7 +92,6 @@ impl Voter {
         }
     }
 }
-
 
 impl cbor_event::se::Serialize for Voter {
     fn serialize<'se, W: Write>(
@@ -183,15 +166,15 @@ impl Deserialize for VoterEnum {
                 0 => VoterEnum::ConstitutionalCommitteeHotKey(StakeCredential(StakeCredType::Key(
                     Ed25519KeyHash::deserialize(raw)?,
                 ))),
-                1 => VoterEnum::ConstitutionalCommitteeHotKey(StakeCredential(StakeCredType::Script(
+                1 => VoterEnum::ConstitutionalCommitteeHotKey(StakeCredential(
+                    StakeCredType::Script(ScriptHash::deserialize(raw)?),
+                )),
+                2 => VoterEnum::DRep(StakeCredential(StakeCredType::Key(
+                    Ed25519KeyHash::deserialize(raw)?,
+                ))),
+                3 => VoterEnum::DRep(StakeCredential(StakeCredType::Script(
                     ScriptHash::deserialize(raw)?,
                 ))),
-                2 => VoterEnum::DRep(StakeCredential(StakeCredType::Key(Ed25519KeyHash::deserialize(
-                    raw,
-                )?))),
-                3 => VoterEnum::DRep(StakeCredential(StakeCredType::Script(ScriptHash::deserialize(
-                    raw,
-                )?))),
                 4 => VoterEnum::StakingPool(Ed25519KeyHash::deserialize(raw)?),
                 n => {
                     return Err(DeserializeFailure::FixedValuesMismatch {

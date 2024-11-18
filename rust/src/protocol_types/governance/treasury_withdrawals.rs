@@ -3,15 +3,7 @@ use alloc::collections::BTreeMap;
 use serialization::is_break_tag;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct TreasuryWithdrawals(pub(crate) BTreeMap<RewardAddress, Coin>);
@@ -40,7 +32,6 @@ impl TreasuryWithdrawals {
         self.0.len()
     }
 }
-
 
 impl Serialize for TreasuryWithdrawals {
     fn serialize<'se, W: Write>(

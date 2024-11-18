@@ -1,15 +1,15 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
+use alloc::str::FromStr;
+use alloc::string::String;
+use core::hash::Hash;
+use core::hash::Hasher;
 use core::{error, fmt, result};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;
 use hex::FromHexError;
-use alloc::string::String;
-use alloc::str::FromStr;
-use core::hash::Hasher;
-use core::hash::Hash;
 
 use crate::chain_crypto::bech32::{self, Bech32};
 
@@ -32,8 +32,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-}
+impl error::Error for Error {}
 
 impl From<FromHexError> for Error {
     fn from(err: FromHexError) -> Self {
