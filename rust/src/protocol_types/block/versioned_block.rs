@@ -1,7 +1,7 @@
 use crate::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum BlockEra {
     Byron,
     Shelley,
@@ -10,11 +10,11 @@ pub enum BlockEra {
     Alonzo,
     Babbage,
     Conway,
-    Unknown
+    Unknown,
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct VersionedBlock {
     pub(crate) era_code: u32,
     pub(crate) block: Block,
@@ -25,10 +25,7 @@ impl_to_from!(VersionedBlock);
 #[wasm_bindgen]
 impl VersionedBlock {
     pub fn new(block: Block, era_code: u32) -> VersionedBlock {
-        VersionedBlock {
-            block,
-            era_code,
-        }
+        VersionedBlock { block, era_code }
     }
 
     pub fn block(&self) -> Block {

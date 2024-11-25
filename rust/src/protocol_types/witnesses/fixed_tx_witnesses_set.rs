@@ -1,6 +1,5 @@
 use crate::*;
-#[allow(dead_code)]
-
+use core2::io::Cursor;
 
 /// A set of witnesses for a transaction.
 /// Keeps original bytes to allow for safe roundtrip serialization.
@@ -16,8 +15,10 @@ pub struct FixedTxWitnessesSet {
 
 #[wasm_bindgen]
 impl FixedTxWitnessesSet {
-
-    pub(crate) fn new(mut witnesses_set: TransactionWitnessSet, raw_parts: TransactionWitnessSetRaw) -> Self {
+    pub(crate) fn new(
+        mut witnesses_set: TransactionWitnessSet,
+        raw_parts: TransactionWitnessSetRaw,
+    ) -> Self {
         if let Some(bootstraps) = &mut witnesses_set.bootstraps {
             bootstraps.set_force_original_cbor_set_type(true);
         }
@@ -69,13 +70,13 @@ impl FixedTxWitnessesSet {
 
     #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
     pub fn from_bytes(data: Vec<u8>) -> Result<FixedTxWitnessesSet, DeserializeError> {
-        let mut raw = Deserializer::from(std::io::Cursor::new(data));
+        let mut raw = Deserializer::from(Cursor::new(data));
         Self::deserialize(&mut raw)
     }
 
     #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
     pub fn from_bytes(data: Vec<u8>) -> Result<FixedTxWitnessesSet, JsError> {
-        let mut raw = Deserializer::from(std::io::Cursor::new(data));
+        let mut raw = Deserializer::from(Cursor::new(data));
         Ok(Self::deserialize(&mut raw)?)
     }
 

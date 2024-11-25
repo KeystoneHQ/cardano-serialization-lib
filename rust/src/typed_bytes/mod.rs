@@ -1,7 +1,8 @@
 mod builder;
 
+use alloc::{boxed::Box, vec::Vec};
 pub use builder::ByteBuilder;
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// A typed slice of bytes
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

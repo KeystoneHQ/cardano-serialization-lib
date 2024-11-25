@@ -1,19 +1,11 @@
 use crate::*;
-use std::vec::Vec;
+
+use alloc::vec::Vec;
 use hashlink::LinkedHashMap;
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct MoveInstantaneousRewardsCert {
     pub(crate) move_instantaneous_reward: MoveInstantaneousReward,
@@ -36,17 +28,7 @@ impl MoveInstantaneousRewardsCert {
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum MIRPot {
     Reserves,
@@ -54,16 +36,7 @@ pub enum MIRPot {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum MIREnum {
     ToOtherPot(Coin),
@@ -71,9 +44,7 @@ pub enum MIREnum {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub enum MIRKind {
     ToOtherPot,
     ToStakeCredentials,
@@ -108,25 +79,12 @@ impl MIRToStakeCredentials {
     }
 
     pub fn keys(&self) -> Credentials {
-        Credentials::from_iter(
-            self.rewards
-                .iter()
-                .map(|(k, _v)| k.clone())
-        )
+        Credentials::from_iter(self.rewards.iter().map(|(k, _v)| k.clone()))
     }
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 struct StakeToCoin {
     stake_cred: Credential,
@@ -165,30 +123,9 @@ impl<'de> serde::de::Deserialize<'de> for MIRToStakeCredentials {
     }
 }
 
-impl JsonSchema for MIRToStakeCredentials {
-    fn schema_name() -> String {
-        String::from("MIRToStakeCredentials")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<StakeToCoin>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<StakeToCoin>::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct MoveInstantaneousReward {
     pub(crate) pot: MIRPot,

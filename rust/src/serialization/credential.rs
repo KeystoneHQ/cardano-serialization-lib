@@ -1,8 +1,11 @@
-use std::io::{BufRead, Seek, Write};
+use crate::protocol_types::{CBORSpecial, Deserialize};
+use crate::{
+    CredType, Credential, DeserializeError, DeserializeFailure, Ed25519KeyHash, Key, ScriptHash,
+};
+use alloc::{vec, vec::Vec};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-use crate::{Credential, CredType, DeserializeError, DeserializeFailure, Ed25519KeyHash, Key, ScriptHash};
-use crate::protocol_types::{CBORSpecial, Deserialize};
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 
 impl cbor_event::se::Serialize for Credential {
     fn serialize<'se, W: Write>(
@@ -34,7 +37,7 @@ impl Deserialize for Credential {
                         len,
                         "[id, hash]",
                     ))
-                        .into());
+                    .into());
                 }
             }
             let cred_type = match raw.unsigned_integer()? {
@@ -45,7 +48,7 @@ impl Deserialize for Credential {
                         found: Key::Uint(n),
                         expected: vec![Key::Uint(0), Key::Uint(1)],
                     }
-                        .into());
+                    .into());
                 }
             };
             if let cbor_event::Len::Indefinite = len {
@@ -55,6 +58,6 @@ impl Deserialize for Credential {
             }
             Ok(Credential(cred_type))
         })()
-            .map_err(|e| e.annotate("StakeCredential"))
+        .map_err(|e| e.annotate("StakeCredential"))
     }
 }

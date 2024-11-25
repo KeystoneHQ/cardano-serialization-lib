@@ -1,17 +1,8 @@
 use crate::*;
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct TreasuryWithdrawals(pub(crate) BTreeMap<RewardAddress, Coin>);

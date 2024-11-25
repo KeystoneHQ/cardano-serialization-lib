@@ -1,18 +1,9 @@
-use std::fmt::Formatter;
 use crate::*;
+use core::fmt::Formatter;
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 pub struct TransactionInput {
     pub(crate) transaction_id: TransactionHash,

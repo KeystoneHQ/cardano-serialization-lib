@@ -1,8 +1,10 @@
-use std::io::{BufRead, Seek, Write};
+use core2 as std;
+
+use crate::protocol_types::{CBORSpecial, Deserialize, DeserializeEmbeddedGroup};
+use crate::{BootstrapWitness, DeserializeError, DeserializeFailure, Ed25519Signature, Vkey};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-use crate::{BootstrapWitness, DeserializeError, DeserializeFailure, Ed25519Signature, Vkey};
-use crate::protocol_types::{CBORSpecial, Deserialize, DeserializeEmbeddedGroup};
+use core2::io::{BufRead, Seek, Write};
 
 impl cbor_event::se::Serialize for BootstrapWitness {
     fn serialize<'se, W: Write>(
@@ -26,21 +28,21 @@ impl Deserialize for BootstrapWitness {
             match len {
                 cbor_event::Len::Len(_) =>
                 /* TODO: check finite len somewhere */
-                    {
-                        ()
-                    }
+                {
+                    ()
+                }
                 cbor_event::Len::Indefinite => match raw.special()? {
                     CBORSpecial::Break =>
                     /* it's ok */
-                        {
-                            ()
-                        }
+                    {
+                        ()
+                    }
                     _ => return Err(DeserializeFailure::EndingBreakMissing.into()),
                 },
             }
             ret
         })()
-            .map_err(|e| e.annotate("BootstrapWitness"))
+        .map_err(|e| e.annotate("BootstrapWitness"))
     }
 }
 

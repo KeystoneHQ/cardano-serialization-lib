@@ -74,17 +74,17 @@ fn compare_values() {
     {
         let a = Value::new(&BigNum(1));
         let b = Value::new(&BigNum(1));
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Equal);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Equal);
     }
     {
         let a = Value::new(&BigNum(2));
         let b = Value::new(&BigNum(1));
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Greater);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Greater);
     }
     {
         let a = Value::new(&BigNum(1));
         let b = Value::new(&BigNum(2));
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Less);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Less);
     }
     // testing case where one side has assets
     {
@@ -97,7 +97,7 @@ fn compare_values() {
             multiasset: Some(token_bundle1),
         };
         let b = Value::new(&BigNum(1));
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Greater);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Greater);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -109,7 +109,7 @@ fn compare_values() {
             coin: BigNum(1),
             multiasset: Some(token_bundle1),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Less);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Less);
     }
     // testing case where both sides has assets
     {
@@ -130,7 +130,7 @@ fn compare_values() {
             coin: BigNum(1),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Equal);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Equal);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -150,7 +150,7 @@ fn compare_values() {
             coin: BigNum(1),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Greater);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Greater);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -170,7 +170,7 @@ fn compare_values() {
             coin: BigNum(2),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Less);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Less);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -190,7 +190,7 @@ fn compare_values() {
             coin: BigNum(1),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Greater);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Greater);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -210,7 +210,7 @@ fn compare_values() {
             coin: BigNum(1),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Greater);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Greater);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -250,7 +250,7 @@ fn compare_values() {
             coin: BigNum(1),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Less);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Less);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -270,7 +270,7 @@ fn compare_values() {
             coin: BigNum(2),
             multiasset: Some(token_bundle2),
         };
-        assert_eq!(a.partial_cmp(&b).unwrap(), std::cmp::Ordering::Less);
+        assert_eq!(a.partial_cmp(&b).unwrap(), core::cmp::Ordering::Less);
     }
     {
         let mut token_bundle1 = MultiAsset::new();
@@ -375,7 +375,7 @@ fn bigint_serialization() {
 
 #[test]
 fn bounded_bytes_read_chunked() {
-    use std::io::Cursor;
+    use core::io::Cursor;
     let chunks = vec![
         vec![
             0x52, 0x73, 0x6F, 0x6D, 0x65, 0x20, 0x72, 0x61, 0x6E, 0x64, 0x6F, 0x6D, 0x20, 0x73,
@@ -400,7 +400,7 @@ fn bounded_bytes_read_chunked() {
 #[test]
 fn bounded_bytes_write_chunked() {
     let mut chunk_64 = vec![0x58, crate::utils::BOUNDED_BYTES_CHUNK_SIZE as u8];
-    chunk_64.extend(std::iter::repeat(37).take(crate::utils::BOUNDED_BYTES_CHUNK_SIZE));
+    chunk_64.extend(core::iter::repeat(37).take(crate::utils::BOUNDED_BYTES_CHUNK_SIZE));
     let chunks = vec![chunk_64, vec![0x44, 0x01, 0x02, 0x03, 0x04]];
     let mut input = Vec::new();
     input.extend_from_slice(&chunks[0][2..]);

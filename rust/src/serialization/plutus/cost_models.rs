@@ -1,5 +1,6 @@
-use crate::*;
 use crate::serialization::utils::is_break_tag;
+use crate::*;
+use alloc::collections::BTreeMap;
 
 impl cbor_event::se::Serialize for Costmdls {
     fn serialize<'se, W: Write>(
@@ -17,7 +18,7 @@ impl cbor_event::se::Serialize for Costmdls {
 
 impl Deserialize for Costmdls {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -33,12 +34,12 @@ impl Deserialize for Costmdls {
                     return Err(DeserializeFailure::DuplicateKey(Key::Str(String::from(
                         "some complicated/unsupported type",
                     )))
-                        .into());
+                    .into());
                 }
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("Costmdls"))?;
+        .map_err(|e| e.annotate("Costmdls"))?;
         Ok(Self(table))
     }
 }

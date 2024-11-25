@@ -1,7 +1,7 @@
 use crate::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TransactionWitnessSets(pub(crate) Vec<TransactionWitnessSet>);
 
 impl_to_from!(TransactionWitnessSets);

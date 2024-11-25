@@ -2,7 +2,9 @@ use crate::serialization::map_names::VotingProposalIndexNames;
 use crate::serialization::utils::check_len_indefinite;
 use crate::*;
 use num_traits::FromPrimitive;
-use std::io::{Seek, SeekFrom};
+
+use alloc::{vec, vec::Vec};
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 
 impl Serialize for GovernanceAction {
     fn serialize<'se, W: Write>(

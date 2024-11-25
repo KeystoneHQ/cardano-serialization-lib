@@ -1,11 +1,17 @@
-use std::convert::TryInto;
 use crate::protocol_types::{CBORSpecial, Deserialize};
 use crate::{DeserializeError, DeserializeFailure, Nonce};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-
+#[cfg(feature = "alloc")]
+use core::convert::TryInto;
+#[cfg(not(feature = "alloc"))]
+use core::convert::TryInto;
+#[cfg(not(feature = "alloc"))]
+use core::io::{Seek, SeekFrom};
+#[cfg(feature = "alloc")]
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 impl cbor_event::se::Serialize for Nonce {
-    fn serialize<'se, W: std::io::Write>(
+    fn serialize<'se, W: Write>(
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -24,9 +30,7 @@ impl cbor_event::se::Serialize for Nonce {
 }
 
 impl Deserialize for Nonce {
-    fn deserialize<R: std::io::BufRead>(
-        raw: &mut Deserializer<R>,
-    ) -> Result<Self, DeserializeError> {
+    fn deserialize<R: BufRead>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
         (|| -> Result<Self, DeserializeError> {
             let len = raw.array()?;
             let hash = match raw.unsigned_integer()? {

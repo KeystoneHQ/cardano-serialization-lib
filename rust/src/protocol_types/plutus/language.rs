@@ -2,17 +2,7 @@ use crate::*;
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum LanguageKind {
     PlutusV1 = 0,
@@ -33,17 +23,7 @@ impl LanguageKind {
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Copy, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Language(pub(crate) LanguageKind);
 

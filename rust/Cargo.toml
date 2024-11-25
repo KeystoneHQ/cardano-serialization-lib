@@ -7,13 +7,12 @@ license = "MIT"
 description = "(De)serialization functions for the Cardano blockchain along with related utility functions"
 documentation = "https://docs.cardano.org/cardano-components/cardano-serialization-lib"
 repository = "https://github.com/Emurgo/cardano-serialization-lib"
-readme="../README.md"
-exclude = [
-    "pkg/*",
-]
+readme = "../README.md"
+exclude = ["pkg/*"]
 
 [features]
-default = ["arbitrary-precision-json"]
+default = ["alloc"]
+alloc = []
 arbitrary-precision-json = ["serde_json/arbitrary_precision"]
 #TODO: need to review the features and delete legacy ones. List is defined to avoid warnings.
 property-test-api = []
@@ -33,7 +32,7 @@ bech32 = "0.7.2"
 hex = "0.4.0"
 cfg-if = "1"
 hashlink = "0.9.1"
-serde_json = { version = "1.0.114"}
+serde_json = { version = "1.0.114" }
 num-bigint = "0.4.0"
 num-integer = "0.1.45"
 # The default can't be compiled to wasm, so it's necessary to use either the 'nightly'
@@ -46,6 +45,8 @@ serde = { version = "1.0", features = ["derive"] }
 num-derive = "0.4.0"
 num-traits = "0.2.16"
 num = "0.4.1"
+core2 = { version = "0.4.0", features = ["alloc"] }
+hashbrown = { version = "0.15.1", features = ["alloc"] }
 
 # non-wasm
 [target.'cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))'.dependencies]

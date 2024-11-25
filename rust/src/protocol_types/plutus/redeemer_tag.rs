@@ -2,17 +2,7 @@ use crate::*;
 
 #[wasm_bindgen]
 #[derive(
-    Copy,
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Copy, Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum RedeemerTagKind {
     Spend,
@@ -25,16 +15,7 @@ pub enum RedeemerTagKind {
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct RedeemerTag(pub(crate) RedeemerTagKind);
 

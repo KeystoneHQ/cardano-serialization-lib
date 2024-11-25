@@ -1,10 +1,11 @@
-use std::io::{BufRead, Seek, Write};
-use cbor_event::de::Deserializer;
-use cbor_event::se::Serializer;
-use crate::{DeserializeError, Vkey, Vkeys};
 use crate::protocol_types::Deserialize;
 use crate::serialization::utils::is_break_tag;
+use crate::{DeserializeError, Vkey, Vkeys};
+use alloc::vec::Vec;
+use cbor_event::de::Deserializer;
+use cbor_event::se::Serializer;
 
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 impl cbor_event::se::Serialize for Vkeys {
     fn serialize<'se, W: Write>(
         &self,
@@ -34,7 +35,7 @@ impl Deserialize for Vkeys {
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("Vkeys"))?;
+        .map_err(|e| e.annotate("Vkeys"))?;
         Ok(Self(arr))
     }
 }

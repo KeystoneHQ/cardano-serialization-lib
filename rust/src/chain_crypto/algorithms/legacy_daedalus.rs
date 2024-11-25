@@ -15,6 +15,8 @@ use cryptoxide::ed25519;
 use ed25519_bip32::{XPrv, XPub, XPRV_SIZE, XPUB_SIZE};
 use rand_os::rand_core::{CryptoRng, RngCore};
 
+#[cfg(feature = "alloc")]
+use alloc::format;
 const CHAIN_CODE_SIZE: usize = 32;
 const SEED_SIZE: usize = 64;
 

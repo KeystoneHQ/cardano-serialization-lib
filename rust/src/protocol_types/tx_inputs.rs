@@ -1,11 +1,12 @@
 use crate::*;
+use alloc::collections::BTreeSet;
+use alloc::rc::Rc;
+use core::hash::Hash;
+use core::hash::Hasher;
+use core::iter::Map;
+use core::ops::Deref;
+use core::slice;
 use itertools::Itertools;
-use std::hash::{Hash, Hasher};
-use std::iter::Map;
-use std::ops::Deref;
-use std::rc::Rc;
-use std::slice;
-
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct TransactionInputs {
@@ -156,17 +157,5 @@ impl<'de> serde::de::Deserialize<'de> for TransactionInputs {
     {
         let vec = <Vec<TransactionInput> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(vec))
-    }
-}
-
-impl JsonSchema for TransactionInputs {
-    fn schema_name() -> String {
-        String::from("TransactionInputs")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<TransactionInput>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<TransactionInput>::is_referenceable()
     }
 }

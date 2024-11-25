@@ -1,11 +1,12 @@
 use crate::*;
-use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
-use std::iter::Map;
+
+use alloc::rc::Rc;
+use core::hash::{Hash, Hasher};
+use core::iter::Map;
+use core::ops::Deref;
+use core::slice;
+use hashbrown::HashSet;
 use itertools::Itertools;
-use std::ops::Deref;
-use std::rc::Rc;
-use std::slice;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
@@ -105,10 +106,8 @@ impl Hash for Certificates {
 
 impl<'a> IntoIterator for &'a Certificates {
     type Item = &'a Certificate;
-    type IntoIter = Map<
-        slice::Iter<'a, Rc<Certificate>>,
-        fn(&'a Rc<Certificate>) -> &'a Certificate,
-    >;
+    type IntoIter =
+        Map<slice::Iter<'a, Rc<Certificate>>, fn(&'a Rc<Certificate>) -> &'a Certificate>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.certs.iter().map(|rc| rc.as_ref())
@@ -135,17 +134,5 @@ impl<'de> serde::de::Deserialize<'de> for Certificates {
     {
         let vec = <Vec<_> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(vec))
-    }
-}
-
-impl JsonSchema for Certificates {
-    fn schema_name() -> String {
-        String::from("Certificates")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<Certificate>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<Certificate>::is_referenceable()
     }
 }

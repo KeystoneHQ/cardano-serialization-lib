@@ -1,7 +1,7 @@
+use crate::*;
 use num_bigint::Sign;
 use num_integer::Integer;
 use num_traits::Signed;
-use crate::*;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
@@ -11,8 +11,8 @@ impl_to_from!(BigInt);
 
 impl serde::Serialize for BigInt {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_str())
     }
@@ -20,8 +20,8 @@ impl serde::Serialize for BigInt {
 
 impl<'de> serde::de::Deserialize<'de> for BigInt {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
         let s = <String as serde::de::Deserialize>::deserialize(deserializer)?;
         BigInt::from_str(&s).map_err(|_e| {
@@ -30,18 +30,6 @@ impl<'de> serde::de::Deserialize<'de> for BigInt {
                 &"string rep of a big int",
             )
         })
-    }
-}
-
-impl JsonSchema for BigInt {
-    fn schema_name() -> String {
-        String::from("BigInt")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
 
@@ -77,7 +65,7 @@ impl BigInt {
     }
 
     pub fn from_str(text: &str) -> Result<BigInt, JsError> {
-        use std::str::FromStr;
+        use core::str::FromStr;
         num_bigint::BigInt::from_str(text)
             .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
             .map(Self)
@@ -132,9 +120,9 @@ impl BigInt {
     }
 }
 
-impl<T> std::convert::From<T> for BigInt
-    where
-        T: std::convert::Into<num_bigint::BigInt>,
+impl<T> core::convert::From<T> for BigInt
+where
+    T: core::convert::Into<num_bigint::BigInt>,
 {
     fn from(x: T) -> Self {
         Self(x.into())

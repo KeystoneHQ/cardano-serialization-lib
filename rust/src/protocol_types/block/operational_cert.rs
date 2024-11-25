@@ -1,7 +1,7 @@
 use crate::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct OperationalCert {
     pub(crate) hot_vkey: KESVKey,
     pub(crate) sequence_number: u32,

@@ -1,11 +1,14 @@
+#![feature(error_in_core)]
 use crate::chain_crypto::{
     bech32::{self, Bech32},
     key,
 };
 use crate::typed_bytes::{ByteArray, ByteSlice};
+use core as std;
+use core::{fmt, marker::PhantomData, str::FromStr};
 use hex::FromHexError;
-use std::{fmt, marker::PhantomData, str::FromStr};
 
+use alloc::{string::String, vec::Vec};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verification {
     Failed,
@@ -100,9 +103,9 @@ impl fmt::Display for SignatureFromStrError {
     }
 }
 
-impl std::error::Error for SignatureError {}
-impl std::error::Error for SignatureFromStrError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl core::error::Error for SignatureError {}
+impl core::error::Error for SignatureFromStrError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
             SignatureFromStrError::HexMalformed(e) => Some(e),
             SignatureFromStrError::Invalid(e) => Some(e),
@@ -185,7 +188,7 @@ impl<T, A: VerificationAlgorithm> Clone for Signature<T, A> {
     fn clone(&self) -> Self {
         Signature {
             signdata: self.signdata.clone(),
-            phantom: std::marker::PhantomData,
+            phantom: core::marker::PhantomData,
         }
     }
 }

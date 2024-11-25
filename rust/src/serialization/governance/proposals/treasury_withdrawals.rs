@@ -1,6 +1,9 @@
 use crate::*;
-use std::collections::BTreeMap;
+#[cfg(feature = "alloc")]
+use alloc as std;
+
 use crate::serialization::utils::is_break_tag;
+use alloc::collections::BTreeMap;
 
 impl Serialize for TreasuryWithdrawals {
     fn serialize<'se, W: Write>(

@@ -1,4 +1,6 @@
 use crate::*;
+
+use alloc::collections;
 use hashlink::LinkedHashMap;
 
 const MD_MAX_LEN: usize = 64;
@@ -236,20 +238,6 @@ impl<'de> serde::de::Deserialize<'de> for TransactionMetadatum {
     }
 }
 
-// just for now we'll do json-in-json until I can figure this out better
-// TODO: maybe not generate this? or how do we do this?
-impl JsonSchema for TransactionMetadatum {
-    fn schema_name() -> String {
-        String::from("TransactionMetadatum")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 pub type TransactionMetadatumLabel = BigNum;
 
 #[wasm_bindgen]
@@ -322,7 +310,7 @@ impl serde::Serialize for GeneralTransactionMetadata {
     where
         S: serde::Serializer,
     {
-        let map = self.0.iter().collect::<std::collections::BTreeMap<_, _>>();
+        let map = self.0.iter().collect::<collections::BTreeMap<_, _>>();
         map.serialize(serializer)
     }
 }
@@ -332,29 +320,14 @@ impl<'de> serde::de::Deserialize<'de> for GeneralTransactionMetadata {
     where
         D: serde::de::Deserializer<'de>,
     {
-        let map = <std::collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(
-            deserializer,
-        )?;
+        let map =
+            <collections::BTreeMap<_, _> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self(map.into_iter().collect()))
     }
 }
 
-impl JsonSchema for GeneralTransactionMetadata {
-    fn schema_name() -> String {
-        String::from("GeneralTransactionMetadata")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        std::collections::BTreeMap::<TransactionMetadatumLabel, TransactionMetadatum>::json_schema(
-            gen,
-        )
-    }
-    fn is_referenceable() -> bool {
-        std::collections::BTreeMap::<TransactionMetadatumLabel, TransactionMetadatum>::is_referenceable()
-    }
-}
-
 #[wasm_bindgen]
-#[derive(Clone, Debug, Ord, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct AuxiliaryData {
     pub(crate) metadata: Option<GeneralTransactionMetadata>,
     pub(crate) native_scripts: Option<NativeScripts>,
@@ -362,7 +335,7 @@ pub struct AuxiliaryData {
     pub(crate) prefer_alonzo_format: bool,
 }
 
-impl std::cmp::PartialEq<Self> for AuxiliaryData {
+impl core::cmp::PartialEq<Self> for AuxiliaryData {
     fn eq(&self, other: &Self) -> bool {
         self.metadata.eq(&other.metadata)
             && self.native_scripts.eq(&other.native_scripts)
@@ -370,7 +343,7 @@ impl std::cmp::PartialEq<Self> for AuxiliaryData {
     }
 }
 
-impl std::cmp::Eq for AuxiliaryData {}
+impl core::cmp::Eq for AuxiliaryData {}
 
 impl_to_from!(AuxiliaryData);
 
@@ -640,8 +613,8 @@ pub fn decode_metadatum_to_json_value(
     metadatum: &TransactionMetadatum,
     schema: MetadataJsonSchema,
 ) -> Result<serde_json::Value, JsError> {
+    use core::convert::TryFrom;
     use serde_json::Value;
-    use std::convert::TryFrom;
     fn decode_key(
         key: &TransactionMetadatum,
         schema: MetadataJsonSchema,

@@ -1,5 +1,7 @@
-use std::io::SeekFrom;
 use crate::*;
+
+use core2 as std;
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 
 impl cbor_event::se::Serialize for NativeScript {
     fn serialize<'se, W: Write>(
@@ -122,10 +124,9 @@ impl Deserialize for NativeScriptEnum {
                 DeserializeFailure::NoVariantMatched.into(),
             ))
         })()
-            .map_err(|e| e.annotate("NativeScriptEnum"))
+        .map_err(|e| e.annotate("NativeScriptEnum"))
     }
 }
-
 
 impl cbor_event::se::Serialize for ScriptPubkey {
     fn serialize<'se, W: Write>(
@@ -164,7 +165,7 @@ impl Deserialize for ScriptPubkey {
             }
             ret
         })()
-            .map_err(|e| e.annotate("ScriptPubkey"))
+        .map_err(|e| e.annotate("ScriptPubkey"))
     }
 }
 
@@ -180,11 +181,11 @@ impl DeserializeEmbeddedGroup for ScriptPubkey {
                     found: Key::Uint(index_0_value),
                     expected: Key::Uint(0),
                 }
-                    .into());
+                .into());
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("index_0"))?;
+        .map_err(|e| e.annotate("index_0"))?;
         let addr_keyhash =
             (|| -> Result<_, DeserializeError> { Ok(Ed25519KeyHash::deserialize(raw)?) })()
                 .map_err(|e| e.annotate("addr_keyhash"))?;
@@ -229,7 +230,7 @@ impl Deserialize for ScriptAll {
             }
             ret
         })()
-            .map_err(|e| e.annotate("ScriptAll"))
+        .map_err(|e| e.annotate("ScriptAll"))
     }
 }
 
@@ -245,11 +246,11 @@ impl DeserializeEmbeddedGroup for ScriptAll {
                     found: Key::Uint(index_0_value),
                     expected: Key::Uint(1),
                 }
-                    .into());
+                .into());
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("index_0"))?;
+        .map_err(|e| e.annotate("index_0"))?;
         let native_scripts =
             (|| -> Result<_, DeserializeError> { Ok(NativeScripts::deserialize(raw)?) })()
                 .map_err(|e| e.annotate("native_scripts"))?;
@@ -294,7 +295,7 @@ impl Deserialize for ScriptAny {
             }
             ret
         })()
-            .map_err(|e| e.annotate("ScriptAny"))
+        .map_err(|e| e.annotate("ScriptAny"))
     }
 }
 
@@ -310,11 +311,11 @@ impl DeserializeEmbeddedGroup for ScriptAny {
                     found: Key::Uint(index_0_value),
                     expected: Key::Uint(2),
                 }
-                    .into());
+                .into());
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("index_0"))?;
+        .map_err(|e| e.annotate("index_0"))?;
         let native_scripts =
             (|| -> Result<_, DeserializeError> { Ok(NativeScripts::deserialize(raw)?) })()
                 .map_err(|e| e.annotate("native_scripts"))?;
@@ -360,7 +361,7 @@ impl Deserialize for ScriptNOfK {
             }
             ret
         })()
-            .map_err(|e| e.annotate("ScriptNOfK"))
+        .map_err(|e| e.annotate("ScriptNOfK"))
     }
 }
 
@@ -376,11 +377,11 @@ impl DeserializeEmbeddedGroup for ScriptNOfK {
                     found: Key::Uint(index_0_value),
                     expected: Key::Uint(3),
                 }
-                    .into());
+                .into());
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("index_0"))?;
+        .map_err(|e| e.annotate("index_0"))?;
         let n = (|| -> Result<_, DeserializeError> { Ok(u32::deserialize(raw)?) })()
             .map_err(|e| e.annotate("n"))?;
         let native_scripts =
@@ -427,7 +428,7 @@ impl Deserialize for TimelockStart {
             }
             ret
         })()
-            .map_err(|e| e.annotate("TimelockStart"))
+        .map_err(|e| e.annotate("TimelockStart"))
     }
 }
 
@@ -443,11 +444,11 @@ impl DeserializeEmbeddedGroup for TimelockStart {
                     found: Key::Uint(index_0_value),
                     expected: Key::Uint(4),
                 }
-                    .into());
+                .into());
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("index_0"))?;
+        .map_err(|e| e.annotate("index_0"))?;
         let slot = (|| -> Result<_, DeserializeError> { Ok(SlotBigNum::deserialize(raw)?) })()
             .map_err(|e| e.annotate("slot"))?;
         Ok(TimelockStart { slot })
@@ -491,7 +492,7 @@ impl Deserialize for TimelockExpiry {
             }
             ret
         })()
-            .map_err(|e| e.annotate("TimelockExpiry"))
+        .map_err(|e| e.annotate("TimelockExpiry"))
     }
 }
 
@@ -507,11 +508,11 @@ impl DeserializeEmbeddedGroup for TimelockExpiry {
                     found: Key::Uint(index_0_value),
                     expected: Key::Uint(5),
                 }
-                    .into());
+                .into());
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("index_0"))?;
+        .map_err(|e| e.annotate("index_0"))?;
         let slot = (|| -> Result<_, DeserializeError> { Ok(SlotBigNum::deserialize(raw)?) })()
             .map_err(|e| e.annotate("slot"))?;
         Ok(TimelockExpiry { slot })

@@ -1,8 +1,11 @@
+#[cfg(feature = "alloc")]
+use alloc::format;
+use alloc::{boxed::Box, fmt};
+#[cfg(feature = "alloc")]
+use alloc::{string::String, vec::Vec};
 use bech32::{Error as Bech32Error, FromBase32, ToBase32};
-use std::error::Error as StdError;
-use std::fmt;
-use std::result::Result as StdResult;
-
+use core::error::Error as StdError;
+use core::result::Result as StdResult;
 pub type Result<T> = StdResult<T, Error>;
 
 pub trait Bech32 {

@@ -1,3 +1,4 @@
+use core2::io::{BufRead, Error, Seek, SeekFrom, Write};
 const CRC_TABLE: [u32; 256] = [
     0x00000000u32,
     0x77073096u32,
@@ -256,7 +257,7 @@ const CRC_TABLE: [u32; 256] = [
     0x5a05df1bu32,
     0x2d02ef8du32,
 ];
-
+use core2 as std;
 /// structure to compute the CRC32 of chunks of bytes.
 ///
 /// This structure allows implements the `Write` trait making it easier
@@ -292,14 +293,14 @@ impl Crc32 {
         self.0 ^ 0xFFFF_FFFF
     }
 }
-impl ::std::io::Write for Crc32 {
+impl Write for Crc32 {
     #[inline]
-    fn write(&mut self, bytes: &[u8]) -> Result<usize, std::io::Error> {
+    fn write(&mut self, bytes: &[u8]) -> Result<usize, Error> {
         self.update(bytes.iter());
         Ok(bytes.len())
     }
     #[inline]
-    fn flush(&mut self) -> Result<(), std::io::Error> {
+    fn flush(&mut self) -> Result<(), Error> {
         Ok(())
     }
 }

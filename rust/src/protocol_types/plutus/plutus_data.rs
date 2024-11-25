@@ -1,7 +1,8 @@
 use crate::*;
 use core::hash::Hasher;
 use hashlink::LinkedHashMap;
-use std::hash::Hash;
+
+use core::hash::Hash;
 
 use cbor_event::{
     self,
@@ -9,7 +10,6 @@ use cbor_event::{
     se::{Serialize, Serializer},
 };
 
-use schemars::JsonSchema;
 use serde::ser::SerializeStruct;
 
 #[wasm_bindgen]
@@ -72,7 +72,9 @@ impl ConstrPlutusData {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub struct PlutusMapValues {
     pub(crate) elems: Vec<PlutusData>,
 }
@@ -100,7 +102,6 @@ impl PlutusMapValues {
     }
 }
 
-
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct PlutusMap(pub(crate) LinkedHashMap<PlutusData, PlutusMapValues>);
@@ -113,7 +114,6 @@ impl PlutusMap {
         Self(LinkedHashMap::new())
     }
 
-
     /// Return count ok different keys in the map.
     pub fn len(&self) -> usize {
         self.0.len()
@@ -121,7 +121,11 @@ impl PlutusMap {
 
     /// Returns the previous value associated with the key, if any.
     /// Replace the values associated with the key.
-    pub fn insert(&mut self, key: &PlutusData, values: &PlutusMapValues) -> Option<PlutusMapValues> {
+    pub fn insert(
+        &mut self,
+        key: &PlutusData,
+        values: &PlutusMapValues,
+    ) -> Option<PlutusMapValues> {
         self.0.insert(key.clone(), values.clone())
     }
 
@@ -139,16 +143,15 @@ impl PlutusMap {
 
     /// Adds a value to the list of values associated with the key.
     pub(crate) fn add_value(&mut self, key: &PlutusData, value: &PlutusData) {
-        let values = self.0
+        let values = self
+            .0
             .entry(key.clone())
             .or_insert_with(PlutusMapValues::new);
         values.add(value);
     }
 
     pub(crate) fn add_value_move(&mut self, key: PlutusData, value: PlutusData) {
-        let values = self.0
-            .entry(key)
-            .or_insert_with(PlutusMapValues::new);
+        let values = self.0.entry(key).or_insert_with(PlutusMapValues::new);
         values.add_move(value);
     }
 
@@ -185,7 +188,7 @@ pub struct PlutusData {
     pub(crate) original_bytes: Option<Vec<u8>>,
 }
 
-impl std::cmp::PartialEq<Self> for PlutusData {
+impl core::cmp::PartialEq<Self> for PlutusData {
     fn eq(&self, other: &Self) -> bool {
         self.datum.eq(&other.datum)
     }
@@ -197,7 +200,7 @@ impl Hash for PlutusData {
     }
 }
 
-impl std::cmp::Eq for PlutusData {}
+impl core::cmp::Eq for PlutusData {}
 
 to_from_bytes!(PlutusData);
 
@@ -318,7 +321,7 @@ impl PlutusData {
             )),
             AddrType::Malformed(_) => Err(JsError::from_str(
                 "Cannot convert Malformed address to PlutusData",
-            ))
+            )),
         }?;
 
         let staking_data = match &address.0 {
@@ -367,9 +370,9 @@ impl PlutusData {
     }
 
     pub fn as_address(&self, network: &NetworkInfo) -> Result<Address, JsError> {
-        let constr_data = self.as_constr_plutus_data().ok_or_else(|| {
-            JsError::from_str("Expected PlutusData to be a ConstrPlutusData")
-        })?;
+        let constr_data = self
+            .as_constr_plutus_data()
+            .ok_or_else(|| JsError::from_str("Expected PlutusData to be a ConstrPlutusData"))?;
 
         if constr_data.alternative().0 != 0 {
             return Err(JsError::from_str(
@@ -389,39 +392,37 @@ impl PlutusData {
 
         let staking_data = data_list.get(1);
         let staking_cred_option =
-            if let Some(constr_staking_data) = staking_data.as_constr_plutus_data()
-        {
-            match constr_staking_data.alternative().0 {
-                0 => {
-                    let staking_inner_data = constr_staking_data.data();
-                    if staking_inner_data.len() != 1 {
+            if let Some(constr_staking_data) = staking_data.as_constr_plutus_data() {
+                match constr_staking_data.alternative().0 {
+                    0 => {
+                        let staking_inner_data = constr_staking_data.data();
+                        if staking_inner_data.len() != 1 {
+                            return Err(JsError::from_str(
+                                "Expected exactly 1 element in staking inner data",
+                            ));
+                        }
+                        let constr_staking_inner_data = staking_inner_data.get(0);
+                        Some(constr_staking_inner_data)
+                    }
+                    1 => None,
+                    _ => {
                         return Err(JsError::from_str(
-                            "Expected exactly 1 element in staking inner data",
+                            "Invalid alternative in staking data constructor",
                         ));
                     }
-                    let constr_staking_inner_data = staking_inner_data.get(0);
-                    Some(constr_staking_inner_data)
                 }
-                1 => {
-                    None
-                }
-                _ => {
-                    return Err(JsError::from_str(
-                        "Invalid alternative in staking data constructor",
-                    ));
-                }
-            }
-        } else {
-            return Err(JsError::from_str(
-                "Expected staking data to be a ConstrPlutusData",
-            ));
-        };
+            } else {
+                return Err(JsError::from_str(
+                    "Expected staking data to be a ConstrPlutusData",
+                ));
+            };
 
         let network = network.network_id();
         let address = if let Some(staking_cred_data) = staking_cred_option {
-            let staking_cred_constr = staking_cred_data.as_constr_plutus_data().ok_or_else(|| {
-                JsError::from_str("Expected staking data to be a ConstrPlutusData")
-            })?;
+            let staking_cred_constr =
+                staking_cred_data.as_constr_plutus_data().ok_or_else(|| {
+                    JsError::from_str("Expected staking data to be a ConstrPlutusData")
+                })?;
             match staking_cred_constr.alternative.0 {
                 0 => {
                     let staking_cred_constr_data = staking_cred_constr.data();
@@ -469,9 +470,9 @@ impl PlutusData {
     }
 
     fn as_credential(&self) -> Result<Credential, JsError> {
-        let constr_data = self.as_constr_plutus_data().ok_or_else(|| {
-            JsError::from_str("Expected PlutusData to be a ConstrPlutusData")
-        })?;
+        let constr_data = self
+            .as_constr_plutus_data()
+            .ok_or_else(|| JsError::from_str("Expected PlutusData to be a ConstrPlutusData"))?;
 
         let index = constr_data.alternative().0;
 
@@ -483,21 +484,19 @@ impl PlutusData {
         }
 
         let bytes_data = data_list.get(0);
-        let bytes = bytes_data.as_bytes().ok_or_else(|| {
-            JsError::from_str("Expected the inner PlutusData to be bytes")
-        })?;
+        let bytes = bytes_data
+            .as_bytes()
+            .ok_or_else(|| JsError::from_str("Expected the inner PlutusData to be bytes"))?;
 
         match index {
             0 => {
-                let key_hash = Ed25519KeyHash::from_bytes(bytes).map_err(|_| {
-                    JsError::from_str("Invalid KeyHash bytes")
-                })?;
+                let key_hash = Ed25519KeyHash::from_bytes(bytes)
+                    .map_err(|_| JsError::from_str("Invalid KeyHash bytes"))?;
                 Ok(Credential(CredType::Key(key_hash)))
             }
             1 => {
-                let script_hash = ScriptHash::from_bytes(bytes).map_err(|_| {
-                    JsError::from_str("Invalid ScriptHash bytes")
-                })?;
+                let script_hash = ScriptHash::from_bytes(bytes)
+                    .map_err(|_| JsError::from_str("Invalid ScriptHash bytes"))?;
                 Ok(Credential(CredType::Script(script_hash)))
             }
             _ => Err(JsError::from_str(
@@ -521,32 +520,36 @@ impl PlutusData {
     }
 
     fn as_pointer(&self) -> Result<Pointer, JsError> {
-        let constr_data = self.as_constr_plutus_data().ok_or_else(|| {
-            JsError::from_str("Expected PlutusData to be a ConstrPlutusData")
-        })?;
+        let constr_data = self
+            .as_constr_plutus_data()
+            .ok_or_else(|| JsError::from_str("Expected PlutusData to be a ConstrPlutusData"))?;
 
         if constr_data.alternative() != BigNum(1) {
-            return Err(JsError::from_str("Expected alternative 1 in ConstrPlutusData"));
+            return Err(JsError::from_str(
+                "Expected alternative 1 in ConstrPlutusData",
+            ));
         }
 
         let data_list = constr_data.data();
         if data_list.len() != 3 {
-            return Err(JsError::from_str("Expected exactly 3 elements in data list"));
+            return Err(JsError::from_str(
+                "Expected exactly 3 elements in data list",
+            ));
         }
 
         let slot_data = data_list.get(0);
         let tx_index_data = data_list.get(1);
         let cert_index_data = data_list.get(2);
 
-        let slot_integer = slot_data.as_integer().ok_or_else(|| {
-            JsError::from_str("Expected slot data to be an integer")
-        })?;
-        let tx_index_integer = tx_index_data.as_integer().ok_or_else(|| {
-            JsError::from_str("Expected tx_index data to be an integer")
-        })?;
-        let cert_index_integer = cert_index_data.as_integer().ok_or_else(|| {
-            JsError::from_str("Expected cert_index data to be an integer")
-        })?;
+        let slot_integer = slot_data
+            .as_integer()
+            .ok_or_else(|| JsError::from_str("Expected slot data to be an integer"))?;
+        let tx_index_integer = tx_index_data
+            .as_integer()
+            .ok_or_else(|| JsError::from_str("Expected tx_index data to be an integer"))?;
+        let cert_index_integer = cert_index_data
+            .as_integer()
+            .ok_or_else(|| JsError::from_str("Expected cert_index data to be an integer"))?;
 
         let slot_bignum = slot_integer
             .as_u64()
@@ -561,21 +564,6 @@ impl PlutusData {
         let pointer = Pointer::new_pointer(&slot_bignum, &tx_index_bignum, &cert_index_bignum);
 
         Ok(pointer)
-    }
-}
-
-//TODO: replace this by cardano-node schemas
-impl JsonSchema for PlutusData {
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-
-    fn schema_name() -> String {
-        String::from("PlutusData")
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
     }
 }
 
@@ -698,7 +686,7 @@ impl NoneOrEmpty for PlutusList {
     }
 }
 
-#[derive(serde::Deserialize, JsonSchema)]
+#[derive(serde::Deserialize)]
 struct PlutusListFields {
     elems: Vec<PlutusData>,
     definite_encoding: Option<bool>,
@@ -716,7 +704,6 @@ impl serde::Serialize for PlutusList {
     }
 }
 
-
 impl<'de> serde::de::Deserialize<'de> for PlutusList {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -731,31 +718,21 @@ impl<'de> serde::de::Deserialize<'de> for PlutusList {
     }
 }
 
-impl JsonSchema for PlutusList {
-    fn schema_name() -> String {
-        String::from("PlutusList")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        PlutusListFields::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        PlutusListFields::is_referenceable()
-    }
-}
-
 impl<'a> IntoIterator for &'a PlutusList {
     type Item = &'a PlutusData;
-    type IntoIter = std::slice::Iter<'a, PlutusData>;
+    type IntoIter = core::slice::Iter<'a, PlutusData>;
 
-    fn into_iter(self) -> std::slice::Iter<'a, PlutusData> {
+    fn into_iter(self) -> core::slice::Iter<'a, PlutusData> {
         self.elems.iter()
     }
 }
 
 impl PartialOrd for PlutusList {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         match self.elems.partial_cmp(&other.elems) {
-            Some(core::cmp::Ordering::Equal) => self.definite_encoding.partial_cmp(&other.definite_encoding),
+            Some(core::cmp::Ordering::Equal) => {
+                self.definite_encoding.partial_cmp(&other.definite_encoding)
+            }
             non_eq => non_eq,
         }
     }
@@ -769,7 +746,7 @@ impl Hash for PlutusList {
 }
 
 impl Ord for PlutusList {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         match self.elems.cmp(&other.elems) {
             core::cmp::Ordering::Equal => self.definite_encoding.cmp(&other.definite_encoding),
             non_eq => non_eq,
@@ -777,13 +754,13 @@ impl Ord for PlutusList {
     }
 }
 
-impl std::cmp::PartialEq<Self> for PlutusList {
+impl core::cmp::PartialEq<Self> for PlutusList {
     fn eq(&self, other: &Self) -> bool {
         self.elems.eq(&other.elems)
     }
 }
 
-impl std::cmp::Eq for PlutusList {}
+impl core::cmp::Eq for PlutusList {}
 
 impl From<Vec<PlutusData>> for PlutusList {
     fn from(elems: Vec<PlutusData>) -> Self {
@@ -868,7 +845,10 @@ pub fn encode_json_value_to_plutus_datum(
         if let Ok(big_int) = BigInt::from_str(x.as_str()) {
             Ok(PlutusData::new_integer(&big_int))
         } else {
-            Err(JsError::from_str(&format!("Expected an integer value but got \"{}\"", x)))
+            Err(JsError::from_str(&format!(
+                "Expected an integer value but got \"{}\"",
+                x
+            )))
         }
     }
 
@@ -1122,13 +1102,25 @@ fn bigint_to_serde_value(bigint: &BigInt) -> Result<serde_json::Value, JsError> 
     bigint
         .as_int()
         .as_ref()
-        .map(|int| if int.0 >= 0 { serde_json::Value::from(int.0 as u64) } else {serde_json:: Value::from(int.0 as i64) })
-        .ok_or_else(|| JsError::from_str(&format!("Integer {} too big for our JSON support", bigint.to_str())))
+        .map(|int| {
+            if int.0 >= 0 {
+                serde_json::Value::from(int.0 as u64)
+            } else {
+                serde_json::Value::from(int.0 as i64)
+            }
+        })
+        .ok_or_else(|| {
+            JsError::from_str(&format!(
+                "Integer {} too big for our JSON support",
+                bigint.to_str()
+            ))
+        })
 }
 
 #[cfg(feature = "arbitrary-precision-json")]
 fn bigint_to_serde_value(bigint: &BigInt) -> Result<serde_json::Value, JsError> {
     use serde_json::Number;
-    Ok(serde_json::Value::Number(Number::from_string_unchecked(bigint.to_str())))
+    Ok(serde_json::Value::Number(Number::from_string_unchecked(
+        bigint.to_str(),
+    )))
 }
-

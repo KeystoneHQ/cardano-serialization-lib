@@ -1,6 +1,10 @@
-use std::error::Error;
-use std::fmt;
-use std::num::{NonZeroU32, NonZeroU64};
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::error::Error;
+use core::fmt;
+use core::num::{NonZeroU32, NonZeroU64};
 
 /// A local memory buffer to serialize data to
 pub struct WriteBuf(Vec<u8>);
@@ -96,7 +100,6 @@ impl<'a> ReadBuf<'a> {
         if left >= expected {
             Ok(())
         } else {
-            dbg!(self.debug());
             Err(ReadError::NotEnoughBytes(left, expected))
         }
     }
@@ -297,26 +300,4 @@ pub fn read_mut_slice<'a, T: Readable>(
         v[i] = t
     }
     Ok(())
-}
-
-/// Transform a raw buffer into a Header
-pub fn read_from_raw<T: Readable>(raw: &[u8]) -> Result<T, std::io::Error> {
-    let mut rbuf = ReadBuf::from(raw);
-    match T::read(&mut rbuf) {
-        Err(e) => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                format!("invalid data {:?} {:?}", e, raw).to_owned(),
-            ));
-        }
-        Ok(h) => match rbuf.expect_end() {
-            Err(e) => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("end of data {:?}", e).to_owned(),
-                ));
-            }
-            Ok(()) => Ok(h),
-        },
-    }
 }

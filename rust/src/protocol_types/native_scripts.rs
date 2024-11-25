@@ -1,11 +1,9 @@
 use crate::*;
-use std::vec::IntoIter;
-use std::slice::{Iter, IterMut};
+use alloc::slice::{Iter, IterMut};
+use alloc::vec::IntoIter;
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug
-)]
+#[derive(Clone, Debug)]
 pub struct NativeScripts {
     pub(crate) scripts: Vec<NativeScript>,
     pub(crate) cbor_tag_type: Option<CborSetType>,
@@ -119,12 +117,10 @@ impl NoneOrEmpty for NativeScripts {
 
 impl From<&NativeScripts> for Ed25519KeyHashes {
     fn from(scripts: &NativeScripts) -> Self {
-        scripts
-            .iter()
-            .fold(Ed25519KeyHashes::new(), |mut set, s| {
-                set.extend_move(Ed25519KeyHashes::from(s));
-                set
-            })
+        scripts.iter().fold(Ed25519KeyHashes::new(), |mut set, s| {
+            set.extend_move(Ed25519KeyHashes::from(s));
+            set
+        })
     }
 }
 
@@ -176,16 +172,3 @@ impl<'de> serde::de::Deserialize<'de> for NativeScripts {
         })
     }
 }
-
-impl JsonSchema for NativeScripts {
-    fn is_referenceable() -> bool {
-        Vec::<NativeScript>::is_referenceable()
-    }
-    fn schema_name() -> String {
-        String::from("NativeScripts")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<NativeScript>::json_schema(gen)
-    }
-}
-

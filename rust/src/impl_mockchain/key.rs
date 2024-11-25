@@ -7,8 +7,11 @@ use crate::chain_crypto as crypto;
 use crate::chain_crypto::{
     AsymmetricKey, AsymmetricPublicKey, SecretKey, SigningAlgorithm, VerificationAlgorithm,
 };
+use alloc::format;
+use alloc::{string::String, vec, vec::Vec};
+use core::{error, fmt, result};
+use core2::io::{BufRead, Error, Seek, SeekFrom, Write};
 use rand_os::rand_core::{CryptoRng, RngCore};
-
 #[derive(Clone)]
 pub enum EitherEd25519SecretKey {
     Extended(crypto::SecretKey<crypto::Ed25519Extended>),
@@ -69,17 +72,17 @@ fn chain_crypto_sig_err(e: crypto::SignatureError) -> ReadError {
 }
 
 #[inline]
-pub fn serialize_public_key<A: AsymmetricPublicKey, W: std::io::Write>(
+pub fn serialize_public_key<A: AsymmetricPublicKey, W: Write>(
     key: &crypto::PublicKey<A>,
     mut writer: W,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     writer.write_all(key.as_ref())
 }
 #[inline]
-pub fn serialize_signature<A: VerificationAlgorithm, T, W: std::io::Write>(
+pub fn serialize_signature<A: VerificationAlgorithm, T, W: Write>(
     signature: &crypto::Signature<T, A>,
     mut writer: W,
-) -> Result<(), std::io::Error> {
+) -> Result<(), Error> {
     writer.write_all(signature.as_ref())
 }
 #[inline]
@@ -154,10 +157,10 @@ where
 
 impl<T: property::Serialize, A: VerificationAlgorithm> property::Serialize for Signed<T, A>
 where
-    std::io::Error: From<T::Error>,
+    Error: From<T::Error>,
 {
-    type Error = std::io::Error;
-    fn serialize<W: std::io::Write>(&self, mut writer: W) -> Result<(), Self::Error> {
+    type Error = Error;
+    fn serialize<W: Write>(&self, mut writer: W) -> Result<(), Self::Error> {
         self.data.serialize(&mut writer)?;
         serialize_signature(&self.sig, &mut writer)?;
         Ok(())
@@ -179,8 +182,8 @@ impl<T: PartialEq, A: VerificationAlgorithm> PartialEq<Self> for Signed<T, A> {
     }
 }
 impl<T: PartialEq, A: VerificationAlgorithm> Eq for Signed<T, A> {}
-impl<T: std::fmt::Debug, A: VerificationAlgorithm> std::fmt::Debug for Signed<T, A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<T: fmt::Debug, A: VerificationAlgorithm> fmt::Debug for Signed<T, A> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "Signed ( data: {:?}, signature: {:?} )",

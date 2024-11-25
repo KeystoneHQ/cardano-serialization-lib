@@ -1,10 +1,12 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
-use std::hash::{Hash, Hasher};
-use std::str::FromStr;
-use std::{error, fmt, result};
-
+use alloc::str::FromStr;
+use alloc::string::String;
+use core::error;
+use core::hash::Hash;
+use core::hash::Hasher;
+use core::{fmt, result};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;
@@ -17,6 +19,7 @@ pub enum Error {
     InvalidHashSize(usize, usize),
     InvalidHexEncoding(FromHexError),
 }
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -29,14 +32,8 @@ impl fmt::Display for Error {
         }
     }
 }
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Error::InvalidHashSize(..) => None,
-            Error::InvalidHexEncoding(err) => Some(err),
-        }
-    }
-}
+
+impl error::Error for Error {}
 
 impl From<FromHexError> for Error {
     fn from(err: FromHexError) -> Self {

@@ -1,9 +1,10 @@
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 #[macro_export]
 macro_rules! impl_signature {
     ($name:ident, $signee_type:ty, $verifier_type:ty) => {
         #[wasm_bindgen]
         #[derive(Clone, Debug, Hash, Eq, PartialEq)]
-        pub struct $name(pub (crate) chain_crypto::Signature<$signee_type, $verifier_type>);
+        pub struct $name(pub(crate) chain_crypto::Signature<$signee_type, $verifier_type>);
 
         #[wasm_bindgen]
         impl $name {
@@ -28,7 +29,7 @@ macro_rules! impl_signature {
             }
 
             pub fn from_hex(input: &str) -> Result<$name, JsError> {
-                use std::str::FromStr;
+                use core::str::FromStr;
                 chain_crypto::Signature::from_str(input)
                     .map_err(|e| JsError::from_str(&format!("{:?}", e)))
                     .map($name)
@@ -44,7 +45,7 @@ macro_rules! impl_signature {
         });
 
         impl cbor_event::se::Serialize for $name {
-            fn serialize<'se, W: std::io::Write>(
+            fn serialize<'se, W: Write>(
                 &self,
                 serializer: &'se mut Serializer<W>,
             ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -53,10 +54,12 @@ macro_rules! impl_signature {
         }
 
         impl Deserialize for $name {
-            fn deserialize<R: std::io::BufRead>(
+            fn deserialize<R: BufRead>(
                 raw: &mut Deserializer<R>,
             ) -> Result<Self, DeserializeError> {
-                Ok(Self(chain_crypto::Signature::from_binary(raw.bytes()?.as_ref())?))
+                Ok(Self(chain_crypto::Signature::from_binary(
+                    raw.bytes()?.as_ref(),
+                )?))
             }
         }
 
@@ -81,18 +84,6 @@ macro_rules! impl_signature {
                         &"hex bytes for signature",
                     )
                 })
-            }
-        }
-
-        impl JsonSchema for $name {
-            fn schema_name() -> String {
-                String::from(stringify!($name))
-            }
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                String::json_schema(gen)
-            }
-            fn is_referenceable() -> bool {
-                String::is_referenceable()
             }
         }
     };

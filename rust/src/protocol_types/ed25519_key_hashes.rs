@@ -1,19 +1,16 @@
-use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
-use std::rc::Rc;
-use std::slice;
-use std::iter::Map;
-use itertools::Itertools;
 pub use crate::*;
+use alloc::rc::Rc;
+use alloc::slice;
+use core::hash::{Hash, Hasher};
+use core::iter::Map;
+use core::ops::Deref;
+use hashbrown::HashSet;
+use itertools::Itertools;
 
 pub type RequiredSigners = Ed25519KeyHashes;
 
 #[wasm_bindgen]
-#[derive(
-    Clone,
-    Debug,
-)]
+#[derive(Clone, Debug)]
 pub struct Ed25519KeyHashes {
     keyhashes: Vec<Rc<Ed25519KeyHash>>,
     dedup: HashSet<Rc<Ed25519KeyHash>>,
@@ -120,10 +117,8 @@ impl Ed25519KeyHashes {
 
 impl<'a> IntoIterator for &'a Ed25519KeyHashes {
     type Item = &'a Ed25519KeyHash;
-    type IntoIter = Map<
-        slice::Iter<'a, Rc<Ed25519KeyHash>>,
-        fn(&'a Rc<Ed25519KeyHash>) -> &'a Ed25519KeyHash,
-    >;
+    type IntoIter =
+        Map<slice::Iter<'a, Rc<Ed25519KeyHash>>, fn(&'a Rc<Ed25519KeyHash>) -> &'a Ed25519KeyHash>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.keyhashes.iter().map(|rc| rc.as_ref())
@@ -164,8 +159,8 @@ impl NoneOrEmpty for Ed25519KeyHashes {
 
 impl serde::Serialize for Ed25519KeyHashes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         self.keyhashes
             .iter()
@@ -177,24 +172,10 @@ impl serde::Serialize for Ed25519KeyHashes {
 
 impl<'de> serde::de::Deserialize<'de> for Ed25519KeyHashes {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
-        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(
-            deserializer,
-        )?;
+        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(vec))
-    }
-}
-
-impl JsonSchema for Ed25519KeyHashes {
-    fn schema_name() -> String {
-        String::from("Ed25519KeyHashes")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<Ed25519KeyHash>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<Ed25519KeyHash>::is_referenceable()
     }
 }

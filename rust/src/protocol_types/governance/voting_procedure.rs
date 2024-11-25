@@ -1,16 +1,7 @@
 use crate::*;
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub enum VoteKind {
@@ -20,16 +11,7 @@ pub enum VoteKind {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 #[wasm_bindgen]
 pub struct VotingProcedure {

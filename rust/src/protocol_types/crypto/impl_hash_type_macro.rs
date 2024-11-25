@@ -1,3 +1,5 @@
+use core2::io::{BufRead, Seek, SeekFrom, Write};
+
 #[macro_export]
 macro_rules! impl_hash_type {
     ($name:ident, $byte_count:expr) => {
@@ -8,7 +10,7 @@ macro_rules! impl_hash_type {
         // hash types are the only types in this library to not expect the entire CBOR structure.
         // There is no CBOR binary tag here just the raw hash bytes.
         from_bytes!($name, bytes, {
-            use std::convert::TryInto;
+            use core::convert::TryInto;
             match bytes.len() {
                 $byte_count => Ok($name(bytes[..$byte_count].try_into().unwrap())),
                 other_len => {
@@ -70,7 +72,7 @@ macro_rules! impl_hash_type {
         }
 
         impl cbor_event::se::Serialize for $name {
-            fn serialize<'se, W: std::io::Write>(
+            fn serialize<'se, W: Write>(
                 &self,
                 serializer: &'se mut Serializer<W>,
             ) -> cbor_event::Result<&'se mut Serializer<W>> {
@@ -79,10 +81,10 @@ macro_rules! impl_hash_type {
         }
 
         impl Deserialize for $name {
-            fn deserialize<R: std::io::BufRead>(
+            fn deserialize<R: BufRead>(
                 raw: &mut Deserializer<R>,
             ) -> Result<Self, DeserializeError> {
-                use std::convert::TryInto;
+                use core::convert::TryInto;
                 (|| -> Result<Self, DeserializeError> {
                     let bytes = raw.bytes()?;
                     if bytes.len() != $byte_count {
@@ -120,18 +122,6 @@ macro_rules! impl_hash_type {
                         &"hex bytes for hash",
                     )
                 })
-            }
-        }
-
-        impl JsonSchema for $name {
-            fn schema_name() -> String {
-                String::from(stringify!($name))
-            }
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                String::json_schema(gen)
-            }
-            fn is_referenceable() -> bool {
-                String::is_referenceable()
             }
         }
 

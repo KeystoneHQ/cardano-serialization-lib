@@ -4,6 +4,7 @@
 // Note: wasm-bindgen doesn't support macros inside impls, so we have to wrap these
 //       in their own impl and invoke the invoke the macro from global scope.
 // TODO: possibly write s generic version of this for other usages (e.g. PrivateKey, etc)
+
 #[macro_export]
 macro_rules! from_bytes {
     // Custom from_bytes() code
@@ -25,7 +26,7 @@ macro_rules! from_bytes {
     // Uses Deserialize trait to auto-generate one
     ($name:ident) => {
         from_bytes!($name, bytes, {
-            let mut raw = Deserializer::from(std::io::Cursor::new(bytes));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(bytes));
             Self::deserialize(&mut raw)
         });
     };
@@ -74,7 +75,7 @@ macro_rules! from_hex {
     // Uses Deserialize trait to auto-generate one
     ($name:ident) => {
         from_hex!($name, hex_str, {
-            let mut raw = Deserializer::from(std::io::Cursor::new(hex::decode(hex_str).unwrap()));
+            let mut raw = Deserializer::from(core2::io::Cursor::new(hex::decode(hex_str).unwrap()));
             Self::deserialize(&mut raw)
         });
     };

@@ -3,7 +3,7 @@ use crate::*;
 pub type TransactionIndexes = Vec<TransactionIndex>;
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Block {
     pub(crate) header: Header,
     pub(crate) transaction_bodies: TransactionBodies,

@@ -1,17 +1,13 @@
 use crate::*;
 
-#[derive(
-    Debug, Clone, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub(crate) enum ScriptRefEnum {
     NativeScript(NativeScript),
     PlutusScript(PlutusScript),
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct ScriptRef(pub(crate) ScriptRefEnum);
 
 impl_to_from!(ScriptRef);

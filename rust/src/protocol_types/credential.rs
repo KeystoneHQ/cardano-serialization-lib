@@ -1,16 +1,7 @@
 use crate::*;
 
 #[derive(
-Debug,
-Clone,
-Hash,
-Eq,
-Ord,
-PartialEq,
-PartialOrd,
-serde::Serialize,
-serde::Deserialize,
-JsonSchema,
+    Debug, Clone, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub enum CredType {
     Key(Ed25519KeyHash),
@@ -27,16 +18,7 @@ pub enum CredKind {
 
 #[wasm_bindgen]
 #[derive(
-Debug,
-Clone,
-Eq,
-Hash,
-Ord,
-PartialEq,
-PartialOrd,
-serde::Serialize,
-serde::Deserialize,
-JsonSchema,
+    Debug, Clone, Eq, Hash, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Credential(pub(crate) CredType);
 

@@ -3,16 +3,7 @@ use crate::*;
 // Evolving nonce type (used for Update's crypto)
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct Nonce {
     pub(crate) hash: Option<[u8; 32]>,
@@ -32,7 +23,7 @@ impl Nonce {
     }
 
     pub fn new_from_hash(hash: Vec<u8>) -> Result<Nonce, JsError> {
-        use std::convert::TryInto;
+        use core::convert::TryInto;
         match hash[..Self::HASH_LEN].try_into() {
             Ok(bytes_correct_size) => Ok(Self {
                 hash: Some(bytes_correct_size),

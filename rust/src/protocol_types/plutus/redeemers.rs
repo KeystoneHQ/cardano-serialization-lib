@@ -71,7 +71,6 @@ impl PartialEq<Redeemers> for Redeemers {
     fn eq(&self, other: &Redeemers) -> bool {
         self.redeemers == other.redeemers
     }
-
 }
 
 impl Eq for Redeemers {}
@@ -104,17 +103,5 @@ impl<'de> serde::de::Deserialize<'de> for Redeemers {
             redeemers: vec,
             serialization_format: None,
         })
-    }
-}
-
-impl JsonSchema for Redeemers {
-    fn is_referenceable() -> bool {
-        Vec::<Redeemer>::is_referenceable()
-    }
-    fn schema_name() -> String {
-        String::from("Redeemers")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<Redeemer>::json_schema(gen)
     }
 }

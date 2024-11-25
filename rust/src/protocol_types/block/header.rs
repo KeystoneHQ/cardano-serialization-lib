@@ -1,7 +1,7 @@
 use crate::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Header {
     pub(crate) header_body: HeaderBody,
     pub(crate) body_signature: KESSignature,

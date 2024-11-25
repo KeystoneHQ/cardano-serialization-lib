@@ -1,13 +1,12 @@
-use std::hash::{Hash, Hasher};
-use std::rc::Rc;
-use std::ops::Deref;
-use std::slice;
-use std::iter::Map;
-use std::collections::HashSet;
-use itertools::Itertools;
-use schemars::JsonSchema;
 use crate::*;
 
+use alloc::rc::Rc;
+use alloc::slice;
+use core::hash::{Hash, Hasher};
+use core::iter::Map;
+use core::ops::Deref;
+use hashbrown::HashSet;
+use itertools::Itertools;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct BootstrapWitnesses {
@@ -94,7 +93,7 @@ impl BootstrapWitnesses {
     }
 
     #[allow(dead_code)]
-    pub (crate) fn contains(&self, elem: &BootstrapWitness) -> bool {
+    pub(crate) fn contains(&self, elem: &BootstrapWitness) -> bool {
         self.dedup.contains(elem)
     }
 
@@ -151,19 +150,8 @@ impl<'de> serde::de::Deserialize<'de> for BootstrapWitnesses {
     where
         D: serde::Deserializer<'de>,
     {
-        let witnesses_vec = <Vec<BootstrapWitness> as serde::de::Deserialize>::deserialize(deserializer)?;
+        let witnesses_vec =
+            <Vec<BootstrapWitness> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(witnesses_vec))
-    }
-}
-
-impl JsonSchema for BootstrapWitnesses {
-    fn schema_name() -> String {
-        String::from("BootstrapWitnesses")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<BootstrapWitness>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<BootstrapWitness>::is_referenceable()
     }
 }

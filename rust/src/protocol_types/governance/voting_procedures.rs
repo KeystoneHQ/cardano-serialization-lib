@@ -1,21 +1,12 @@
 use crate::*;
+use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
 use schemars::gen::SchemaGenerator;
 use schemars::schema::Schema;
 use serde::ser::SerializeSeq;
-use std::collections::BTreeMap;
-use std::vec::Vec;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct VoterVotes {
     voter: Voter,
@@ -23,16 +14,7 @@ struct VoterVotes {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct Vote {
     action_id: GovernanceActionId,
@@ -93,20 +75,6 @@ impl VotingProcedures {
                 .map(|v| v.keys().cloned().collect())
                 .unwrap_or_default(),
         )
-    }
-}
-
-impl JsonSchema for VotingProcedures {
-    fn is_referenceable() -> bool {
-        Vec::<VoterVotes>::is_referenceable()
-    }
-
-    fn schema_name() -> String {
-        "VotingProcedures".to_string()
-    }
-
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        Vec::<VoterVotes>::json_schema(gen)
     }
 }
 

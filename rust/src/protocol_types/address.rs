@@ -1,8 +1,8 @@
 use crate::legacy_address::ExtendedAddr;
 use crate::*;
 use bech32::ToBase32;
-use ed25519_bip32::XPub;
 
+use ed25519_bip32::XPub;
 // returns (Number represented, bytes read) if valid encoding
 // or None if decoding prematurely finished
 pub(crate) fn variable_nat_decode(bytes: &[u8]) -> Option<(u64, usize)> {
@@ -108,8 +108,8 @@ impl MalformedAddress {
 
 impl serde::Serialize for MalformedAddress {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         let bech32 = self
             .to_address()
@@ -121,30 +121,17 @@ impl serde::Serialize for MalformedAddress {
 
 impl<'de> serde::de::Deserialize<'de> for MalformedAddress {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
         let bech32 = <String as serde::de::Deserialize>::deserialize(deserializer)?;
-        match Address::from_bech32(&bech32).map(|addr| addr.0)
-        {
+        match Address::from_bech32(&bech32).map(|addr| addr.0) {
             Ok(AddrType::Malformed(malformed_address)) => Ok(malformed_address),
             _ => Err(serde::de::Error::invalid_value(
                 serde::de::Unexpected::Str(&bech32),
                 &"bech32 malformed address string",
             )),
         }
-    }
-}
-
-impl JsonSchema for MalformedAddress {
-    fn schema_name() -> String {
-        String::from("MalformedAddress")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
 
@@ -172,7 +159,7 @@ impl ByronAddress {
         addr_bytes.finalize()
     }
     pub fn from_bytes(bytes: Vec<u8>) -> Result<ByronAddress, JsError> {
-        let mut raw = Deserializer::from(std::io::Cursor::new(bytes));
+        let mut raw = Deserializer::from(core2::io::Cursor::new(bytes));
         let extended_addr = ExtendedAddr::deserialize(&mut raw)?;
         Ok(ByronAddress(extended_addr))
     }
@@ -218,7 +205,7 @@ impl ByronAddress {
     }
 
     pub fn from_base58(s: &str) -> Result<ByronAddress, JsError> {
-        use std::str::FromStr;
+        use core::str::FromStr;
         ExtendedAddr::from_str(s)
             .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
             .map(ByronAddress)
@@ -242,7 +229,7 @@ impl ByronAddress {
     }
 
     pub fn is_valid(s: &str) -> bool {
-        use std::str::FromStr;
+        use core::str::FromStr;
         match ExtendedAddr::from_str(s) {
             Ok(_v) => true,
             Err(_err) => false,
@@ -296,24 +283,11 @@ impl<'de> serde::de::Deserialize<'de> for Address {
     }
 }
 
-impl JsonSchema for Address {
-    fn schema_name() -> String {
-        String::from("Address")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
-    }
-}
-
 // to/from_bytes() are the raw encoding without a wrapping CBOR Bytes tag
 // while Serialize and Deserialize traits include that for inclusion with
 // other CBOR types
 #[wasm_bindgen]
 impl Address {
-
     pub fn kind(&self) -> AddressKind {
         match &self.0 {
             AddrType::Base(_) => AddressKind::Base,
@@ -397,12 +371,12 @@ impl Address {
     fn from_bytes_impl_unsafe(data: &[u8]) -> Address {
         match Self::from_bytes_internal_impl(data) {
             Ok(addr) => addr,
-            Err(_) => Address(AddrType::Malformed(MalformedAddress(data.to_vec())))
+            Err(_) => Address(AddrType::Malformed(MalformedAddress(data.to_vec()))),
         }
     }
 
     fn from_bytes_internal_impl(data: &[u8]) -> Result<Address, DeserializeError> {
-        use std::convert::TryInto;
+        use core::convert::TryInto;
         // header has 4 bits addr type discrim then 4 bits network discrim.
         // Copied from shelley.cddl:
         //
@@ -436,7 +410,7 @@ impl Address {
                 };
                 x
             };
-            let addr: Result<AddrType, DeserializeError>  = match (header & 0xF0) >> 4 {
+            let addr: Result<AddrType, DeserializeError> = match (header & 0xF0) >> 4 {
                 // base
                 0b0000 | 0b0001 | 0b0010 | 0b0011 => {
                     const BASE_ADDR_SIZE: usize = 1 + HASH_LEN * 2;
@@ -476,7 +450,7 @@ impl Address {
                                     )))
                                 }
                             }
-                            Err(err) => Err(err)
+                            Err(err) => Err(err),
                         }
                     }
                 }
@@ -551,11 +525,7 @@ impl Address {
             ))?;
         offset += cert_bytes;
         Ok((
-            Pointer::new_pointer(
-                &slot.into(),
-                &tx_index.into(),
-                &cert_index.into(),
-            ),
+            Pointer::new_pointer(&slot.into(), &tx_index.into(), &cert_index.into()),
             offset,
         ))
     }
@@ -762,18 +732,6 @@ impl<'de> serde::de::Deserialize<'de> for RewardAddress {
                 &"bech32 reward address string",
             )),
         }
-    }
-}
-
-impl JsonSchema for RewardAddress {
-    fn schema_name() -> String {
-        String::from("RewardAddress")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
 

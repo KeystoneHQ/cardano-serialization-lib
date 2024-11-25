@@ -1,18 +1,13 @@
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
-use std::rc::Rc;
-use std::slice;
-use std::iter::Map;
-use std::collections::HashSet;
-use itertools::Itertools;
-use schemars::JsonSchema;
 use crate::*;
-
+use alloc::rc::Rc;
+use alloc::slice;
+use core::hash::{Hash, Hasher};
+use core::iter::Map;
+use core::ops::Deref;
+use hashbrown::HashSet;
+use itertools::Itertools;
 #[wasm_bindgen]
-#[derive(
-    Clone,
-    Debug,
-)]
+#[derive(Clone, Debug)]
 pub struct Vkeywitnesses {
     witnesses: Vec<Rc<Vkeywitness>>,
     dedup: HashSet<Rc<Vkeywitness>>,
@@ -114,10 +109,8 @@ impl Vkeywitnesses {
 
 impl<'a> IntoIterator for &'a Vkeywitnesses {
     type Item = &'a Vkeywitness;
-    type IntoIter = Map<
-        slice::Iter<'a, Rc<Vkeywitness>>,
-        fn(&'a Rc<Vkeywitness>) -> &'a Vkeywitness,
-    >;
+    type IntoIter =
+        Map<slice::Iter<'a, Rc<Vkeywitness>>, fn(&'a Rc<Vkeywitness>) -> &'a Vkeywitness>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.witnesses.iter().map(|rc| rc.as_ref())
@@ -158,17 +151,5 @@ impl<'de> serde::de::Deserialize<'de> for Vkeywitnesses {
     {
         let vec = <Vec<Vkeywitness> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(vec))
-    }
-}
-
-impl JsonSchema for Vkeywitnesses {
-    fn schema_name() -> String {
-        String::from("Vkeywitnesses")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<Vkeywitness>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<Vkeywitness>::is_referenceable()
     }
 }

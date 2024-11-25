@@ -11,9 +11,7 @@ pub enum NativeScriptKind {
     TimelockExpiry,
 }
 
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub enum NativeScriptEnum {
     ScriptPubkey(ScriptPubkey),
     ScriptAll(ScriptAll),
@@ -24,9 +22,7 @@ pub enum NativeScriptEnum {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct NativeScript(pub(crate) NativeScriptEnum);
 
 impl_to_from!(NativeScript);
@@ -126,9 +122,7 @@ impl NativeScript {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct ScriptPubkey {
     pub(crate) addr_keyhash: Ed25519KeyHash,
 }
@@ -149,9 +143,7 @@ impl ScriptPubkey {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct ScriptAll {
     pub(crate) native_scripts: NativeScripts,
 }
@@ -172,9 +164,7 @@ impl ScriptAll {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct ScriptAny {
     pub(crate) native_scripts: NativeScripts,
 }
@@ -195,9 +185,7 @@ impl ScriptAny {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct ScriptNOfK {
     pub(crate) n: u32,
     pub(crate) native_scripts: NativeScripts,
@@ -224,9 +212,7 @@ impl ScriptNOfK {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct TimelockStart {
     pub(crate) slot: SlotBigNum,
 }
@@ -268,9 +254,7 @@ impl TimelockStart {
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct TimelockExpiry {
     pub(crate) slot: SlotBigNum,
 }

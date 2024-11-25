@@ -1,19 +1,15 @@
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
-use std::rc::Rc;
-use std::slice;
-use std::iter::Map;
-use std::collections::HashSet;
-use std::cmp::Ordering;
-use itertools::Itertools;
-use schemars::JsonSchema;
 use crate::*;
+use alloc::rc::Rc;
+use core::cmp::Ordering;
+use core::hash::{Hash, Hasher};
+use core::iter::Map;
+use core::ops::Deref;
+use core::slice;
+use hashbrown::HashSet;
+use itertools::Itertools;
 
 #[wasm_bindgen]
-#[derive(
-    Clone,
-    Debug,
-)]
+#[derive(Clone, Debug)]
 pub struct VotingProposals {
     proposals: Vec<Rc<VotingProposal>>,
     dedup: HashSet<Rc<VotingProposal>>,
@@ -104,10 +100,8 @@ impl VotingProposals {
 
 impl<'a> IntoIterator for &'a VotingProposals {
     type Item = &'a VotingProposal;
-    type IntoIter = Map<
-        slice::Iter<'a, Rc<VotingProposal>>,
-        fn(&'a Rc<VotingProposal>) -> &'a VotingProposal,
-    >;
+    type IntoIter =
+        Map<slice::Iter<'a, Rc<VotingProposal>>, fn(&'a Rc<VotingProposal>) -> &'a VotingProposal>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.proposals.iter().map(|rc| rc.as_ref())
@@ -155,24 +149,10 @@ impl serde::Serialize for VotingProposals {
 
 impl<'de> serde::de::Deserialize<'de> for VotingProposals {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
-        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(
-            deserializer,
-        )?;
+        let vec = <Vec<_> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(vec))
-    }
-}
-
-impl JsonSchema for VotingProposals {
-    fn schema_name() -> String {
-        String::from("VotingProposals")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<VotingProposal>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<VotingProposal>::is_referenceable()
     }
 }

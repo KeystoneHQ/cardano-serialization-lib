@@ -3,7 +3,7 @@ use crate::*;
 #[test]
 fn nonce_identity() {
     let orig = Nonce::new_identity();
-    let deser = Nonce::deserialize(&mut Deserializer::from(std::io::Cursor::new(
+    let deser = Nonce::deserialize(&mut Deserializer::from(core::io::Cursor::new(
         orig.to_bytes(),
     )))
     .unwrap();
@@ -17,7 +17,7 @@ fn nonce_hash() {
         25, 26, 27, 28, 29, 30, 31,
     ])
     .unwrap();
-    let deser = Nonce::deserialize(&mut Deserializer::from(std::io::Cursor::new(
+    let deser = Nonce::deserialize(&mut Deserializer::from(core::io::Cursor::new(
         orig.to_bytes(),
     )))
     .unwrap();

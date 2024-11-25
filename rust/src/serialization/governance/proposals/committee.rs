@@ -1,6 +1,10 @@
 use crate::serialization::utils::{check_len, is_break_tag};
 use crate::*;
-use std::collections::BTreeMap;
+
+#[cfg(feature = "alloc")]
+use alloc as std;
+
+use alloc::collections::BTreeMap;
 
 impl Serialize for Committee {
     fn serialize<'se, W: Write>(
@@ -14,7 +18,10 @@ impl Serialize for Committee {
 }
 
 impl SerializeEmbeddedGroup for Committee {
-    fn serialize_as_embedded_group<'a, W: Write + Sized>(&self, serializer: &'a mut Serializer<W>) -> cbor_event::Result<&'a mut Serializer<W>> {
+    fn serialize_as_embedded_group<'a, W: Write + Sized>(
+        &self,
+        serializer: &'a mut Serializer<W>,
+    ) -> cbor_event::Result<&'a mut Serializer<W>> {
         serializer.write_map(cbor_event::Len::Len(self.members.len() as u64))?;
         for (key, value) in &self.members {
             key.serialize(serializer)?;

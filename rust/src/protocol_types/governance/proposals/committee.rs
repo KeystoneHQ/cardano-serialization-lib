@@ -1,19 +1,11 @@
 use crate::*;
 use schemars::gen::SchemaGenerator;
 use schemars::schema::Schema;
-use std::collections::BTreeMap;
+
+use alloc::collections::BTreeMap;
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct CommitteeMember {
     stake_credential: Credential,
@@ -21,16 +13,7 @@ struct CommitteeMember {
 }
 
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
 struct CommitteeJsonStruct {
     members: Vec<CommitteeMember>,
@@ -70,20 +53,6 @@ impl Committee {
 
     pub fn get_member_epoch(&self, committee_cold_credential: &Credential) -> Option<Epoch> {
         self.members.get(committee_cold_credential).cloned()
-    }
-}
-
-impl JsonSchema for Committee {
-    fn is_referenceable() -> bool {
-        CommitteeJsonStruct::is_referenceable()
-    }
-
-    fn schema_name() -> String {
-        "Committee".to_string()
-    }
-
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        CommitteeJsonStruct::json_schema(gen)
     }
 }
 

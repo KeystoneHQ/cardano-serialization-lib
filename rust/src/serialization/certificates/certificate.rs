@@ -1,7 +1,8 @@
 use crate::serialization::map_names::CertificateIndexNames;
 use crate::*;
 use num_traits::FromPrimitive;
-use std::io::{Seek, SeekFrom};
+
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 
 impl cbor_event::se::Serialize for CertificateEnum {
     fn serialize<'se, W: Write>(
@@ -109,16 +110,12 @@ impl DeserializeEmbeddedGroup for CertificateEnum {
                     MoveInstantaneousRewardsCert::deserialize_as_embedded_group(raw, len)?,
                 ))
             }
-            CertificateIndexNames::CommitteeHotAuth => {
-                Ok(CertificateEnum::CommitteeHotAuth(
-                    CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
-                ))
-            }
-            CertificateIndexNames::CommitteeColdResign => {
-                Ok(CertificateEnum::CommitteeColdResign(
-                    CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
-                ))
-            }
+            CertificateIndexNames::CommitteeHotAuth => Ok(CertificateEnum::CommitteeHotAuth(
+                CommitteeHotAuth::deserialize_as_embedded_group(raw, len)?,
+            )),
+            CertificateIndexNames::CommitteeColdResign => Ok(CertificateEnum::CommitteeColdResign(
+                CommitteeColdResign::deserialize_as_embedded_group(raw, len)?,
+            )),
             CertificateIndexNames::DRepRegistration => Ok(CertificateEnum::DRepRegistration(
                 DRepRegistration::deserialize_as_embedded_group(raw, len)?,
             )),

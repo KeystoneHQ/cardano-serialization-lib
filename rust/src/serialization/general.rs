@@ -1,6 +1,8 @@
 use crate::*;
-use std::io::{Seek, SeekFrom};
+use alloc::collections::BTreeMap;
+
 use crate::serialization::utils::is_break_tag;
+use core2::io::{BufRead, Seek, SeekFrom, Write};
 use hashlink::LinkedHashMap;
 
 // This file was code-generated using an experimental CDDL to rust tool:
@@ -1407,7 +1409,7 @@ impl cbor_event::se::Serialize for Assets {
 
 impl Deserialize for Assets {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -1449,7 +1451,7 @@ impl cbor_event::se::Serialize for MultiAsset {
 
 impl Deserialize for MultiAsset {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {
@@ -1491,7 +1493,7 @@ impl cbor_event::se::Serialize for MintAssets {
 
 impl Deserialize for MintAssets {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let mut table = std::collections::BTreeMap::new();
+        let mut table = BTreeMap::new();
         (|| -> Result<_, DeserializeError> {
             let len = raw.map()?;
             while match len {

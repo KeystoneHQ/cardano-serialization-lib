@@ -1,9 +1,7 @@
 use crate::*;
 
 #[wasm_bindgen]
-#[derive(
-    Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct VRFCert {
     pub(crate) output: Vec<u8>,
     pub(crate) proof: Vec<u8>,

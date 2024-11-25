@@ -1,7 +1,7 @@
 use crate::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct BootstrapWitness {
     pub(crate) vkey: Vkey,
     pub(crate) signature: Ed25519Signature,

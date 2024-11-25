@@ -2,16 +2,7 @@ use crate::*;
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct PoolVotingThresholds {
     pub(crate) motion_no_confidence: UnitInterval,
@@ -74,7 +65,6 @@ impl PoolVotingThresholds {
     Default,
     serde::Serialize,
     serde::Deserialize,
-    JsonSchema,
 )]
 pub struct DRepVotingThresholds {
     pub(crate) motion_no_confidence: UnitInterval,
@@ -202,16 +192,7 @@ impl DRepVotingThresholds {
 
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
 pub struct ProtocolParamUpdate {
     pub(crate) minfee_a: Option<Coin>,
@@ -489,7 +470,10 @@ impl ProtocolParamUpdate {
         self.committee_term_limit.clone()
     }
 
-    pub fn set_governance_action_validity_period(&mut self, governance_action_validity_period: Epoch) {
+    pub fn set_governance_action_validity_period(
+        &mut self,
+        governance_action_validity_period: Epoch,
+    ) {
         self.governance_action_validity_period = Some(governance_action_validity_period)
     }
 

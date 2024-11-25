@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use itertools::Itertools;
-use std::slice;
 use crate::*;
-
+use alloc::collections::BTreeSet;
+use core::slice;
+use hashbrown::HashMap;
+use itertools::Itertools;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct PlutusScripts {
@@ -27,10 +27,7 @@ impl PlutusScripts {
         }
     }
 
-    pub(crate) fn from_vec(
-        scripts: Vec<PlutusScript>,
-        cbor_set_type: Option<CborSetType>,
-    ) -> Self {
+    pub(crate) fn from_vec(scripts: Vec<PlutusScript>, cbor_set_type: Option<CborSetType>) -> Self {
         Self {
             scripts,
             cbor_set_type: cbor_set_type.map(|t| {
@@ -63,7 +60,10 @@ impl PlutusScripts {
                 .filter(|s| s.language_version().eq(language))
                 .map(|s| s.clone())
                 .collect(),
-            self.cbor_set_type.as_ref().map(|x| x.get(language).cloned()).flatten(),
+            self.cbor_set_type
+                .as_ref()
+                .map(|x| x.get(language).cloned())
+                .flatten(),
         )
     }
 
@@ -132,7 +132,10 @@ impl PlutusScripts {
     }
 
     pub(crate) fn get_set_type(&self, language: &Language) -> Option<CborSetType> {
-        self.cbor_set_type.as_ref().map(|m| m.get(language).cloned()).flatten()
+        self.cbor_set_type
+            .as_ref()
+            .map(|m| m.get(language).cloned())
+            .flatten()
     }
 
     pub(crate) fn set_set_type(&mut self, cbor_set_type: CborSetType, language: &Language) {
@@ -163,13 +166,13 @@ impl PartialEq for PlutusScripts {
 impl Eq for PlutusScripts {}
 
 impl PartialOrd for PlutusScripts {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.scripts.partial_cmp(&other.scripts)
     }
 }
 
 impl Ord for PlutusScripts {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.scripts.cmp(&other.scripts)
     }
 }
@@ -179,10 +182,7 @@ impl serde::Serialize for PlutusScripts {
     where
         S: serde::Serializer,
     {
-        self.scripts
-            .iter()
-            .collect_vec()
-            .serialize(serializer)
+        self.scripts.iter().collect_vec().serialize(serializer)
     }
 }
 
@@ -193,17 +193,5 @@ impl<'de> serde::de::Deserialize<'de> for PlutusScripts {
     {
         let scripts_vec = <Vec<PlutusScript> as serde::de::Deserialize>::deserialize(deserializer)?;
         Ok(Self::from_vec(scripts_vec, None))
-    }
-}
-
-impl JsonSchema for PlutusScripts {
-    fn schema_name() -> String {
-        String::from("PlutusScripts")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        Vec::<PlutusScript>::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        Vec::<PlutusScript>::is_referenceable()
     }
 }

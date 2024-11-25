@@ -1,5 +1,5 @@
-use crate::*;
 use crate::serialization::utils::read_nint;
+use crate::*;
 
 impl Serialize for BigInt {
     fn serialize<'se, W: Write>(
@@ -35,7 +35,7 @@ impl Serialize for BigInt {
                         // negative bigint
                         num_bigint::Sign::Minus => {
                             serializer.write_tag(3u64)?;
-                            use std::ops::Neg;
+                            use core::ops::Neg;
                             // CBOR RFC defines this as the bytes of -n -1
                             let adjusted = self
                                 .0
@@ -73,7 +73,7 @@ impl Deserialize for BigInt {
                             // CBOR RFC defines this as the bytes of -n -1
                             let initial =
                                 num_bigint::BigInt::from_bytes_be(num_bigint::Sign::Plus, &bytes);
-                            use std::ops::Neg;
+                            use core::ops::Neg;
                             let adjusted = initial
                                 .checked_add(&num_bigint::BigInt::from(1u32))
                                 .unwrap()
@@ -85,7 +85,7 @@ impl Deserialize for BigInt {
                                 found: tag,
                                 expected: 2,
                             }
-                                .into());
+                            .into());
                         }
                     }
                 }
@@ -98,6 +98,6 @@ impl Deserialize for BigInt {
                 _ => return Err(DeserializeFailure::NoVariantMatched.into()),
             }
         })()
-            .map_err(|e| e.annotate("BigInt"))
+        .map_err(|e| e.annotate("BigInt"))
     }
 }

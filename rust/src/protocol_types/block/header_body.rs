@@ -1,13 +1,13 @@
 use crate::*;
 
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum HeaderLeaderCertEnum {
     NonceAndLeader(VRFCert, VRFCert),
     VrfResult(VRFCert),
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Eq, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct HeaderBody {
     pub(crate) block_number: u32,
     pub(crate) slot: SlotBigNum,

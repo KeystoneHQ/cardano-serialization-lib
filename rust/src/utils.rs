@@ -1,20 +1,16 @@
+use super::*;
+use crate::error::{DeserializeError, DeserializeFailure};
 use cbor_event::{
     self,
     de::Deserializer,
     se::{Serialize, Serializer},
 };
+use core::fmt::Display;
+use core2::io::Cursor;
+use core2::io::{BufRead, Seek, Write};
+use hashbrown::HashMap;
 use hex::FromHex;
 use serde_json;
-use std::fmt::Display;
-use std::{
-    collections::HashMap,
-    io::{BufRead, Seek, Write},
-};
-
-use super::*;
-use crate::error::{DeserializeError, DeserializeFailure};
-use schemars::JsonSchema;
-
 pub fn to_bytes<T: cbor_event::se::Serialize>(data_item: &T) -> Vec<u8> {
     let mut buf = Serializer::new_vec();
     data_item.serialize(&mut buf).unwrap();
@@ -22,12 +18,12 @@ pub fn to_bytes<T: cbor_event::se::Serialize>(data_item: &T) -> Vec<u8> {
 }
 
 pub fn from_bytes<T: Deserialize>(data: &Vec<u8>) -> Result<T, DeserializeError> {
-    let mut raw = Deserializer::from(std::io::Cursor::new(data));
+    let mut raw = Deserializer::from(Cursor::new(data));
     T::deserialize(&mut raw)
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionUnspentOutput {
     pub(crate) input: TransactionInput,
     pub(crate) output: TransactionOutput,
@@ -111,7 +107,7 @@ impl Deserialize for TransactionUnspentOutput {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct TransactionUnspentOutputs(pub(crate) Vec<TransactionUnspentOutput>);
 
 to_from_json!(TransactionUnspentOutputs);
@@ -137,24 +133,15 @@ impl TransactionUnspentOutputs {
 
 impl<'a> IntoIterator for &'a TransactionUnspentOutputs {
     type Item = &'a TransactionUnspentOutput;
-    type IntoIter = std::slice::Iter<'a, TransactionUnspentOutput>;
+    type IntoIter = core::slice::Iter<'a, TransactionUnspentOutput>;
 
-    fn into_iter(self) -> std::slice::Iter<'a, TransactionUnspentOutput> {
+    fn into_iter(self) -> core::slice::Iter<'a, TransactionUnspentOutput> {
         self.0.iter()
     }
 }
 
 #[wasm_bindgen]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    /*Hash,*/ Ord,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, /*Hash,*/ Ord, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Value {
     pub(crate) coin: Coin,
     pub(crate) multiasset: Option<MultiAsset>,
@@ -215,7 +202,7 @@ impl Value {
     }
 
     pub fn checked_add(&self, rhs: &Value) -> Result<Value, JsError> {
-        use std::collections::btree_map::Entry;
+        use alloc::collections::btree_map::Entry;
         let coin = self.coin.checked_add(&rhs.coin)?;
 
         let multiasset = match (&self.multiasset, &rhs.multiasset) {
@@ -291,21 +278,21 @@ impl Value {
     pub fn compare(&self, rhs_value: &Value) -> Option<i8> {
         match self.partial_cmp(&rhs_value) {
             None => None,
-            Some(std::cmp::Ordering::Equal) => Some(0),
-            Some(std::cmp::Ordering::Less) => Some(-1),
-            Some(std::cmp::Ordering::Greater) => Some(1),
+            Some(core::cmp::Ordering::Equal) => Some(0),
+            Some(core::cmp::Ordering::Less) => Some(-1),
+            Some(core::cmp::Ordering::Greater) => Some(1),
         }
     }
 }
 
 impl PartialOrd for Value {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        use std::cmp::Ordering::*;
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        use core::cmp::Ordering::*;
 
         fn compare_assets(
             lhs: &Option<MultiAsset>,
             rhs: &Option<MultiAsset>,
-        ) -> Option<std::cmp::Ordering> {
+        ) -> Option<core::cmp::Ordering> {
             match (lhs, rhs) {
                 (None, None) => Some(Equal),
                 (None, Some(rhs_assets)) => MultiAsset::new().partial_cmp(&rhs_assets),
@@ -422,7 +409,7 @@ pub(crate) fn write_bounded_bytes<'se, W: Write>(
 pub(crate) fn read_bounded_bytes<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
 ) -> Result<Vec<u8>, DeserializeError> {
-    use std::io::Read;
+    use core2::io::Read;
     let t = raw.cbor_type()?;
     if t != CBORType::Bytes {
         return Err(cbor_event::Error::Expected(CBORType::Bytes, t).into());
@@ -491,7 +478,6 @@ pub(crate) fn read_bounded_bytes<R: BufRead + Seek>(
         }
     }
 }
-
 
 pub struct CBORReadLen {
     deser_len: cbor_event::Len,
@@ -639,21 +625,23 @@ pub fn internal_get_implicit_input(
     };
     let certificate_refund = match &certs {
         None => BigNum::zero(),
-        Some(certs) => certs
-            .certs
-            .iter()
-            .try_fold(BigNum::zero(), |acc, ref cert| match &cert.0 {
-                CertificateEnum::StakeDeregistration(cert) => {
-                    if let Some(coin) = cert.coin {
-                        acc.checked_add(&coin)
-                    } else {
-                        acc.checked_add(&key_deposit)
+        Some(certs) => {
+            certs
+                .certs
+                .iter()
+                .try_fold(BigNum::zero(), |acc, ref cert| match &cert.0 {
+                    CertificateEnum::StakeDeregistration(cert) => {
+                        if let Some(coin) = cert.coin {
+                            acc.checked_add(&coin)
+                        } else {
+                            acc.checked_add(&key_deposit)
+                        }
                     }
-                }
-                CertificateEnum::PoolRetirement(_) => acc.checked_add(&pool_deposit),
-                CertificateEnum::DRepDeregistration(cert) => acc.checked_add(&cert.coin),
-                _ => Ok(acc),
-            })?,
+                    CertificateEnum::PoolRetirement(_) => acc.checked_add(&pool_deposit),
+                    CertificateEnum::DRepDeregistration(cert) => acc.checked_add(&cert.coin),
+                    _ => Ok(acc),
+                })?
+        }
     };
 
     Ok(Value::new(
@@ -668,28 +656,32 @@ pub fn internal_get_deposit(
 ) -> Result<Coin, JsError> {
     let certificate_deposit = match &certs {
         None => BigNum::zero(),
-        Some(certs) => certs
-            .certs
-            .iter()
-            .try_fold(BigNum::zero(), |acc, ref cert| match &cert.0 {
-                CertificateEnum::PoolRegistration(_) => acc.checked_add(&pool_deposit),
-                CertificateEnum::StakeRegistration(cert) => {
-                    if let Some(coin) = cert.coin {
-                        acc.checked_add(&coin)
-                    } else {
-                        acc.checked_add(&key_deposit)
+        Some(certs) => {
+            certs
+                .certs
+                .iter()
+                .try_fold(BigNum::zero(), |acc, ref cert| match &cert.0 {
+                    CertificateEnum::PoolRegistration(_) => acc.checked_add(&pool_deposit),
+                    CertificateEnum::StakeRegistration(cert) => {
+                        if let Some(coin) = cert.coin {
+                            acc.checked_add(&coin)
+                        } else {
+                            acc.checked_add(&key_deposit)
+                        }
                     }
-                }
-                CertificateEnum::DRepRegistration(cert) => acc.checked_add(&cert.coin),
-                CertificateEnum::StakeRegistrationAndDelegation(cert) => {
-                    acc.checked_add(&cert.coin)
-                }
-                CertificateEnum::VoteRegistrationAndDelegation(cert) => acc.checked_add(&cert.coin),
-                CertificateEnum::StakeVoteRegistrationAndDelegation(cert) => {
-                    acc.checked_add(&cert.coin)
-                }
-                _ => Ok(acc),
-            })?,
+                    CertificateEnum::DRepRegistration(cert) => acc.checked_add(&cert.coin),
+                    CertificateEnum::StakeRegistrationAndDelegation(cert) => {
+                        acc.checked_add(&cert.coin)
+                    }
+                    CertificateEnum::VoteRegistrationAndDelegation(cert) => {
+                        acc.checked_add(&cert.coin)
+                    }
+                    CertificateEnum::StakeVoteRegistrationAndDelegation(cert) => {
+                        acc.checked_add(&cert.coin)
+                    }
+                    _ => Ok(acc),
+                })?
+        }
     };
     Ok(certificate_deposit)
 }
@@ -1102,63 +1094,71 @@ pub enum TransactionSetsState {
 #[wasm_bindgen]
 pub fn has_transaction_set_tag(tx_bytes: Vec<u8>) -> Result<TransactionSetsState, JsError> {
     let mut has_tag = false;
-    let mut has_no_tag  = false;
+    let mut has_no_tag = false;
 
     let tx = Transaction::from_bytes(tx_bytes)?;
-    tx.witness_set.bootstraps.as_ref().map(|bs| {
-        match bs.get_set_type() {
+    tx.witness_set
+        .bootstraps
+        .as_ref()
+        .map(|bs| match bs.get_set_type() {
             CborSetType::Tagged => has_tag = true,
             CborSetType::Untagged => has_no_tag = true,
-        }
-    });
-    tx.witness_set.vkeys.as_ref().map(|vkeys| {
-        match vkeys.get_set_type() {
+        });
+    tx.witness_set
+        .vkeys
+        .as_ref()
+        .map(|vkeys| match vkeys.get_set_type() {
             CborSetType::Tagged => has_tag = true,
             CborSetType::Untagged => has_no_tag = true,
-        }
-    });
-    tx.witness_set.plutus_data.as_ref().map(|plutus_data| {
-        match plutus_data.get_set_type() {
+        });
+    tx.witness_set
+        .plutus_data
+        .as_ref()
+        .map(|plutus_data| match plutus_data.get_set_type() {
             Some(CborSetType::Tagged) => has_tag = true,
             Some(CborSetType::Untagged) => has_no_tag = true,
             None => has_tag = true,
-        }
-    });
-    tx.witness_set.native_scripts.as_ref().map(|native_scripts| {
-        match native_scripts.get_set_type() {
+        });
+    tx.witness_set
+        .native_scripts
+        .as_ref()
+        .map(|native_scripts| match native_scripts.get_set_type() {
             Some(CborSetType::Tagged) => has_tag = true,
             Some(CborSetType::Untagged) => has_no_tag = true,
             None => has_tag = true,
-        }
-    });
-    tx.witness_set.plutus_scripts.as_ref().map(|plutus_scripts| {
-        match plutus_scripts.get_set_type(&Language::new_plutus_v1()) {
-            Some(CborSetType::Tagged) => has_tag = true,
-            Some(CborSetType::Untagged) => has_no_tag = true,
-            None => has_tag = true,
-        }
-        match plutus_scripts.get_set_type(&Language::new_plutus_v2()) {
-            Some(CborSetType::Tagged) => has_tag = true,
-            Some(CborSetType::Untagged) => has_no_tag = true,
-            None => has_tag = true,
-        }
-        match plutus_scripts.get_set_type(&Language::new_plutus_v3()) {
-            Some(CborSetType::Tagged) => has_tag = true,
-            Some(CborSetType::Untagged) => has_no_tag = true,
-            None => has_tag = true,
-        }
-    });
+        });
+    tx.witness_set
+        .plutus_scripts
+        .as_ref()
+        .map(|plutus_scripts| {
+            match plutus_scripts.get_set_type(&Language::new_plutus_v1()) {
+                Some(CborSetType::Tagged) => has_tag = true,
+                Some(CborSetType::Untagged) => has_no_tag = true,
+                None => has_tag = true,
+            }
+            match plutus_scripts.get_set_type(&Language::new_plutus_v2()) {
+                Some(CborSetType::Tagged) => has_tag = true,
+                Some(CborSetType::Untagged) => has_no_tag = true,
+                None => has_tag = true,
+            }
+            match plutus_scripts.get_set_type(&Language::new_plutus_v3()) {
+                Some(CborSetType::Tagged) => has_tag = true,
+                Some(CborSetType::Untagged) => has_no_tag = true,
+                None => has_tag = true,
+            }
+        });
 
     match tx.body.inputs.get_set_type() {
         CborSetType::Tagged => has_tag = true,
         CborSetType::Untagged => has_no_tag = true,
     }
-    tx.body.reference_inputs.as_ref().map(|ref_inputs| {
-        match ref_inputs.get_set_type() {
+    tx.body
+        .reference_inputs
+        .as_ref()
+        .map(|ref_inputs| match ref_inputs.get_set_type() {
             CborSetType::Tagged => has_tag = true,
             CborSetType::Untagged => has_no_tag = true,
-        }
-    });
+        });
     tx.body.required_signers.as_ref().map(|required_signers| {
         match required_signers.get_set_type() {
             CborSetType::Tagged => has_tag = true,
@@ -1171,18 +1171,20 @@ pub fn has_transaction_set_tag(tx_bytes: Vec<u8>) -> Result<TransactionSetsState
             CborSetType::Untagged => has_no_tag = true,
         }
     });
-    tx.body.collateral.as_ref().map(|collateral_inputs| {
-        match collateral_inputs.get_set_type() {
+    tx.body
+        .collateral
+        .as_ref()
+        .map(|collateral_inputs| match collateral_inputs.get_set_type() {
             CborSetType::Tagged => has_tag = true,
             CborSetType::Untagged => has_no_tag = true,
-        }
-    });
-    tx.body.certs.as_ref().map(|certs| {
-        match certs.get_set_type() {
+        });
+    tx.body
+        .certs
+        .as_ref()
+        .map(|certs| match certs.get_set_type() {
             CborSetType::Tagged => has_tag = true,
             CborSetType::Untagged => has_no_tag = true,
-        }
-    });
+        });
 
     tx.body.certs.as_ref().map(|certs| {
         for cert in certs {

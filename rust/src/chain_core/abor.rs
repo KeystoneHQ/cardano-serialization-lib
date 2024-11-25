@@ -1,3 +1,6 @@
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+
 /// ABOR Encoder
 pub struct Encoder {
     data: Vec<u8>,
@@ -297,6 +300,7 @@ impl<'a> Decoder<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
 
     #[test]
     pub fn serialize_unit1() {

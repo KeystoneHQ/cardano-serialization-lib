@@ -1,5 +1,7 @@
 use crate::*;
-use std::io::SeekFrom;
+use alloc::{vec, vec::Vec};
+use core2::io::{BufRead, Seek, SeekFrom, Write};
+
 use crate::serialization::utils::{is_break_tag, skip_set_tag};
 
 impl cbor_event::se::Serialize for ConstrPlutusData {
@@ -7,9 +9,7 @@ impl cbor_event::se::Serialize for ConstrPlutusData {
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {
-        if let Some(compact_tag) =
-            Self::alternative_to_compact_cbor_tag(self.alternative.into())
-        {
+        if let Some(compact_tag) = Self::alternative_to_compact_cbor_tag(self.alternative.into()) {
             // compact form
             serializer.write_tag(compact_tag as u64)?;
             self.data.serialize(serializer)
@@ -54,13 +54,13 @@ impl Deserialize for ConstrPlutusData {
                             found: tag,
                             expected: Self::GENERAL_FORM_TAG,
                         }
-                            .into());
+                        .into());
                     }
                 }
             };
             Ok(ConstrPlutusData { alternative, data })
         })()
-            .map_err(|e| e.annotate("ConstrPlutusData"))
+        .map_err(|e| e.annotate("ConstrPlutusData"))
     }
 }
 
@@ -100,7 +100,7 @@ impl Deserialize for PlutusMap {
             }
             Ok(())
         })()
-            .map_err(|e| e.annotate("PlutusMap"))?;
+        .map_err(|e| e.annotate("PlutusMap"))?;
         Ok(plutus_map)
     }
 }
@@ -179,7 +179,7 @@ impl Deserialize for PlutusDataEnum {
                 DeserializeFailure::NoVariantMatched.into(),
             ))
         })()
-            .map_err(|e| e.annotate("PlutusDataEnum"))
+        .map_err(|e| e.annotate("PlutusDataEnum"))
     }
 }
 
@@ -286,7 +286,7 @@ impl Deserialize for PlutusList {
             }
             Ok(len)
         })()
-            .map_err(|e| e.annotate("PlutusList"))?;
+        .map_err(|e| e.annotate("PlutusList"))?;
 
         let set_tag = if has_set_tag {
             Some(CborSetType::Tagged)
@@ -297,7 +297,7 @@ impl Deserialize for PlutusList {
         Ok(Self {
             elems: arr,
             definite_encoding: Some(len != cbor_event::Len::Indefinite),
-            cbor_set_type: set_tag
+            cbor_set_type: set_tag,
         })
     }
 }

@@ -1,5 +1,5 @@
-use crate::*;
 use crate::serialization::utils::deserilized_with_orig_bytes;
+use crate::*;
 
 impl cbor_event::se::Serialize for FixedTransaction {
     fn serialize<'se, W: Write>(
@@ -52,8 +52,8 @@ impl DeserializeEmbeddedGroup for FixedTransaction {
         let (body, body_bytes) =
             deserilized_with_orig_bytes(raw, |raw| TransactionBody::deserialize(raw))
                 .map_err(|e| e.annotate("body"))?;
-        let witness_set = FixedTxWitnessesSet::deserialize(raw)
-            .map_err(|e| e.annotate("witness_set"))?;
+        let witness_set =
+            FixedTxWitnessesSet::deserialize(raw).map_err(|e| e.annotate("witness_set"))?;
         let mut checked_auxiliary_data = false;
         let mut auxiliary_data = None;
         let mut auxiliary_bytes = None;

@@ -1,26 +1,20 @@
 use crate::*;
 
+use alloc::collections::BTreeMap;
+use core::cmp::Ordering;
+
 #[wasm_bindgen]
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    Eq,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-    JsonSchema,
+    Clone, Debug, Hash, Eq, Ord, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize,
 )]
-pub struct Costmdls(pub(crate) std::collections::BTreeMap<Language, CostModel>);
+pub struct Costmdls(pub(crate) BTreeMap<Language, CostModel>);
 
 impl_to_from!(Costmdls);
 
 #[wasm_bindgen]
 impl Costmdls {
     pub fn new() -> Self {
-        Self(std::collections::BTreeMap::new())
+        Self(BTreeMap::new())
     }
 
     pub fn len(&self) -> usize {
@@ -52,7 +46,7 @@ impl Costmdls {
         let mut keys: Vec<Language> = self.0.iter().map(|(k, _v)| k.clone()).collect();
         // keys must be in canonical ordering first
         keys.sort_by(|lhs, rhs| match key_len(lhs).cmp(&key_len(rhs)) {
-            std::cmp::Ordering::Equal => lhs.cmp(&rhs),
+            Ordering::Equal => lhs.cmp(&rhs),
             len_order => len_order,
         });
         serializer

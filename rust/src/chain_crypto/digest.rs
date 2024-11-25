@@ -1,11 +1,13 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
-use std::convert::TryFrom;
-use std::hash::{Hash, Hasher};
-use std::str::FromStr;
-use std::{error, fmt, result};
+use core::convert::TryFrom;
+use core::hash::{Hash, Hasher};
+use core::str::FromStr;
+use core::{error, fmt, result};
 
+use alloc::{string::String, vec::Vec};
+use core as std;
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;
@@ -227,13 +229,13 @@ impl<H: DigestAlg> PartialEq for Digest<H> {
 impl<H: DigestAlg> Eq for Digest<H> {}
 
 impl<H: DigestAlg> PartialOrd for Digest<H> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl<H: DigestAlg> Ord for Digest<H> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.as_ref().cmp(other.as_ref())
     }
 }
@@ -287,7 +289,7 @@ impl<H: DigestAlg> Digest<H> {
     }
 }
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// A typed version of Digest
 pub struct DigestOf<H: DigestAlg, T> {
@@ -330,13 +332,13 @@ impl<H: DigestAlg, T> PartialEq for DigestOf<H, T> {
 impl<H: DigestAlg, T> Eq for DigestOf<H, T> {}
 
 impl<H: DigestAlg, T> PartialOrd for DigestOf<H, T> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         self.inner.partial_cmp(&other.inner)
     }
 }
 
 impl<H: DigestAlg, T> Ord for DigestOf<H, T> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.inner.cmp(&other.inner)
     }
 }

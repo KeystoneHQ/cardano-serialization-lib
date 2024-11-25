@@ -1,6 +1,6 @@
-use std::convert::TryFrom;
-use std::ops::Div;
 use crate::*;
+use core::convert::TryFrom;
+use core::ops::Div;
 
 // Generic u64 wrapper for platforms that don't support u64 or BigInt/etc
 // This is an unsigned type - no negative numbers.
@@ -14,8 +14,8 @@ pub type Coin = BigNum;
 
 impl_to_from!(BigNum);
 
-impl std::fmt::Display for BigNum {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for BigNum {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -84,9 +84,9 @@ impl BigNum {
 
     pub fn compare(&self, rhs_value: &BigNum) -> i8 {
         match self.cmp(&rhs_value) {
-            std::cmp::Ordering::Equal => 0,
-            std::cmp::Ordering::Less => -1,
-            std::cmp::Ordering::Greater => 1,
+            core::cmp::Ordering::Equal => 0,
+            core::cmp::Ordering::Less => -1,
+            core::cmp::Ordering::Greater => 1,
         }
     }
 
@@ -167,8 +167,8 @@ impl From<u8> for BigNum {
 
 impl serde::Serialize for BigNum {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_str())
     }
@@ -176,8 +176,8 @@ impl serde::Serialize for BigNum {
 
 impl<'de> serde::de::Deserialize<'de> for BigNum {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::de::Deserializer<'de>,
+    where
+        D: serde::de::Deserializer<'de>,
     {
         let s = <String as serde::de::Deserialize>::deserialize(deserializer)?;
         Self::from_str(&s).map_err(|_e| {
@@ -186,17 +186,5 @@ impl<'de> serde::de::Deserialize<'de> for BigNum {
                 &"string rep of a number",
             )
         })
-    }
-}
-
-impl JsonSchema for BigNum {
-    fn schema_name() -> String {
-        String::from("BigNum")
-    }
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        String::json_schema(gen)
-    }
-    fn is_referenceable() -> bool {
-        String::is_referenceable()
     }
 }
