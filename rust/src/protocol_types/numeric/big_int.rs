@@ -1,7 +1,7 @@
 use crate::*;
+use num::Signed;
 use num_bigint::Sign;
 use num_integer::Integer;
-use num_traits::Signed;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]

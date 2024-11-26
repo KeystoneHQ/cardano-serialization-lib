@@ -1,8 +1,6 @@
 use crate::*;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
-use schemars::gen::SchemaGenerator;
-use schemars::schema::Schema;
 use serde::ser::SerializeSeq;
 
 #[derive(

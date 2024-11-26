@@ -1,5 +1,6 @@
-use core2::io::{BufRead, Seek, SeekFrom, Write};
-
+use cbor_event::se::Serializer;
+use core2::io::Write;
+use core2::io::{BufRead, Seek, SeekFrom};
 #[macro_export]
 macro_rules! impl_hash_type {
     ($name:ident, $byte_count:expr) => {
@@ -34,15 +35,18 @@ macro_rules! impl_hash_type {
             pub fn to_bytes(&self) -> Vec<u8> {
                 self.0.to_vec()
             }
-
             pub fn to_bech32(&self, prefix: &str) -> Result<String, JsError> {
                 use bech32::ToBase32;
-                bech32::encode(&prefix, self.to_bytes().to_base32())
-                    .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
+                bech32::encode(
+                    &prefix,
+                    self.to_bytes().to_base32(),
+                    bech32::Variant::Bech32,
+                )
+                .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
             }
 
             pub fn from_bech32(bech_str: &str) -> Result<$name, JsError> {
-                let (_hrp, u5data) =
+                let (_hrp, u5data, _variant) =
                     bech32::decode(bech_str).map_err(|e| JsError::from_str(&e.to_string()))?;
                 let data: Vec<u8> = bech32::FromBase32::from_base32(&u5data).unwrap();
                 Ok(Self::from_bytes(data)?)
@@ -72,7 +76,7 @@ macro_rules! impl_hash_type {
         }
 
         impl cbor_event::se::Serialize for $name {
-            fn serialize<'se, W: Write>(
+            fn serialize<'se, W: core2::io::Write>(
                 &self,
                 serializer: &'se mut Serializer<W>,
             ) -> cbor_event::Result<&'se mut Serializer<W>> {

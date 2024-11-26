@@ -2,11 +2,10 @@ use crate::protocol_types::{CBORSpecial, Deserialize};
 use crate::{
     CredType, Credential, DeserializeError, DeserializeFailure, Ed25519KeyHash, Key, ScriptHash,
 };
-use alloc::{vec, vec::Vec};
+use alloc::vec;
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-use core2::io::{BufRead, Seek, SeekFrom, Write};
-
+use core2::io::{BufRead, Seek, Write};
 impl cbor_event::se::Serialize for Credential {
     fn serialize<'se, W: Write>(
         &self,

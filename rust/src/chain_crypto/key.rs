@@ -1,12 +1,11 @@
 use crate::chain_crypto::bech32::{self, Bech32};
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 use core::cmp;
-use core::convert::TryFrom;
+use core::fmt;
 use core::hash::{Hash, Hasher};
 use core::str::FromStr;
-use core::{error, fmt, result};
 use hex::FromHexError;
-use rand_os::rand_core::{CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SecretKeyError {
     SizeInvalid,
@@ -133,18 +132,11 @@ impl fmt::Display for PublicKeyFromStrError {
     }
 }
 
-impl error::Error for SecretKeyError {}
+impl core::error::Error for SecretKeyError {}
 
-impl error::Error for PublicKeyError {}
+impl core::error::Error for PublicKeyError {}
 
-impl error::Error for PublicKeyFromStrError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            PublicKeyFromStrError::HexMalformed(e) => Some(e),
-            PublicKeyFromStrError::KeyInvalid(e) => Some(e),
-        }
-    }
-}
+impl core::error::Error for PublicKeyFromStrError {}
 
 impl<A: AsymmetricPublicKey> AsRef<[u8]> for PublicKey<A> {
     fn as_ref(&self) -> &[u8] {

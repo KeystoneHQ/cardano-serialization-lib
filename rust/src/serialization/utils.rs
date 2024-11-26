@@ -1,5 +1,3 @@
-use core2 as std;
-
 use crate::*;
 use core2::io::SeekFrom;
 

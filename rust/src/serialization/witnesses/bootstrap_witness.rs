@@ -1,4 +1,3 @@
-use core2 as std;
 
 use crate::protocol_types::{CBORSpecial, Deserialize, DeserializeEmbeddedGroup};
 use crate::{BootstrapWitness, DeserializeError, DeserializeFailure, Ed25519Signature, Vkey};

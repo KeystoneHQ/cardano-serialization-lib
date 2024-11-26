@@ -1,9 +1,6 @@
 use crate::serialization::utils::{check_len, is_break_tag};
 use crate::*;
 
-#[cfg(feature = "alloc")]
-use alloc as std;
-
 use alloc::collections::BTreeMap;
 
 impl Serialize for Committee {

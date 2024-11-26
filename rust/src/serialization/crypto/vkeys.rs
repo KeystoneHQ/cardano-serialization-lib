@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
 
-use core2::io::{BufRead, Seek, SeekFrom, Write};
+use core2::io::{BufRead, Seek, Write};
 impl cbor_event::se::Serialize for Vkeys {
     fn serialize<'se, W: Write>(
         &self,

@@ -1,13 +1,11 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
+use alloc::string::String;
 use core::convert::TryFrom;
 use core::hash::{Hash, Hasher};
 use core::str::FromStr;
-use core::{error, fmt, result};
-
-use alloc::{string::String, vec::Vec};
-use core as std;
+use core::{fmt, result};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;
@@ -36,17 +34,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Error::InvalidDigestSize {
-                got: _,
-                expected: _,
-            } => None,
-            Error::InvalidHexEncoding(err) => Some(err),
-        }
-    }
-}
+impl core::error::Error for Error {}
 
 impl From<FromHexError> for Error {
     fn from(err: FromHexError) -> Self {

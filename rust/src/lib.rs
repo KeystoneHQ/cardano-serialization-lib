@@ -1,15 +1,12 @@
 #![cfg_attr(feature = "with-bench", feature(test))]
 #![allow(deprecated)]
-// #![no_std]
-#![feature(error_in_core)]
+#![cfg_attr(feature = "alloc", no_std)]
+#![cfg_attr(feature = "alloc", feature(error_in_core))]
 extern crate alloc;
 #[macro_use]
 extern crate cfg_if;
 
-#[cfg(test)]
-#[cfg(feature = "with-bench")]
-extern crate test;
-use core::{slice, slice::from_raw_parts, slice::from_raw_parts_mut};
+use core::slice;
 
 use alloc::collections::BTreeMap;
 use alloc::format;
@@ -19,19 +16,9 @@ use alloc::vec::Vec;
 use core::cmp::Ordering;
 use core::convert::TryInto;
 use core2::io::{BufRead, Seek, Write};
-
-#[cfg(test)]
-extern crate quickcheck;
-#[cfg(test)]
-#[macro_use(quickcheck)]
-extern crate quickcheck_macros;
 extern crate hex;
-
 #[cfg(test)]
 mod tests;
-
-#[macro_use]
-extern crate num_derive;
 
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
 use noop_proc_macro::wasm_bindgen;
@@ -64,8 +51,9 @@ mod fees;
 pub use fees::*;
 pub mod impl_mockchain;
 pub mod legacy_address;
-mod protocol_types;
+pub mod protocol_types;
 pub mod traits;
+pub use protocol_types::credentials::*;
 pub use protocol_types::*;
 pub mod typed_bytes;
 #[macro_use]
@@ -77,11 +65,10 @@ mod serialization;
 pub use serialization::*;
 
 use crate::traits::NoneOrEmpty;
-use hashlink::LinkedHashMap;
-
 use alloc::collections::BTreeSet;
 use core::fmt;
 use core::fmt::Display;
+use hashlink::LinkedHashMap;
 
 type DeltaCoin = Int;
 

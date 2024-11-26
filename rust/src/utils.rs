@@ -1,4 +1,5 @@
 use super::*;
+use crate::alloc::borrow::ToOwned;
 use crate::error::{DeserializeError, DeserializeFailure};
 use cbor_event::{
     self,

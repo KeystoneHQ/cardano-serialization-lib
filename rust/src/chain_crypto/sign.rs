@@ -4,11 +4,10 @@ use crate::chain_crypto::{
     key,
 };
 use crate::typed_bytes::{ByteArray, ByteSlice};
-use core as std;
 use core::{fmt, marker::PhantomData, str::FromStr};
 use hex::FromHexError;
 
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verification {
     Failed,
@@ -104,14 +103,7 @@ impl fmt::Display for SignatureFromStrError {
 }
 
 impl core::error::Error for SignatureError {}
-impl core::error::Error for SignatureFromStrError {
-    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
-        match self {
-            SignatureFromStrError::HexMalformed(e) => Some(e),
-            SignatureFromStrError::Invalid(e) => Some(e),
-        }
-    }
-}
+impl core::error::Error for SignatureFromStrError {}
 
 impl<A: VerificationAlgorithm, T> Signature<T, A> {
     pub fn from_binary(sig: &[u8]) -> Result<Self, SignatureError> {

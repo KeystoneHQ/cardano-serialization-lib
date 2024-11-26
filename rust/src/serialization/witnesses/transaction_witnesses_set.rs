@@ -1,3 +1,4 @@
+use crate::alloc::borrow::ToOwned;
 use crate::protocol_types::{opt64, CBORSpecial, CBORType, Deserialize, TransactionWitnessSetRaw};
 use crate::serialization::utils::{deserilized_with_orig_bytes, merge_option_plutus_list};
 use crate::traits::NoneOrEmpty;
@@ -9,8 +10,6 @@ use crate::{
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
 use cbor_event::Serialize;
-use core2 as std;
-
 use core2::io::{BufRead, Seek, Write};
 
 impl cbor_event::se::Serialize for TransactionWitnessSet {

@@ -1,5 +1,5 @@
 use crate::*;
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 use core2::io::{BufRead, Seek, SeekFrom, Write};
 
 use crate::serialization::utils::{is_break_tag, skip_set_tag};

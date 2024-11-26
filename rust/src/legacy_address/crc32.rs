@@ -1,4 +1,4 @@
-use core2::io::{BufRead, Error, Seek, SeekFrom, Write};
+use core2::io::{Error, Write};
 const CRC_TABLE: [u32; 256] = [
     0x00000000u32,
     0x77073096u32,

@@ -412,7 +412,7 @@ impl<'a> cbor_event::se::Serialize for SpendingData<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Addr, AddressMatchXPub};
-    use ed25519_bip32_core::XPub;
+    use ed25519_bip32::XPub;
 
     fn assert_same_address(address: Addr, xpub: XPub) {
         assert_eq!(

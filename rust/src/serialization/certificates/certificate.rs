@@ -1,6 +1,5 @@
 use crate::serialization::map_names::CertificateIndexNames;
 use crate::*;
-use num_traits::FromPrimitive;
 
 use core2::io::{BufRead, Seek, SeekFrom, Write};
 

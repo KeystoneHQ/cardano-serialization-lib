@@ -3,7 +3,6 @@ use crate::{DeserializeError, DeserializeFailure, KESSignature};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
 
-use core2 as std;
 impl cbor_event::se::Serialize for KESSignature {
     fn serialize<'se, W: core2::io::Write>(
         &self,

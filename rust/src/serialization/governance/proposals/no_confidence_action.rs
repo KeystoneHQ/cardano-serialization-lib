@@ -2,7 +2,6 @@ use crate::serialization::utils::serialize_and_check_index;
 use crate::serialization::{check_len, deserialize_and_check_index};
 use crate::*;
 use map_names::VotingProposalIndexNames;
-use num_traits::ToPrimitive;
 
 impl cbor_event::se::Serialize for NoConfidenceAction {
     fn serialize<'se, W: Write>(

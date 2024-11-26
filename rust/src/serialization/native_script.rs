@@ -1,6 +1,5 @@
 use crate::*;
 
-use core2 as std;
 use core2::io::{BufRead, Seek, SeekFrom, Write};
 
 impl cbor_event::se::Serialize for NativeScript {

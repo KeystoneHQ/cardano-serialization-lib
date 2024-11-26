@@ -2,7 +2,6 @@ use crate::serialization::map_names::CertificateIndexNames;
 use crate::serialization::utils::{check_index, check_len, serialize_and_check_index};
 use crate::*;
 use cbor_event::Len;
-use num_traits::{FromPrimitive, ToPrimitive};
 
 impl cbor_event::se::Serialize for StakeDeregistration {
     fn serialize<'se, W: Write>(

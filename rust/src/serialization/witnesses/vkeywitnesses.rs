@@ -3,9 +3,8 @@ use crate::serialization::utils::skip_set_tag;
 use crate::{CborSetType, DeserializeError, Vkeywitness, Vkeywitnesses};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-
-use core2::io::{BufRead, Seek, Write};
-
+use core2::io::Write;
+use core2::io::{BufRead, Seek};
 impl cbor_event::se::Serialize for Vkeywitnesses {
     fn serialize<'se, W: Write>(
         &self,

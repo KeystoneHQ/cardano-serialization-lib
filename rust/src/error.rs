@@ -1,8 +1,8 @@
 use super::*;
+use crate::alloc::borrow::ToOwned;
+use crate::alloc::string::ToString;
 use crate::chain_crypto;
 use cbor_event::{self};
-
-use alloc::string::ToString;
 
 // This file was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen

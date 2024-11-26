@@ -1,6 +1,7 @@
 //! Module provides cryptographic utilities and types related to
 //! the user keys.
 //!
+use crate::alloc::string::ToString;
 use crate::chain_core::mempack::{read_mut_slice, ReadBuf, ReadError, Readable};
 use crate::chain_core::property;
 use crate::chain_crypto as crypto;
@@ -8,10 +9,10 @@ use crate::chain_crypto::{
     AsymmetricKey, AsymmetricPublicKey, SecretKey, SigningAlgorithm, VerificationAlgorithm,
 };
 use alloc::format;
-use alloc::{string::String, vec, vec::Vec};
-use core::{error, fmt, result};
-use core2::io::{BufRead, Error, Seek, SeekFrom, Write};
-use rand_os::rand_core::{CryptoRng, RngCore};
+use alloc::vec;
+use core::fmt;
+use core2::io::{Error, Write};
+use rand::{CryptoRng, RngCore};
 #[derive(Clone)]
 pub enum EitherEd25519SecretKey {
     Extended(crypto::SecretKey<crypto::Ed25519Extended>),

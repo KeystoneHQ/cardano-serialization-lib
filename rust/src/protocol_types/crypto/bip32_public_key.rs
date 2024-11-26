@@ -1,7 +1,7 @@
+use crate::alloc::string::ToString;
 use crate::chain_crypto::bech32::Bech32;
 use crate::{wasm_bindgen, JsError, PublicKey};
 use alloc::{format, string::String, vec::Vec};
-use rand_os::OsRng;
 #[wasm_bindgen]
 pub struct Bip32PublicKey(
     pub(crate) crate::chain_crypto::PublicKey<crate::chain_crypto::Ed25519Bip32>,

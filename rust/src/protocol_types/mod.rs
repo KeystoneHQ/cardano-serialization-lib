@@ -29,10 +29,10 @@ pub use tx_input::*;
 mod tx_inputs;
 pub use tx_inputs::*;
 
-mod credential;
+pub mod credential;
 pub use credential::*;
 
-mod credentials;
+pub mod credentials;
 pub use credentials::*;
 
 mod ed25519_key_hashes;
@@ -50,7 +50,7 @@ pub use native_script::*;
 mod native_scripts;
 pub use native_scripts::*;
 
-mod numeric;
+pub mod numeric;
 pub use numeric::*;
 
 mod script_ref;

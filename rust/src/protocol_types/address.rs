@@ -551,12 +551,16 @@ impl Address {
                 format!("{}{}", prefix_header, prefix_tail)
             }
         };
-        bech32::encode(&final_prefix, self.to_bytes().to_base32())
-            .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
+        bech32::encode(
+            &final_prefix,
+            self.to_bytes().to_base32(),
+            bech32::Variant::Bech32,
+        )
+        .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
     }
 
     pub fn from_bech32(bech_str: &str) -> Result<Address, JsError> {
-        let (_hrp, u5data) =
+        let (_hrp, u5data, _variant) =
             bech32::decode(bech_str).map_err(|e| JsError::from_str(&e.to_string()))?;
         let data: Vec<u8> = bech32::FromBase32::from_base32(&u5data).unwrap();
         Ok(Self::from_bytes_impl_safe(data.as_ref())?)

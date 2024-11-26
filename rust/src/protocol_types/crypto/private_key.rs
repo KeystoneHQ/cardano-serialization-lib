@@ -1,8 +1,8 @@
+use crate::alloc::string::ToString;
 use crate::chain_crypto::bech32::Bech32;
 use crate::impl_mockchain::key;
 use crate::{wasm_bindgen, Ed25519Signature, JsError, PublicKey};
-use alloc::{format, string::String, vec::Vec};
-use rand_os::OsRng;
+use alloc::{string::String, vec::Vec};
 #[wasm_bindgen]
 pub struct PrivateKey(pub(crate) key::EitherEd25519SecretKey);
 
@@ -16,22 +16,6 @@ impl From<key::EitherEd25519SecretKey> for PrivateKey {
 impl PrivateKey {
     pub fn to_public(&self) -> PublicKey {
         self.0.to_public().into()
-    }
-
-    pub fn generate_ed25519() -> Result<PrivateKey, JsError> {
-        OsRng::new()
-            .map(crate::chain_crypto::SecretKey::<crate::chain_crypto::Ed25519>::generate)
-            .map(key::EitherEd25519SecretKey::Normal)
-            .map(PrivateKey)
-            .map_err(|e| JsError::from_str(&format!("{}", e)))
-    }
-
-    pub fn generate_ed25519extended() -> Result<PrivateKey, JsError> {
-        OsRng::new()
-            .map(crate::chain_crypto::SecretKey::<crate::chain_crypto::Ed25519Extended>::generate)
-            .map(key::EitherEd25519SecretKey::Extended)
-            .map(PrivateKey)
-            .map_err(|e| JsError::from_str(&format!("{}", e)))
     }
 
     /// Get private key from its bech32 representation

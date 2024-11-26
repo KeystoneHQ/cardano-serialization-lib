@@ -1,7 +1,7 @@
+use crate::alloc::borrow::ToOwned;
 use crate::serialization::utils::{is_break_tag, merge_option_plutus_list};
 use crate::*;
 use hashlink::LinkedHashMap;
-
 impl cbor_event::se::Serialize for MetadataMap {
     fn serialize<'se, W: Write>(
         &self,

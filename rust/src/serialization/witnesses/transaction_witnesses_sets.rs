@@ -4,10 +4,10 @@ use crate::{DeserializeError, TransactionWitnessSet, TransactionWitnessSets};
 use alloc::vec::Vec;
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-use core2::io::{BufRead, Seek, Write};
+use core2::io::{BufRead, Seek};
 
 impl cbor_event::se::Serialize for TransactionWitnessSets {
-    fn serialize<'se, W: Write>(
+    fn serialize<'se, W: core2::io::Write>(
         &self,
         serializer: &'se mut Serializer<W>,
     ) -> cbor_event::Result<&'se mut Serializer<W>> {

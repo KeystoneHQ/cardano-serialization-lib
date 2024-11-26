@@ -2,7 +2,7 @@ use crate::*;
 use alloc::collections::BTreeMap;
 
 use crate::serialization::utils::is_break_tag;
-use core2::io::{BufRead, Seek, SeekFrom, Write};
+use core2::io::{BufRead, Seek, SeekFrom};
 use hashlink::LinkedHashMap;
 
 // This file was code-generated using an experimental CDDL to rust tool:

@@ -2,7 +2,6 @@ use crate::protocol_types::Deserialize;
 use crate::{DeserializeError, DeserializeFailure, Ed25519Signature, Vkey, Vkeywitness};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-use core2 as std;
 
 use core2::io::{BufRead, Seek, Write};
 

@@ -88,11 +88,12 @@ impl DRep {
                 "Cannot convert AlwaysNoConfidence to bech32",
             )),
         }?;
-        bech32::encode(&hrp, data.to_base32()).map_err(|e| JsError::from_str(&format! {"{:?}", e}))
+        bech32::encode(&hrp, data.to_base32(), bech32::Variant::Bech32)
+            .map_err(|e| JsError::from_str(&format! {"{:?}", e}))
     }
 
     pub fn from_bech32(bech32_str: &str) -> Result<DRep, JsError> {
-        let (hrp, u5data) =
+        let (hrp, u5data, _variant) =
             bech32::decode(bech32_str).map_err(|e| JsError::from_str(&e.to_string()))?;
         let data: Vec<u8> = bech32::FromBase32::from_base32(&u5data)
             .map_err(|_| JsError::from_str("Malformed DRep"))?;
