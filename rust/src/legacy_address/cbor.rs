@@ -3,6 +3,7 @@ pub mod util {
     //! CBor util and other stuff
 
     use crate::legacy_address::crc32::crc32;
+    use crate::*;
     use alloc::format;
     use alloc::vec::Vec;
     use cbor_event::{self, cbor, de::Deserializer, se::Serializer, Len};

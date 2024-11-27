@@ -7,10 +7,14 @@ use cbor_event::{
     se::{Serialize, Serializer},
 };
 use core::fmt::Display;
+use core::iter::IntoIterator;
+use core::todo;
+use core::write;
+use core::writeln;
 use core2::io::Cursor;
 use core2::io::{BufRead, Seek, Write};
-use hashbrown::HashMap;
 use hex::FromHex;
+use ritelinked::LinkedHashMap;
 use serde_json;
 pub fn to_bytes<T: cbor_event::se::Serialize>(data_item: &T) -> Vec<u8> {
     let mut buf = Serializer::new_vec();
@@ -838,7 +842,7 @@ fn encode_wallet_value_to_native_script(
         serde_json::Value::Object(map)
             if map.contains_key("cosigners") && map.contains_key("template") =>
         {
-            let mut cosigners = HashMap::new();
+            let mut cosigners = LinkedHashMap::new();
 
             if let serde_json::Value::Object(cosigner_map) = map.get("cosigners").unwrap() {
                 for (key, value) in cosigner_map.iter() {
@@ -870,7 +874,7 @@ fn encode_wallet_value_to_native_script(
 
 fn encode_template_to_native_script(
     template: &serde_json::Value,
-    cosigners: &HashMap<String, String>,
+    cosigners: &LinkedHashMap<String, String>,
 ) -> Result<NativeScript, JsError> {
     match template {
         serde_json::Value::String(cosigner) => {

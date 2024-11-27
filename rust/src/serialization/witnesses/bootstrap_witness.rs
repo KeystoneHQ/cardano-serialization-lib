@@ -1,5 +1,5 @@
-
 use crate::protocol_types::{CBORSpecial, Deserialize, DeserializeEmbeddedGroup};
+use crate::*;
 use crate::{BootstrapWitness, DeserializeError, DeserializeFailure, Ed25519Signature, Vkey};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;

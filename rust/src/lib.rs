@@ -1,25 +1,63 @@
+#![no_std]
 #![cfg_attr(feature = "with-bench", feature(test))]
 #![allow(deprecated)]
-#![cfg_attr(feature = "alloc", no_std)]
 #![cfg_attr(feature = "alloc", feature(error_in_core))]
-extern crate alloc;
+// #![cfg_attr(feature = "alloc", no_std)]
 #[macro_use]
 extern crate cfg_if;
 
-use core::slice;
+#[cfg(test)]
+#[cfg(feature = "with-bench")]
+extern crate test;
 
+#[cfg(feature = "alloc")]
+use core as std;
+#[cfg(test)]
+extern crate quickcheck;
+#[cfg(test)]
+#[macro_use(quickcheck)]
+extern crate quickcheck_macros;
+extern crate hex;
+#[cfg(test)]
+mod tests;
 use alloc::collections::BTreeMap;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
-use core::cmp::Ordering;
-use core::convert::TryInto;
-use core2::io::{BufRead, Seek, Write};
-extern crate hex;
-#[cfg(test)]
-mod tests;
+use core::iter::IntoIterator;
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
+use core::assert_eq;
+use core::clone::Clone;
+use core::cmp::Eq;
+use core::cmp::Ordering;
+use core::cmp::{Ord, PartialEq, PartialOrd};
+use core::convert::AsRef;
+use core::convert::From;
+use core::convert::Into;
+use core::convert::TryInto;
+use core::fmt;
+use core::fmt::Display;
+use core::iter::ExactSizeIterator;
+use core::iter::Iterator;
+use core::marker::Send;
+use core::marker::Sized;
+use core::marker::Sync;
+use core::ops::Fn;
+use core::ops::FnMut;
+use core::option::Option;
+use core::option::Option::None;
+use core::option::Option::Some;
+use core::prelude::rust_2018::*;
+use core::result::Result;
+use core::result::Result::Err;
+use core::result::Result::Ok;
+use core::slice;
+use core::stringify;
+use core::write;
+use core2::io::{BufRead, Seek, Write};
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
 use noop_proc_macro::wasm_bindgen;
 
@@ -66,9 +104,7 @@ pub use serialization::*;
 
 use crate::traits::NoneOrEmpty;
 use alloc::collections::BTreeSet;
-use core::fmt;
-use core::fmt::Display;
-use hashlink::LinkedHashMap;
+use ritelinked::LinkedHashMap;
 
 type DeltaCoin = Int;
 

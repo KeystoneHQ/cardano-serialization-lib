@@ -1,9 +1,9 @@
 use crate::protocol_types::Deserialize;
+use crate::*;
 use crate::{DeserializeError, PublicKey, Vkey};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
 use core2::io::{BufRead, Seek, Write};
-
 impl cbor_event::se::Serialize for Vkey {
     fn serialize<'se, W: Write>(
         &self,

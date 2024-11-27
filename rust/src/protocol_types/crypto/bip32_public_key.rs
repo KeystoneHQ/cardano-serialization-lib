@@ -1,5 +1,6 @@
 use crate::alloc::string::ToString;
 use crate::chain_crypto::bech32::Bech32;
+use crate::*;
 use crate::{wasm_bindgen, JsError, PublicKey};
 use alloc::{format, string::String, vec::Vec};
 #[wasm_bindgen]

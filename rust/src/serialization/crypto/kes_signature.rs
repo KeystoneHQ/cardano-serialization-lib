@@ -1,8 +1,8 @@
 use crate::protocol_types::Deserialize;
+use crate::*;
 use crate::{DeserializeError, DeserializeFailure, KESSignature};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-
 impl cbor_event::se::Serialize for KESSignature {
     fn serialize<'se, W: core2::io::Write>(
         &self,

@@ -2,7 +2,7 @@ use crate::alloc::borrow::ToOwned;
 use crate::alloc::string::ToString;
 use crate::*;
 use alloc::collections;
-use hashlink::LinkedHashMap;
+use ritelinked::LinkedHashMap;
 
 const MD_MAX_LEN: usize = 64;
 

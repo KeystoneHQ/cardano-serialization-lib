@@ -1,7 +1,7 @@
 use crate::*;
 use core::convert::TryFrom;
 use core::ops::Div;
-
+use core::write;
 // Generic u64 wrapper for platforms that don't support u64 or BigInt/etc
 // This is an unsigned type - no negative numbers.
 // Can be converted to/from plain rust

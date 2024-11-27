@@ -4,7 +4,7 @@
 // Note: wasm-bindgen doesn't support macros inside impls, so we have to wrap these
 //       in their own impl and invoke the invoke the macro from global scope.
 // TODO: possibly write s generic version of this for other usages (e.g. PrivateKey, etc)
-
+use crate::*;
 #[macro_export]
 macro_rules! from_bytes {
     // Custom from_bytes() code

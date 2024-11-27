@@ -1,3 +1,4 @@
+use crate::*;
 #[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub(crate) enum TxBodyNames {
     Inputs = 0,

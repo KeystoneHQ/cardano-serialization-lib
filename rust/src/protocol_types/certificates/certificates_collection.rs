@@ -5,14 +5,14 @@ use core::hash::{Hash, Hasher};
 use core::iter::Map;
 use core::ops::Deref;
 use core::slice;
-use hashbrown::HashSet;
 use itertools::Itertools;
+use ritelinked::LinkedHashSet;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Certificates {
     pub(crate) certs: Vec<Rc<Certificate>>,
-    pub(crate) dedup: HashSet<Rc<Certificate>>,
+    pub(crate) dedup: LinkedHashSet<Rc<Certificate>>,
     pub(crate) cbor_set_type: CborSetType,
 }
 
@@ -29,7 +29,7 @@ impl Certificates {
     pub fn new() -> Self {
         Self {
             certs: Vec::new(),
-            dedup: HashSet::new(),
+            dedup: LinkedHashSet::new(),
             cbor_set_type: CborSetType::Tagged,
         }
     }

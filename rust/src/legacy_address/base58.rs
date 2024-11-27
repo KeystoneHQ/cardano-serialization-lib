@@ -1,9 +1,10 @@
 //! bitcoin's base58 encoding format
 #![feature(error_in_core)]
+use crate::*;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
-
+use core::write;
 pub const ALPHABET: &'static str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]

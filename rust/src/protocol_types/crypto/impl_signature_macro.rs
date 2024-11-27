@@ -1,3 +1,4 @@
+use crate::*;
 use core2::io::{BufRead, Seek, SeekFrom, Write};
 #[macro_export]
 macro_rules! impl_signature {

@@ -1,6 +1,7 @@
 use crate::alloc::string::ToString;
 use crate::chain_crypto::bech32::Bech32;
 use crate::crypto::blake2b224;
+use crate::*;
 use crate::{wasm_bindgen, Ed25519KeyHash, Ed25519Signature, JsError};
 use alloc::{format, string::String, vec::Vec};
 /// ED25519 key used as public key

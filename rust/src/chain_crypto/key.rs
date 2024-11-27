@@ -1,9 +1,11 @@
 use crate::chain_crypto::bech32::{self, Bech32};
+use crate::*;
 use alloc::string::String;
 use core::cmp;
 use core::fmt;
 use core::hash::{Hash, Hasher};
 use core::str::FromStr;
+use core::write;
 use hex::FromHexError;
 use rand::{CryptoRng, RngCore};
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

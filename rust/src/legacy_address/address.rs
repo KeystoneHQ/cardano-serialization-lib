@@ -11,20 +11,21 @@
 
 use crate::legacy_address::base58;
 use crate::legacy_address::cbor;
+use crate::*;
 use alloc::format;
 use alloc::vec::Vec;
 use cbor_event::{self, cbor, de::Deserializer, se::Serializer};
+use core::write;
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt,
+};
 use core2;
 use core2::io::{BufRead, Write};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest;
 use cryptoxide::sha3;
 use ed25519_bip32::XPub;
-
-use core::{
-    convert::{TryFrom, TryInto},
-    fmt,
-};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 #[cfg_attr(feature = "generic-serialization", derive(Serialize, Deserialize))]

@@ -1,9 +1,10 @@
+use crate::*;
 pub trait NoneOrEmpty {
     fn is_none_or_empty(&self) -> bool;
 }
 
 pub trait EmptyToNone: Sized {
-   fn empty_to_none(self) -> Option<Self>;
+    fn empty_to_none(self) -> Option<Self>;
 }
 
 impl<T: NoneOrEmpty> NoneOrEmpty for &T {

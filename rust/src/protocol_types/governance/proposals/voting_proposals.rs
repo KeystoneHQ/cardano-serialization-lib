@@ -5,14 +5,14 @@ use core::hash::{Hash, Hasher};
 use core::iter::Map;
 use core::ops::Deref;
 use core::slice;
-use hashbrown::HashSet;
 use itertools::Itertools;
+use ritelinked::LinkedHashSet;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct VotingProposals {
     proposals: Vec<Rc<VotingProposal>>,
-    dedup: HashSet<Rc<VotingProposal>>,
+    dedup: LinkedHashSet<Rc<VotingProposal>>,
     cbor_set_type: CborSetType,
 }
 
@@ -29,14 +29,14 @@ impl VotingProposals {
     pub fn new() -> Self {
         Self {
             proposals: Vec::new(),
-            dedup: HashSet::new(),
+            dedup: LinkedHashSet::new(),
             cbor_set_type: CborSetType::Tagged,
         }
     }
 
     pub(crate) fn new_from_prepared_fields(
         proposals: Vec<Rc<VotingProposal>>,
-        dedup: HashSet<Rc<VotingProposal>>,
+        dedup: LinkedHashSet<Rc<VotingProposal>>,
     ) -> Self {
         Self {
             proposals,
@@ -78,7 +78,7 @@ impl VotingProposals {
     }
 
     pub(crate) fn from_vec(proposal_vec: Vec<VotingProposal>) -> Self {
-        let mut dedup = HashSet::new();
+        let mut dedup = LinkedHashSet::new();
         let mut proposals = Vec::new();
         for proposal in proposal_vec {
             let proposal_rc = Rc::new(proposal.clone());

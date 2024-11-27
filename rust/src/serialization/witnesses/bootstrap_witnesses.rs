@@ -1,11 +1,11 @@
 use crate::protocol_types::Deserialize;
 use crate::serialization::utils::skip_set_tag;
+use crate::*;
 use crate::{BootstrapWitness, BootstrapWitnesses, CborSetType, DeserializeError};
+use alloc::vec::Vec;
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
 use core2::io::{BufRead, Seek, Write};
-
-use alloc::vec::Vec;
 impl cbor_event::se::Serialize for BootstrapWitnesses {
     fn serialize<'se, W: Write>(
         &self,

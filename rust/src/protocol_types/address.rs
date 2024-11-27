@@ -1,7 +1,7 @@
 use crate::legacy_address::ExtendedAddr;
 use crate::*;
 use bech32::ToBase32;
-
+use core::matches;
 use ed25519_bip32::XPub;
 // returns (Number represented, bytes read) if valid encoding
 // or None if decoding prematurely finished

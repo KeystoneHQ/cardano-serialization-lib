@@ -1,5 +1,5 @@
+use crate::*;
 use cryptoxide::blake2b::Blake2b;
-
 pub(crate) fn blake2b224(data: &[u8]) -> [u8; 28] {
     let mut out = [0; 28];
     Blake2b::blake2b(&mut out, data, &[]);

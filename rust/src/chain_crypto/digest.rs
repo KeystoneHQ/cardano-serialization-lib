@@ -1,21 +1,37 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
+use crate::chain_crypto::bech32::{self, Bech32};
+use crate::chain_crypto::hash::{Blake2b256, Sha3_256};
+use crate::typed_bytes::ByteSlice;
 use alloc::string::String;
+use core as std;
+use core::clone::Clone;
+use core::cmp::Eq;
+use core::cmp::Ord;
+use core::cmp::PartialEq;
+use core::cmp::PartialOrd;
+use core::concat;
+use core::convert::AsRef;
+use core::convert::From;
 use core::convert::TryFrom;
 use core::hash::{Hash, Hasher};
+use core::marker::PhantomData;
+use core::marker::Send;
+use core::ops::FnOnce;
+use core::option::Option;
+use core::option::Option::Some;
+use core::prelude::rust_2018::*;
+use core::result::Result;
+use core::result::Result::Err;
+use core::result::Result::Ok;
 use core::str::FromStr;
-use core::{fmt, result};
+use core::write;
+use core::{error, fmt, result};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;
 use hex::FromHexError;
-
-use crate::typed_bytes::ByteSlice;
-
-use crate::chain_crypto::bech32::{self, Bech32};
-use crate::chain_crypto::hash::{Blake2b256, Sha3_256};
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     InvalidDigestSize { got: usize, expected: usize },
@@ -276,8 +292,6 @@ impl<H: DigestAlg> Digest<H> {
         ctx.finalize()
     }
 }
-
-use core::marker::PhantomData;
 
 /// A typed version of Digest
 pub struct DigestOf<H: DigestAlg, T> {

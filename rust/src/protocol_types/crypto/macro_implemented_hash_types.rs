@@ -1,5 +1,5 @@
 use crate::*;
-
+use core::write;
 impl_hash_type!(Ed25519KeyHash, 28);
 impl_hash_type!(ScriptHash, 28);
 impl_hash_type!(AnchorDataHash, 32);

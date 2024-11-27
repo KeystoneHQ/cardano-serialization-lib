@@ -1,3 +1,4 @@
+use crate::*;
 pub mod map_names;
 pub mod traits;
 pub(super) use traits::*;

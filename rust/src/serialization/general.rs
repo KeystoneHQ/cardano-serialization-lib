@@ -3,7 +3,7 @@ use alloc::collections::BTreeMap;
 
 use crate::serialization::utils::is_break_tag;
 use core2::io::{BufRead, Seek, SeekFrom};
-use hashlink::LinkedHashMap;
+use ritelinked::LinkedHashMap;
 
 // This file was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen

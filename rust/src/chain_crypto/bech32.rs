@@ -8,7 +8,11 @@ use bech32::{Error as Bech32Error, FromBase32, ToBase32, Variant};
 use core::error::Error as StdError;
 use core::result::Result as StdResult;
 pub type Result<T> = StdResult<T, Error>;
-
+use crate::*;
+use core::marker::Send;
+use core::marker::Sync;
+use core::panic;
+use core::write;
 pub trait Bech32 {
     const BECH32_HRP: &'static str;
 
@@ -20,13 +24,13 @@ pub trait Bech32 {
 }
 
 pub fn to_bech32_from_bytes<B: Bech32>(bytes: &[u8]) -> String {
-    bech32::encode(B::BECH32_HRP, bytes.to_base32(),Variant::Bech32)
+    bech32::encode(B::BECH32_HRP, bytes.to_base32(), Variant::Bech32)
         .unwrap_or_else(|e| panic!("Failed to build bech32: {}", e))
         .to_string()
 }
 
 pub fn try_from_bech32_to_bytes<B: Bech32>(bech32_str: &str) -> Result<Vec<u8>> {
-    let (hrp, bech32_data,_varent) = bech32::decode(bech32_str)?;
+    let (hrp, bech32_data, _varent) = bech32::decode(bech32_str)?;
     if hrp != B::BECH32_HRP {
         return Err(Error::HrpInvalid {
             expected: B::BECH32_HRP,

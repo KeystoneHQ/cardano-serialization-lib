@@ -1,5 +1,4 @@
 use crate::*;
-
 impl cbor_event::se::Serialize for VRFCert {
     fn serialize<'se, W: Write>(
         &self,

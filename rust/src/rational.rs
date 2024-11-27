@@ -1,6 +1,5 @@
+use crate::*;
 use crate::{BigInt, BigNum, JsError, UnitInterval};
-#[cfg(feature = "alloc")]
-use alloc::{format, string::String, vec::Vec};
 #[derive(Clone, Debug)]
 pub(crate) struct Rational {
     numerator: BigInt,

@@ -1,6 +1,7 @@
+use crate::*;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-
+use core::panic;
 /// ABOR Encoder
 pub struct Encoder {
     data: Vec<u8>,

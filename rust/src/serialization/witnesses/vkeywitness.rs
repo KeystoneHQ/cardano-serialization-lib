@@ -1,8 +1,9 @@
 use crate::protocol_types::Deserialize;
+use crate::*;
 use crate::{DeserializeError, DeserializeFailure, Ed25519Signature, Vkey, Vkeywitness};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-
+use core::result::Result::Ok;
 use core2::io::{BufRead, Seek, Write};
 
 impl cbor_event::se::Serialize for Vkeywitness {

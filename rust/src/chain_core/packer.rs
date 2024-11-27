@@ -4,7 +4,7 @@
 //! data.
 
 const INITIAL_BUFFERED_CAPACITY: usize = 2048;
-
+use crate::*;
 use alloc::{vec, vec::Vec};
 use core::{marker, ops};
 use core2::io::{BufRead, Read, Result, Write};

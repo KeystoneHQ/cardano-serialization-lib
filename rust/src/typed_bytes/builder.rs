@@ -1,8 +1,9 @@
 use crate::typed_bytes::ByteArray;
-
+use crate::*;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use core::num::NonZeroUsize;
+use core::panic;
 /// A dynamically created buffer for T
 #[derive(Clone)]
 pub struct ByteBuilder<T> {

@@ -4,10 +4,11 @@ use crate::chain_crypto::{
     key,
 };
 use crate::typed_bytes::{ByteArray, ByteSlice};
+use crate::*;
+use alloc::string::String;
+use core::write;
 use core::{fmt, marker::PhantomData, str::FromStr};
 use hex::FromHexError;
-
-use alloc::string::String;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verification {
     Failed,

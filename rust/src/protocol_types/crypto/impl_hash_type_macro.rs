@@ -1,3 +1,4 @@
+use crate::*;
 use cbor_event::se::Serializer;
 use core2::io::Write;
 use core2::io::{BufRead, Seek, SeekFrom};

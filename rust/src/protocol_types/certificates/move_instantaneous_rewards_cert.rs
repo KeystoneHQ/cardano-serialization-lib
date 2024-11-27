@@ -1,7 +1,7 @@
 use crate::*;
 
 use alloc::vec::Vec;
-use hashlink::LinkedHashMap;
+use ritelinked::LinkedHashMap;
 
 #[wasm_bindgen]
 #[derive(

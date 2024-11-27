@@ -1,4 +1,5 @@
 use crate::protocol_types::{CBORSpecial, Deserialize};
+use crate::*;
 use crate::{
     CredType, Credential, DeserializeError, DeserializeFailure, Ed25519KeyHash, Key, ScriptHash,
 };

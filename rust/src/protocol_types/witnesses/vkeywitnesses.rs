@@ -4,13 +4,13 @@ use alloc::slice;
 use core::hash::{Hash, Hasher};
 use core::iter::Map;
 use core::ops::Deref;
-use hashbrown::HashSet;
 use itertools::Itertools;
+use ritelinked::LinkedHashSet;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Vkeywitnesses {
     witnesses: Vec<Rc<Vkeywitness>>,
-    dedup: HashSet<Rc<Vkeywitness>>,
+    dedup: LinkedHashSet<Rc<Vkeywitness>>,
     cbor_set_type: CborSetType,
     force_original_cbor_set_type: bool,
 }
@@ -28,7 +28,7 @@ impl Vkeywitnesses {
     pub fn new() -> Self {
         Self {
             witnesses: Vec::new(),
-            dedup: HashSet::new(),
+            dedup: LinkedHashSet::new(),
             cbor_set_type: CborSetType::Tagged,
             force_original_cbor_set_type: false,
         }
@@ -36,7 +36,7 @@ impl Vkeywitnesses {
 
     pub(crate) fn new_from_prepared_fields(
         witnesses: Vec<Rc<Vkeywitness>>,
-        dedup: HashSet<Rc<Vkeywitness>>,
+        dedup: LinkedHashSet<Rc<Vkeywitness>>,
     ) -> Self {
         Self {
             witnesses,
@@ -74,7 +74,7 @@ impl Vkeywitnesses {
     }
 
     pub(crate) fn from_vec(vec: Vec<Vkeywitness>) -> Self {
-        let mut dedup = HashSet::new();
+        let mut dedup = LinkedHashSet::new();
         let mut witnesses = Vec::new();
         for witness in vec {
             let witness_rc = Rc::new(witness.clone());

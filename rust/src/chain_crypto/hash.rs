@@ -1,18 +1,19 @@
 //! module to provide some handy interfaces atop the hashes so we have
 //! the common interfaces for the project to work with.
 
+use crate::chain_crypto::bech32::{self, Bech32};
+use crate::*;
 use alloc::str::FromStr;
 use alloc::string::String;
 use core::error;
 use core::hash::Hash;
 use core::hash::Hasher;
+use core::write;
 use core::{fmt, result};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;
 use hex::FromHexError;
-
-use crate::chain_crypto::bech32::{self, Bech32};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {

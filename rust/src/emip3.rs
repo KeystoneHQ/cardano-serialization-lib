@@ -1,6 +1,6 @@
 use super::error::JsError;
 use super::*;
-
+use crate::*;
 use cryptoxide::chacha20poly1305::ChaCha20Poly1305;
 use cryptoxide::hmac::Hmac;
 use cryptoxide::pbkdf2::pbkdf2;

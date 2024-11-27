@@ -1,6 +1,6 @@
 use crate::*;
 use core::hash::Hasher;
-use hashlink::LinkedHashMap;
+use ritelinked::LinkedHashMap;
 
 use core::hash::Hash;
 

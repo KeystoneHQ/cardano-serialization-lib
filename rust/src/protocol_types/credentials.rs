@@ -2,14 +2,14 @@ use crate::*;
 use alloc::rc::Rc;
 use core::hash::{Hash, Hasher};
 use core::ops::Deref;
-use hashbrown::HashSet;
 use itertools::Itertools;
+use ritelinked::LinkedHashSet;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Credentials {
     pub(crate) credentials: Vec<Rc<Credential>>,
-    pub(crate) dedup: HashSet<Rc<Credential>>,
+    pub(crate) dedup: LinkedHashSet<Rc<Credential>>,
     pub(crate) cbor_set_type: CborSetType,
 }
 
@@ -20,14 +20,14 @@ impl Credentials {
     pub fn new() -> Self {
         Self {
             credentials: Vec::new(),
-            dedup: HashSet::new(),
+            dedup: LinkedHashSet::new(),
             cbor_set_type: CborSetType::Tagged,
         }
     }
 
     pub(crate) fn new_from_prepared_fields(
         credentials: Vec<Rc<Credential>>,
-        dedup: HashSet<Rc<Credential>>,
+        dedup: LinkedHashSet<Rc<Credential>>,
     ) -> Self {
         Self {
             credentials,
@@ -69,7 +69,7 @@ impl Credentials {
     }
 
     pub(crate) fn from_vec(vec: Vec<Credential>) -> Self {
-        let mut dedup = HashSet::new();
+        let mut dedup = LinkedHashSet::new();
         let mut credentials = Vec::new();
         for elem in vec {
             let elem_rc = Rc::new(elem);
@@ -81,7 +81,7 @@ impl Credentials {
     }
 
     pub(crate) fn from_iter(iter: impl IntoIterator<Item = Credential>) -> Self {
-        let mut dedup = HashSet::new();
+        let mut dedup = LinkedHashSet::new();
         let mut credentials = Vec::new();
         for elem in iter {
             let elem_rc = Rc::new(elem);

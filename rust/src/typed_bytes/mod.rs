@@ -1,9 +1,10 @@
 mod builder;
-
+mod crypto;
+use crate::*;
 use alloc::{boxed::Box, vec::Vec};
 pub use builder::ByteBuilder;
+use core::convert::AsRef;
 use core::marker::PhantomData;
-
 /// A typed slice of bytes
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ByteSlice<'a, T> {

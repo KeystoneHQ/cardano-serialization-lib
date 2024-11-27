@@ -3,6 +3,7 @@ use crate::protocol_types::{opt64, CBORSpecial, CBORType, Deserialize, Transacti
 use crate::serialization::utils::{deserilized_with_orig_bytes, merge_option_plutus_list};
 use crate::traits::NoneOrEmpty;
 use crate::utils::opt64_non_empty;
+use crate::*;
 use crate::{
     BootstrapWitnesses, CBORReadLen, DeserializeError, DeserializeFailure, Key, Language,
     NativeScripts, PlutusList, PlutusScripts, Redeemers, TransactionWitnessSet, Vkeywitnesses,

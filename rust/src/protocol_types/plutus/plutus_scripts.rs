@@ -1,13 +1,13 @@
 use crate::*;
 use alloc::collections::BTreeSet;
 use core::slice;
-use hashbrown::HashMap;
 use itertools::Itertools;
+use ritelinked::LinkedHashMap;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct PlutusScripts {
     scripts: Vec<PlutusScript>,
-    cbor_set_type: Option<HashMap<Language, CborSetType>>,
+    cbor_set_type: Option<LinkedHashMap<Language, CborSetType>>,
 }
 
 impl_to_from!(PlutusScripts);
@@ -31,7 +31,7 @@ impl PlutusScripts {
         Self {
             scripts,
             cbor_set_type: cbor_set_type.map(|t| {
-                let mut m = HashMap::new();
+                let mut m = LinkedHashMap::new();
                 m.insert(Language::new_plutus_v1(), t.clone());
                 m.insert(Language::new_plutus_v2(), t.clone());
                 m.insert(Language::new_plutus_v3(), t.clone());
@@ -140,7 +140,7 @@ impl PlutusScripts {
 
     pub(crate) fn set_set_type(&mut self, cbor_set_type: CborSetType, language: &Language) {
         if self.cbor_set_type.is_none() {
-            self.cbor_set_type = Some(HashMap::new());
+            self.cbor_set_type = Some(LinkedHashMap::new());
         }
         if let Some(m) = &mut self.cbor_set_type {
             m.insert(language.clone(), cbor_set_type);

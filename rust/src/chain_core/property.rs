@@ -29,7 +29,7 @@
 //! properly and determined a given instance of the LeaderSelection object
 //! is selected to write a block in the chain.
 //!
-
+use crate::*;
 use alloc::{str, vec, vec::Vec};
 use core::{fmt::Debug, hash::Hash};
 use core2::{error, io};

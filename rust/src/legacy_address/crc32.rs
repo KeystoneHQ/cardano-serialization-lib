@@ -1,3 +1,4 @@
+use crate::*;
 use core2::io::{Error, Write};
 const CRC_TABLE: [u32; 256] = [
     0x00000000u32,

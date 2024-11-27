@@ -1,10 +1,10 @@
 use crate::protocol_types::{Deserialize, FixedTxWitnessesSet};
 use crate::DeserializeError;
+use crate::*;
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
-
+use core::marker::Sized;
 use core2::io::{BufRead, Seek, Write};
-
 impl cbor_event::se::Serialize for FixedTxWitnessesSet {
     fn serialize<'a, W: Write + Sized>(
         &self,

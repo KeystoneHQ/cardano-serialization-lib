@@ -5,13 +5,12 @@ use alloc::slice;
 use core::hash::{Hash, Hasher};
 use core::iter::Map;
 use core::ops::Deref;
-use hashbrown::HashSet;
-use itertools::Itertools;
+use ritelinked::LinkedHashSet;
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct BootstrapWitnesses {
     witnesses: Vec<Rc<BootstrapWitness>>,
-    dedup: HashSet<Rc<BootstrapWitness>>,
+    dedup: LinkedHashSet<Rc<BootstrapWitness>>,
     cbor_set_type: CborSetType,
     force_original_cbor_set_type: bool,
 }
@@ -29,7 +28,7 @@ impl BootstrapWitnesses {
     pub fn new() -> Self {
         Self {
             witnesses: Vec::new(),
-            dedup: HashSet::new(),
+            dedup: LinkedHashSet::new(),
             cbor_set_type: CborSetType::Tagged,
             force_original_cbor_set_type: false,
         }
@@ -37,7 +36,7 @@ impl BootstrapWitnesses {
 
     pub(crate) fn new_from_prepared_fields(
         witnesses: Vec<Rc<BootstrapWitness>>,
-        dedup: HashSet<Rc<BootstrapWitness>>,
+        dedup: LinkedHashSet<Rc<BootstrapWitness>>,
     ) -> Self {
         Self {
             witnesses,
@@ -68,7 +67,7 @@ impl BootstrapWitnesses {
     }
 
     pub(crate) fn from_vec(witnesses_vec: Vec<BootstrapWitness>) -> Self {
-        let mut dedup = HashSet::new();
+        let mut dedup = LinkedHashSet::new();
         let mut witnesses = Vec::new();
         for witness in witnesses_vec {
             let witness_rc = Rc::new(witness.clone());
@@ -140,7 +139,7 @@ impl serde::Serialize for BootstrapWitnesses {
         self.witnesses
             .iter()
             .map(|x| x.deref())
-            .collect_vec()
+            .collect::<Vec<_>>()
             .serialize(serializer)
     }
 }

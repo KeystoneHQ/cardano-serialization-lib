@@ -1,3 +1,5 @@
+use crate::*;
+
 #[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub(crate) enum CertificateIndexNames {
     StakeRegistrationLegacy = 0,

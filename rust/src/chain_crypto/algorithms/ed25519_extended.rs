@@ -5,10 +5,10 @@ use crate::chain_crypto::sign::SigningAlgorithm;
 
 use super::ed25519 as ei;
 
+use crate::*;
 use cryptoxide::ed25519;
-use rand::{CryptoRng, RngCore};
-
 use ed25519_bip32::{XPrv, XPRV_SIZE};
+use rand::{CryptoRng, RngCore};
 
 /// ED25519 Signing Algorithm with extended secret key
 pub struct Ed25519Extended;

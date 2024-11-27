@@ -1,11 +1,12 @@
 use crate::protocol_types::Deserialize;
 use crate::serialization::utils::is_break_tag;
+use crate::*;
 use crate::{DeserializeError, TransactionWitnessSet, TransactionWitnessSets};
 use alloc::vec::Vec;
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;
+use core::result::Result::Ok;
 use core2::io::{BufRead, Seek};
-
 impl cbor_event::se::Serialize for TransactionWitnessSets {
     fn serialize<'se, W: core2::io::Write>(
         &self,

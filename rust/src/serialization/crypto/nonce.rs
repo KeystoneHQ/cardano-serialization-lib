@@ -1,4 +1,5 @@
 use crate::protocol_types::{CBORSpecial, Deserialize};
+use crate::*;
 use crate::{DeserializeError, DeserializeFailure, Nonce};
 use cbor_event::de::Deserializer;
 use cbor_event::se::Serializer;

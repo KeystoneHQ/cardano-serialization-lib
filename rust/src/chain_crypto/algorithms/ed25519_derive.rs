@@ -4,7 +4,7 @@ use crate::chain_crypto::key::{
 use crate::chain_crypto::sign::{
     SignatureError, SigningAlgorithm, Verification, VerificationAlgorithm,
 };
-
+use crate::*;
 use ed25519_bip32 as i;
 use ed25519_bip32::{XPrv, XPub, XPRV_SIZE, XPUB_SIZE};
 use rand::{CryptoRng, RngCore};

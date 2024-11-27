@@ -4,8 +4,8 @@ use alloc::slice;
 use core::hash::{Hash, Hasher};
 use core::iter::Map;
 use core::ops::Deref;
-use hashbrown::HashSet;
 use itertools::Itertools;
+use ritelinked::LinkedHashSet;
 
 pub type RequiredSigners = Ed25519KeyHashes;
 
@@ -13,7 +13,7 @@ pub type RequiredSigners = Ed25519KeyHashes;
 #[derive(Clone, Debug)]
 pub struct Ed25519KeyHashes {
     keyhashes: Vec<Rc<Ed25519KeyHash>>,
-    dedup: HashSet<Rc<Ed25519KeyHash>>,
+    dedup: LinkedHashSet<Rc<Ed25519KeyHash>>,
     cbor_set_type: CborSetType,
 }
 
@@ -24,14 +24,14 @@ impl Ed25519KeyHashes {
     pub fn new() -> Self {
         Self {
             keyhashes: Vec::new(),
-            dedup: HashSet::new(),
+            dedup: LinkedHashSet::new(),
             cbor_set_type: CborSetType::Tagged,
         }
     }
 
     pub(crate) fn new_from_prepared_fields(
         keyhashes: Vec<Rc<Ed25519KeyHash>>,
-        dedup: HashSet<Rc<Ed25519KeyHash>>,
+        dedup: LinkedHashSet<Rc<Ed25519KeyHash>>,
     ) -> Self {
         Self {
             keyhashes,
@@ -94,7 +94,7 @@ impl Ed25519KeyHashes {
     }
 
     pub(crate) fn from_vec(keyhash_vec: Vec<Ed25519KeyHash>) -> Self {
-        let mut dedup = HashSet::new();
+        let mut dedup = LinkedHashSet::new();
         let mut keyhashes = Vec::new();
         for keyhash in keyhash_vec {
             let keyhash_rc = Rc::new(keyhash.clone());
