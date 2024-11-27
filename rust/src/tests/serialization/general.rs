@@ -1,6 +1,19 @@
-use crate::{Address, BigInt, BigNum, Block, BlockHash, CborContainerType, Coin, Credential, DataHash, ExUnits, HeaderBody, HeaderLeaderCertEnum, Int, KESVKey, MIRPot, MIRToStakeCredentials, MoveInstantaneousReward, NativeScript, OperationalCert, PlutusData, PlutusList, PlutusScript, PlutusScripts, ProtocolVersion, Redeemer, RedeemerTag, Redeemers, ScriptHash, ScriptRef, TimelockStart, TransactionBody, TransactionInputs, TransactionOutput, TransactionOutputs, TransactionWitnessSet, VRFCert, VRFVKey, Value, Vkeywitness, Vkeywitnesses, VersionedBlock, BlockEra, to_bytes, BootstrapWitnesses, Credentials, Ed25519KeyHashes, CborSetType, ScriptPubkey, NativeScripts, Language, PlutusDatumSchema};
 use crate::protocol_types::ScriptRefEnum;
-use crate::tests::fakes::{fake_base_address, fake_bootsrap_witness, fake_bytes_32, fake_data_hash, fake_key_hash, fake_signature, fake_tx_input, fake_tx_output, fake_value, fake_value2, fake_vkey, fake_vkey_witness};
+use crate::tests::fakes::{
+    fake_base_address, fake_bootsrap_witness, fake_bytes_32, fake_data_hash, fake_key_hash,
+    fake_signature, fake_tx_input, fake_tx_output, fake_value, fake_value2, fake_vkey,
+    fake_vkey_witness,
+};
+use crate::{
+    to_bytes, Address, BigInt, BigNum, Block, BlockEra, BlockHash, BootstrapWitnesses,
+    CborContainerType, CborSetType, Coin, Credential, Credentials, DataHash, Ed25519KeyHashes,
+    ExUnits, HeaderBody, HeaderLeaderCertEnum, Int, KESVKey, Language, MIRPot,
+    MIRToStakeCredentials, MoveInstantaneousReward, NativeScript, NativeScripts, OperationalCert,
+    PlutusData, PlutusDatumSchema, PlutusList, PlutusScript, PlutusScripts, ProtocolVersion,
+    Redeemer, RedeemerTag, Redeemers, ScriptHash, ScriptPubkey, ScriptRef, TimelockStart,
+    TransactionBody, TransactionInputs, TransactionOutput, TransactionOutputs,
+    TransactionWitnessSet, VRFCert, VRFVKey, Value, VersionedBlock, Vkeywitness, Vkeywitnesses,
+};
 
 #[test]
 fn tx_output_deser_lagacy() {
@@ -525,12 +538,14 @@ fn test_witness_set_roundtrip() {
     witness_set_roundtrip(&PlutusScripts::from_vec(vec![script_v1.clone()], None));
     witness_set_roundtrip(&PlutusScripts::from_vec(vec![script_v2.clone()], None));
     witness_set_roundtrip(&PlutusScripts::from_vec(vec![script_v3.clone()], None));
-    witness_set_roundtrip(&PlutusScripts::from_vec(vec![script_v1.clone(), script_v2.clone()], None));
-    witness_set_roundtrip(&PlutusScripts::from_vec(vec![
-        script_v1.clone(),
-        script_v2.clone(),
-        script_v3.clone(),
-    ], None));
+    witness_set_roundtrip(&PlutusScripts::from_vec(
+        vec![script_v1.clone(), script_v2.clone()],
+        None,
+    ));
+    witness_set_roundtrip(&PlutusScripts::from_vec(
+        vec![script_v1.clone(), script_v2.clone(), script_v3.clone()],
+        None,
+    ));
 }
 
 #[test]
@@ -668,13 +683,16 @@ fn redeemers_default_array_round_trip() {
             &BigNum(2),
             &PlutusData::new_integer(&BigInt::from(22)),
             &ExUnits::new(&BigNum(23), &BigNum(45)),
-        )
+        ),
     ]);
 
     let bytes = redeemers.to_bytes();
     let new_redeemers = Redeemers::from_bytes(bytes.clone()).unwrap();
 
-    assert_eq!(new_redeemers.serialization_format, Some(CborContainerType::Map));
+    assert_eq!(
+        new_redeemers.serialization_format,
+        Some(CborContainerType::Map)
+    );
     assert_eq!(redeemers.serialization_format, None);
     assert_eq!(redeemers, new_redeemers);
     assert_eq!(bytes, new_redeemers.to_bytes())
@@ -694,15 +712,19 @@ fn redeemers_array_round_trip() {
             &BigNum(2),
             &PlutusData::new_integer(&BigInt::from(22)),
             &ExUnits::new(&BigNum(23), &BigNum(45)),
-        )
+        ),
     ];
 
-    let redeemers = Redeemers::new_with_serialization_format(redeemers_vec, CborContainerType::Array);
+    let redeemers =
+        Redeemers::new_with_serialization_format(redeemers_vec, CborContainerType::Array);
 
     let bytes = redeemers.to_bytes();
     let new_redeemers = Redeemers::from_bytes(bytes.clone()).unwrap();
 
-    assert_eq!(new_redeemers.serialization_format, Some(CborContainerType::Array));
+    assert_eq!(
+        new_redeemers.serialization_format,
+        Some(CborContainerType::Array)
+    );
     assert_eq!(redeemers, new_redeemers);
     assert_eq!(bytes, new_redeemers.to_bytes())
 }
@@ -721,7 +743,7 @@ fn redeemers_map_round_trip() {
             &BigNum(2),
             &PlutusData::new_integer(&BigInt::from(22)),
             &ExUnits::new(&BigNum(23), &BigNum(45)),
-        )
+        ),
     ];
 
     let redeemers = Redeemers::new_with_serialization_format(redeemers_vec, CborContainerType::Map);
@@ -729,7 +751,10 @@ fn redeemers_map_round_trip() {
     let bytes = redeemers.to_bytes();
     let new_redeemers = Redeemers::from_bytes(bytes.clone()).unwrap();
 
-    assert_eq!(new_redeemers.serialization_format, Some(CborContainerType::Map));
+    assert_eq!(
+        new_redeemers.serialization_format,
+        Some(CborContainerType::Map)
+    );
     assert_eq!(redeemers, new_redeemers);
     assert_eq!(bytes, new_redeemers.to_bytes())
 }
@@ -748,11 +773,13 @@ fn redeemers_map_array_round_trip() {
             &BigNum(2),
             &PlutusData::new_integer(&BigInt::from(22)),
             &ExUnits::new(&BigNum(23), &BigNum(45)),
-        )
+        ),
     ];
 
-    let redeemers_array = Redeemers::new_with_serialization_format(redeemers_vec.clone(), CborContainerType::Array);
-    let redeemers_map = Redeemers::new_with_serialization_format(redeemers_vec, CborContainerType::Map);
+    let redeemers_array =
+        Redeemers::new_with_serialization_format(redeemers_vec.clone(), CborContainerType::Array);
+    let redeemers_map =
+        Redeemers::new_with_serialization_format(redeemers_vec, CborContainerType::Map);
 
     let bytes_array = redeemers_array.to_bytes();
     let new_redeemers_array = Redeemers::from_bytes(bytes_array.clone()).unwrap();
@@ -760,11 +787,17 @@ fn redeemers_map_array_round_trip() {
     let bytes_map = redeemers_map.to_bytes();
     let new_redeemers_map = Redeemers::from_bytes(bytes_map.clone()).unwrap();
 
-    assert_eq!(new_redeemers_array.serialization_format, Some(CborContainerType::Array));
+    assert_eq!(
+        new_redeemers_array.serialization_format,
+        Some(CborContainerType::Array)
+    );
     assert_eq!(redeemers_array, new_redeemers_array);
     assert_eq!(bytes_array, new_redeemers_array.to_bytes());
 
-    assert_eq!(new_redeemers_map.serialization_format, Some(CborContainerType::Map));
+    assert_eq!(
+        new_redeemers_map.serialization_format,
+        Some(CborContainerType::Map)
+    );
     assert_eq!(redeemers_map, new_redeemers_map);
     assert_eq!(bytes_map, new_redeemers_map.to_bytes());
 
@@ -909,7 +942,6 @@ fn tx_inputs_round_trip() {
     assert_eq!(json, new_inputs_json.to_json().unwrap());
 }
 
-
 #[test]
 fn credential_set_always_should_be_with_tag() {
     let mut credentials = Credentials::new();
@@ -1020,7 +1052,10 @@ fn native_scripts_set_always_should_be_with_tag() {
     let wit_set_from_bytes = TransactionWitnessSet::from_bytes(wit_set_bytes).unwrap();
     let native_scripts_from_bytes = wit_set_from_bytes.native_scripts().unwrap();
     assert_eq!(native_scripts, native_scripts_from_bytes);
-    assert_eq!(native_scripts_from_bytes.get_set_type(), Some(CborSetType::Tagged));
+    assert_eq!(
+        native_scripts_from_bytes.get_set_type(),
+        Some(CborSetType::Tagged)
+    );
 }
 
 #[test]
@@ -1033,7 +1068,10 @@ fn plutus_scripts_set_always_should_be_with_tag() {
     let wit_set_from_bytes = TransactionWitnessSet::from_bytes(wit_set_bytes).unwrap();
     let plutus_scripts_from_bytes = wit_set_from_bytes.plutus_scripts().unwrap();
     assert_eq!(plutus_scripts, plutus_scripts_from_bytes);
-    assert_eq!(plutus_scripts_from_bytes.get_set_type(&Language::new_plutus_v1()), Some(CborSetType::Tagged));
+    assert_eq!(
+        plutus_scripts_from_bytes.get_set_type(&Language::new_plutus_v1()),
+        Some(CborSetType::Tagged)
+    );
 }
 
 #[test]
@@ -1046,9 +1084,11 @@ fn plutus_list_set_always_should_be_with_tag() {
     let wit_set_from_bytes = TransactionWitnessSet::from_bytes(wit_set_bytes).unwrap();
     let plutus_data_list_from_bytes = wit_set_from_bytes.plutus_data().unwrap();
     assert_eq!(plutus_data_list, plutus_data_list_from_bytes);
-    assert_eq!(plutus_data_list_from_bytes.get_set_type(), Some(CborSetType::Tagged));
+    assert_eq!(
+        plutus_data_list_from_bytes.get_set_type(),
+        Some(CborSetType::Tagged)
+    );
 }
-
 
 #[test]
 fn pure_native_scripts_always_should_be_without_tag() {
@@ -1057,7 +1097,10 @@ fn pure_native_scripts_always_should_be_without_tag() {
     let native_scripts_bytes = native_scripts.to_bytes();
     let native_scripts_from_bytes = NativeScripts::from_bytes(native_scripts_bytes).unwrap();
     assert_eq!(native_scripts, native_scripts_from_bytes);
-    assert_eq!(native_scripts_from_bytes.get_set_type(), Some(CborSetType::Untagged));
+    assert_eq!(
+        native_scripts_from_bytes.get_set_type(),
+        Some(CborSetType::Untagged)
+    );
 }
 
 #[test]
@@ -1067,7 +1110,10 @@ fn pure_plutus_scripts_always_should_be_without_tag() {
     let plutus_scripts_bytes = plutus_scripts.to_bytes();
     let plutus_scripts_from_bytes = PlutusScripts::from_bytes(plutus_scripts_bytes).unwrap();
     assert_eq!(plutus_scripts, plutus_scripts_from_bytes);
-    assert_eq!(plutus_scripts_from_bytes.get_set_type(&Language::new_plutus_v1()), Some(CborSetType::Untagged));
+    assert_eq!(
+        plutus_scripts_from_bytes.get_set_type(&Language::new_plutus_v1()),
+        Some(CborSetType::Untagged)
+    );
 }
 
 #[test]
@@ -1077,7 +1123,10 @@ fn pure_plutus_list_always_should_be_without_tag() {
     let plutus_data_list_bytes = plutus_data_list.to_bytes();
     let plutus_data_list_from_bytes = PlutusList::from_bytes(plutus_data_list_bytes).unwrap();
     assert_eq!(plutus_data_list, plutus_data_list_from_bytes);
-    assert_eq!(plutus_data_list_from_bytes.get_set_type(), Some(CborSetType::Untagged));
+    assert_eq!(
+        plutus_data_list_from_bytes.get_set_type(),
+        Some(CborSetType::Untagged)
+    );
 }
 
 #[test]
@@ -1088,8 +1137,13 @@ fn plutus_list_round_trip() {
     let bytes = plutus_data_list.to_bytes();
     let new_plutus_data_list = PlutusList::from_bytes(bytes.clone()).unwrap();
 
-    let json = PlutusData::new_list(&plutus_data_list).to_json(PlutusDatumSchema::DetailedSchema).unwrap();
-    let new_plutus_data_list_json = PlutusData::from_json(&json, PlutusDatumSchema::DetailedSchema).unwrap().as_list().unwrap();
+    let json = PlutusData::new_list(&plutus_data_list)
+        .to_json(PlutusDatumSchema::DetailedSchema)
+        .unwrap();
+    let new_plutus_data_list_json = PlutusData::from_json(&json, PlutusDatumSchema::DetailedSchema)
+        .unwrap()
+        .as_list()
+        .unwrap();
 
     assert_eq!(plutus_data_list, new_plutus_data_list);
     assert_eq!(plutus_data_list, new_plutus_data_list_json);

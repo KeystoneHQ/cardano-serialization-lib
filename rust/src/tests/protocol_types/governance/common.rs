@@ -1,4 +1,6 @@
-use crate::tests::fakes::{fake_anchor, fake_anchor_data_hash, fake_key_hash, fake_script_hash, fake_tx_hash};
+use crate::tests::fakes::{
+    fake_anchor, fake_anchor_data_hash, fake_key_hash, fake_script_hash, fake_tx_hash,
+};
 use crate::*;
 
 #[test]
@@ -120,7 +122,8 @@ fn voter_drep_script_hash_setters_getters_test() {
 #[test]
 fn voter_constitutional_committee_hot_key_hash_setters_getters_test() {
     let key_hash = fake_key_hash(1);
-    let voter = Voter::new_constitutional_committee_hot_credential(&Credential::from_keyhash(&key_hash));
+    let voter =
+        Voter::new_constitutional_committee_hot_credential(&Credential::from_keyhash(&key_hash));
     assert_eq!(voter.kind(), VoterKind::ConstitutionalCommitteeHotKeyHash);
     assert_eq!(
         voter.to_constitutional_committee_hot_credential(),
@@ -135,8 +138,9 @@ fn voter_constitutional_committee_hot_key_hash_setters_getters_test() {
 #[test]
 fn voter_constitutional_committee_hot_script_hash_setters_getters_test() {
     let script_hash = fake_script_hash(1);
-    let voter =
-        Voter::new_constitutional_committee_hot_credential(&Credential::from_scripthash(&script_hash));
+    let voter = Voter::new_constitutional_committee_hot_credential(&Credential::from_scripthash(
+        &script_hash,
+    ));
     assert_eq!(
         voter.kind(),
         VoterKind::ConstitutionalCommitteeHotScriptHash

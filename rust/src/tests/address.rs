@@ -1,4 +1,7 @@
-use crate::tests::fakes::{fake_base_address, fake_enterprise_address, fake_malformed_address, fake_pointer_address, fake_reward_address, fake_key_hash};
+use crate::tests::fakes::{
+    fake_base_address, fake_enterprise_address, fake_key_hash, fake_malformed_address,
+    fake_pointer_address, fake_reward_address,
+};
 use crate::*;
 
 #[test]
@@ -617,30 +620,21 @@ fn address_payment_cred() {
     let credential_4 = Credential::from_keyhash(&key_hash_4);
     let credential_5 = Credential::from_keyhash(&key_hash_5);
 
-    let base_address = BaseAddress::new(
-        1,
-        &credential_1,
-        &credential_2,
-    ).to_address();
+    let base_address = BaseAddress::new(1, &credential_1, &credential_2).to_address();
     assert_eq!(base_address.payment_cred(), Some(credential_1));
 
     let pointer_address = PointerAddress::new(
         2,
         &credential_3,
         &Pointer::new_pointer(&BigNum(1), &BigNum(2), &BigNum(3)),
-    ).to_address();
+    )
+    .to_address();
     assert_eq!(pointer_address.payment_cred(), Some(credential_3));
 
-    let enterprise_address = EnterpriseAddress::new(
-        3,
-        &credential_4,
-    ).to_address();
+    let enterprise_address = EnterpriseAddress::new(3, &credential_4).to_address();
     assert_eq!(enterprise_address.payment_cred(), Some(credential_4));
 
-    let reward_address = RewardAddress::new(
-        4,
-        &credential_5,
-    ).to_address();
+    let reward_address = RewardAddress::new(4, &credential_5).to_address();
 
     assert_eq!(reward_address.payment_cred(), Some(credential_5));
 
@@ -653,7 +647,6 @@ fn address_payment_cred() {
     let malformed_address = fake_malformed_address();
     assert_eq!(malformed_address.payment_cred(), None);
 }
-
 
 #[test]
 fn addresses_network_id() {
@@ -673,17 +666,12 @@ fn addresses_network_id() {
     assert_eq!(pointer_address.network_id(), 2);
     assert_eq!(pointer_address.to_address().network_id().unwrap(), 2);
 
-    let enterprise_address = EnterpriseAddress::new(
-        3,
-        &Credential::from_keyhash(&fake_key_hash(4)),
-    );
+    let enterprise_address =
+        EnterpriseAddress::new(3, &Credential::from_keyhash(&fake_key_hash(4)));
     assert_eq!(enterprise_address.network_id(), 3);
     assert_eq!(enterprise_address.to_address().network_id().unwrap(), 3);
 
-    let reward_address = RewardAddress::new(
-        4,
-        &Credential::from_keyhash(&fake_key_hash(5)),
-    );
+    let reward_address = RewardAddress::new(4, &Credential::from_keyhash(&fake_key_hash(5)));
     assert_eq!(reward_address.network_id(), 4);
     assert_eq!(reward_address.to_address().network_id().unwrap(), 4);
 

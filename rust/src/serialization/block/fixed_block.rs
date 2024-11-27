@@ -3,15 +3,19 @@ use crate::*;
 
 impl Deserialize for FixedBlock {
     fn deserialize<R: BufRead + Seek>(raw: &mut Deserializer<R>) -> Result<Self, DeserializeError> {
-        let ((
-            header,
-            transaction_bodies,
-            transaction_witness_sets,
-            auxiliary_data_set,
-            invalid_transactions,
-        ), orig_bytes) = deserilized_with_orig_bytes(raw, |raw| -> Result<_, DeserializeError> {
+        let (
+            (
+                header,
+                transaction_bodies,
+                transaction_witness_sets,
+                auxiliary_data_set,
+                invalid_transactions,
+            ),
+            orig_bytes,
+        ) = deserilized_with_orig_bytes(raw, |raw| -> Result<_, DeserializeError> {
             deserialize_block(raw)
-        }).map_err(|e| e.annotate("Block"))?;
+        })
+        .map_err(|e| e.annotate("Block"))?;
         let block_hash = BlockHash(blake2b256(orig_bytes.as_ref()));
         Ok(FixedBlock {
             header,
@@ -26,20 +30,27 @@ impl Deserialize for FixedBlock {
 
 fn deserialize_block<R: BufRead + Seek>(
     raw: &mut Deserializer<R>,
-) -> Result<(Header, FixedTransactionBodies, TransactionWitnessSets, AuxiliaryDataSet, TransactionIndexes), DeserializeError> {
+) -> Result<
+    (
+        Header,
+        FixedTransactionBodies,
+        TransactionWitnessSets,
+        AuxiliaryDataSet,
+        TransactionIndexes,
+    ),
+    DeserializeError,
+> {
     let len = raw.array()?;
     let mut read_len = CBORReadLen::new(len);
     read_len.read_elems(4)?;
     let header = (|| -> Result<_, DeserializeError> { Ok(Header::deserialize(raw)?) })()
         .map_err(|e| e.annotate("header"))?;
-    let transaction_bodies = (|| -> Result<_, DeserializeError> {
-        Ok(FixedTransactionBodies::deserialize(raw)?)
-    })()
-        .map_err(|e| e.annotate("fixed_transaction_bodies"))?;
-    let transaction_witness_sets = (|| -> Result<_, DeserializeError> {
-        Ok(TransactionWitnessSets::deserialize(raw)?)
-    })()
-        .map_err(|e| e.annotate("transaction_witness_sets"))?;
+    let transaction_bodies =
+        (|| -> Result<_, DeserializeError> { Ok(FixedTransactionBodies::deserialize(raw)?) })()
+            .map_err(|e| e.annotate("fixed_transaction_bodies"))?;
+    let transaction_witness_sets =
+        (|| -> Result<_, DeserializeError> { Ok(TransactionWitnessSets::deserialize(raw)?) })()
+            .map_err(|e| e.annotate("transaction_witness_sets"))?;
     let auxiliary_data_set =
         (|| -> Result<_, DeserializeError> { Ok(AuxiliaryDataSet::deserialize(raw)?) })()
             .map_err(|e| e.annotate("auxiliary_data_set"))?;
@@ -65,7 +76,7 @@ fn deserialize_block<R: BufRead + Seek>(
         }
         Ok(arr)
     })()
-        .map_err(|e| e.annotate("invalid_transactions"))?;
+    .map_err(|e| e.annotate("invalid_transactions"))?;
     match len {
         Len::Len(_) => (),
         Len::Indefinite => match raw.special()? {
