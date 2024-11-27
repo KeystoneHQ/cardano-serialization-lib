@@ -27,7 +27,7 @@ use core::result::Result::Err;
 use core::result::Result::Ok;
 use core::str::FromStr;
 use core::write;
-use core::{error, fmt, result};
+use core::{fmt, result};
 use cryptoxide::blake2b::Blake2b;
 use cryptoxide::digest::Digest as _;
 use cryptoxide::sha3;

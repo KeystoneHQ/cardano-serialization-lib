@@ -1,5 +1,4 @@
 use crate::*;
-use core2::io::Cursor;
 #[test]
 fn nonce_identity() {
     let orig = Nonce::new_identity();

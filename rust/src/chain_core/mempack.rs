@@ -5,7 +5,6 @@ use alloc::vec::Vec;
 use core::error::Error;
 use core::fmt;
 use core::num::{NonZeroU32, NonZeroU64};
-use core::panic;
 use core::write;
 /// A local memory buffer to serialize data to
 pub struct WriteBuf(Vec<u8>);

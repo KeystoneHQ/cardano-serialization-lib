@@ -1,4 +1,3 @@
-use crate::TransactionOutputBuilder;
 use crate::*;
 
 // based off tx test vectors (https://gist.github.com/KtorZ/5a2089df0915f21aca368d12545ab230)

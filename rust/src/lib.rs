@@ -1,8 +1,7 @@
-#![no_std]
 #![cfg_attr(feature = "with-bench", feature(test))]
 #![allow(deprecated)]
 #![cfg_attr(feature = "alloc", feature(error_in_core))]
-// #![cfg_attr(feature = "alloc", no_std)]
+#![cfg_attr(feature = "alloc", no_std)]
 #[macro_use]
 extern crate cfg_if;
 
@@ -10,8 +9,6 @@ extern crate cfg_if;
 #[cfg(feature = "with-bench")]
 extern crate test;
 
-#[cfg(feature = "alloc")]
-use core as std;
 #[cfg(test)]
 extern crate quickcheck;
 #[cfg(test)]
@@ -20,43 +17,31 @@ extern crate quickcheck_macros;
 extern crate hex;
 #[cfg(test)]
 mod tests;
-use alloc::collections::BTreeMap;
-use alloc::format;
-use alloc::string::{String, ToString};
-use alloc::vec;
-use alloc::vec::Vec;
-use core::iter::IntoIterator;
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-use core::assert_eq;
-use core::clone::Clone;
-use core::cmp::Eq;
-use core::cmp::Ordering;
-use core::cmp::{Ord, PartialEq, PartialOrd};
-use core::convert::AsRef;
-use core::convert::From;
-use core::convert::Into;
-use core::convert::TryInto;
-use core::fmt;
-use core::fmt::Display;
-use core::iter::ExactSizeIterator;
-use core::iter::Iterator;
-use core::marker::Send;
-use core::marker::Sized;
-use core::marker::Sync;
-use core::ops::Fn;
-use core::ops::FnMut;
-use core::option::Option;
-use core::option::Option::None;
-use core::option::Option::Some;
-use core::prelude::rust_2018::*;
-use core::result::Result;
-use core::result::Result::Err;
-use core::result::Result::Ok;
-use core::slice;
-use core::stringify;
-use core::write;
+use alloc::{
+    collections::BTreeMap,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
+use core::{
+    assert_eq,
+    clone::Clone,
+    cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
+    convert::{AsRef, From, Into, TryInto},
+    fmt::{self, Display},
+    iter::IntoIterator,
+    iter::{ExactSizeIterator, Iterator},
+    marker::{Send, Sized, Sync},
+    ops::{Fn, FnMut},
+    option::Option,
+    prelude::rust_2018::*,
+    result::Result,
+    slice, stringify, write,
+};
 use core2::io::{BufRead, Seek, Write};
 #[cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
 use noop_proc_macro::wasm_bindgen;
@@ -67,13 +52,12 @@ use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 // This file was code-generated using an experimental CDDL to rust tool:
 // https://github.com/Emurgo/cddl-codegen
 
-use cbor_event::Type as CBORType;
 use cbor_event::{
     self,
     de::Deserializer,
     se::{Serialize, Serializer},
+    Len, Special as CBORSpecial, Type as CBORType,
 };
-use cbor_event::{Len, Special as CBORSpecial};
 
 // mod builders;
 // pub use builders::*;
@@ -91,7 +75,6 @@ pub mod impl_mockchain;
 pub mod legacy_address;
 pub mod protocol_types;
 pub mod traits;
-pub use protocol_types::credentials::*;
 pub use protocol_types::*;
 pub mod typed_bytes;
 #[macro_use]
