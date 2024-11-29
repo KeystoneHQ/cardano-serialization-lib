@@ -385,7 +385,6 @@ fn test_language_roundtrip() {
 
 #[test]
 fn test_cost_model_roundtrip() {
-    use crate::TxBuilderConstants;
     let costmodels = TxBuilderConstants::plutus_vasil_cost_models();
     assert_eq!(
         costmodels,
@@ -395,7 +394,6 @@ fn test_cost_model_roundtrip() {
 
 #[test]
 fn test_known_plutus_data_hash() {
-    use crate::TxBuilderConstants;
     let pdata = PlutusList::from(vec![PlutusData::new_constr_plutus_data(
         &ConstrPlutusData::new(
             &BigNum::zero(),

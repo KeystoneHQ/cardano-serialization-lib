@@ -147,12 +147,12 @@ impl_to_from!(Transaction);
 
 #[wasm_bindgen]
 impl Transaction {
-    pub fn body(&self) -> TransactionBody {
-        self.body.clone()
+    pub fn body(&self) -> &TransactionBody {
+        &self.body
     }
 
-    pub fn witness_set(&self) -> TransactionWitnessSet {
-        self.witness_set.clone()
+    pub fn witness_set(&self) -> &TransactionWitnessSet {
+        &self.witness_set
     }
 
     pub fn is_valid(&self) -> bool {

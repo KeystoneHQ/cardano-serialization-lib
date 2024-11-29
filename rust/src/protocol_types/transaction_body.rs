@@ -30,16 +30,16 @@ impl_to_from!(TransactionBody);
 
 #[wasm_bindgen]
 impl TransactionBody {
-    pub fn inputs(&self) -> TransactionInputs {
-        self.inputs.clone()
+    pub fn inputs(&self) -> &TransactionInputs {
+        &self.inputs
     }
 
-    pub fn outputs(&self) -> TransactionOutputs {
-        self.outputs.clone()
+    pub fn outputs(&self) -> &TransactionOutputs {
+        &self.outputs
     }
 
-    pub fn fee(&self) -> Coin {
-        self.fee.clone()
+    pub fn fee(&self) -> &Coin {
+        &self.fee
     }
 
     /// !!! DEPRECATED !!!
@@ -83,8 +83,8 @@ impl TransactionBody {
         self.withdrawals = Some(withdrawals.clone())
     }
 
-    pub fn withdrawals(&self) -> Option<Withdrawals> {
-        self.withdrawals.clone()
+    pub fn withdrawals(&self) -> &Option<Withdrawals> {
+        &self.withdrawals
     }
 
     pub fn set_update(&mut self, update: &Update) {
