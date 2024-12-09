@@ -11,11 +11,8 @@ impl_to_from!(Vkeywitness);
 
 #[wasm_bindgen]
 impl Vkeywitness {
-    pub fn new(vkey: &Vkey, signature: &Ed25519Signature) -> Self {
-        Self {
-            vkey: vkey.clone(),
-            signature: signature.clone(),
-        }
+    pub fn new(vkey: Vkey, signature: Ed25519Signature) -> Self {
+        Self { vkey, signature }
     }
 
     pub fn vkey(&self) -> Vkey {

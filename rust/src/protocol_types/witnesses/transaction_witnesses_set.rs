@@ -43,9 +43,9 @@ impl_to_from!(TransactionWitnessSet);
 
 #[wasm_bindgen]
 impl TransactionWitnessSet {
-    pub fn set_vkeys(&mut self, vkeys: &Vkeywitnesses) {
+    pub fn set_vkeys(&mut self, vkeys: Vkeywitnesses) {
         if vkeys.len() > 0 {
-            self.vkeys = Some(vkeys.clone())
+            self.vkeys = Some(vkeys)
         }
     }
 

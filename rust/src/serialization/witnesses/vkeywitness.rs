@@ -26,7 +26,7 @@ impl Deserialize for Vkeywitness {
             let signature =
                 (|| -> Result<_, DeserializeError> { Ok(Ed25519Signature::deserialize(raw)?) })()
                     .map_err(|e| e.annotate("signature"))?;
-            let ret = Ok(Vkeywitness::new(&vkey, &signature));
+            let ret = Ok(Vkeywitness::new(vkey, signature));
             match len {
                 cbor_event::Len::Len(n) => match n {
                     2 => (),
